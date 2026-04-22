@@ -283,6 +283,7 @@ export default {
     nextDoseInDays: 'Next dose in (days)',
     seriesCompleteNote: 'Series complete — no next dose.',
     print: 'Print',
+    doneScanning: 'Done scanning',
     newForNext: 'New · next patient',
     preview: 'Preview',
     patientRecordLabel: 'Poliklinik Ng · Patient record',

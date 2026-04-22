@@ -93,8 +93,6 @@ function resetForm() {
   nextDueDays.value = 30
 }
 
-function newQr() { resetForm() }
-
 function newFromScratch(k: 'v' | 'b') {
   kind.value = k
   resetForm()
@@ -151,8 +149,6 @@ async function removeTemplate(tpl: Template) {
 }
 
 function logout() { clearStaffUnlocked(); router.replace('/staff') }
-
-function printPage() { window.print() }
 </script>
 
 <template>
@@ -341,11 +337,10 @@ function printPage() { window.print() }
               </label>
             </template>
 
-            <div class="flex gap-3 pt-4 hairline-t">
-              <button type="button" class="btn-primary flex-1" @click="printPage">
-                {{ $t('staff.print') }} <span aria-hidden>↗</span>
+            <div class="pt-4 hairline-t">
+              <button type="button" class="btn-primary w-full" @click="backToPicker">
+                {{ $t('staff.doneScanning') }} <span aria-hidden>→</span>
               </button>
-              <button type="button" class="btn-ghost whitespace-nowrap" @click="newQr">{{ $t('staff.newForNext') }}</button>
             </div>
           </form>
         </section>

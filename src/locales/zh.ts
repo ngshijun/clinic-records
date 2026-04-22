@@ -283,6 +283,7 @@ export default {
     nextDoseInDays: '下一剂间隔(天)',
     seriesCompleteNote: '系列已完成 — 无需下一剂。',
     print: '打印',
+    doneScanning: '扫描完成',
     newForNext: '新建 · 下一位病人',
     preview: '预览',
     patientRecordLabel: '吴医务所 · 病人记录',

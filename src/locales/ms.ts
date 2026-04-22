@@ -286,6 +286,7 @@ export default {
     nextDoseInDays: 'Dos seterusnya (hari)',
     seriesCompleteNote: 'Siri selesai — tiada dos seterusnya.',
     print: 'Cetak',
+    doneScanning: 'Selesai diimbas',
     newForNext: 'Baharu · pesakit seterusnya',
     preview: 'Pratonton',
     patientRecordLabel: 'Poliklinik Ng · Rekod pesakit',
