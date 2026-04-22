@@ -235,11 +235,8 @@ export default {
     endOfSettings: 'end of settings',
   },
   staff: {
-    consoleLabelDispatch: 'Staff console · dispatch',
     consoleLabel: 'Staff console',
     node: 'Node · 01 / staff',
-    clinicDispatch: 'Clinic',
-    dispatchWonk: 'dispatch',
     dispatchDesc:
       'A small instrument for printing patient QR codes. Restricted to staff on this tablet.',
     volume: 'Version I · 2026',

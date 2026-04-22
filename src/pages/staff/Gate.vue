@@ -48,9 +48,8 @@ async function submit() {
       </header>
 
       <div class="relative z-10 space-y-6">
-        <h1 class="font-display text-[clamp(3rem,7vw,5rem)] leading-[0.92]" style="color: var(--color-staff-ink)">
-          {{ $t('staff.clinicDispatch') }}<br/>
-          <span class="font-display-wonk" style="color: var(--color-staff-accent)">{{ $t('staff.dispatchWonk') }}</span>
+        <h1 class="font-display-wonk text-[clamp(3rem,7vw,5rem)] leading-[0.92]" style="color: var(--color-staff-accent)">
+          {{ $t('staff.consoleLabel') }}
         </h1>
         <p class="text-[15px] max-w-[40ch] leading-relaxed" style="color: var(--color-staff-muted)">
           {{ $t('staff.dispatchDesc') }}

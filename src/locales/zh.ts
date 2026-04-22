@@ -235,11 +235,8 @@ export default {
     endOfSettings: '设置结束',
   },
   staff: {
-    consoleLabelDispatch: '员工控制台 · 分发',
     consoleLabel: '员工控制台',
     node: '节点 · 01 / 员工',
-    clinicDispatch: '诊所',
-    dispatchWonk: '分发',
     dispatchDesc:
       '用于打印病人二维码的小工具。仅限本平板上的员工使用。',
     volume: '第一版 · 2026',

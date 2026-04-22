@@ -238,11 +238,8 @@ export default {
     endOfSettings: 'akhir tetapan',
   },
   staff: {
-    consoleLabelDispatch: 'Konsol staf · pengedaran',
     consoleLabel: 'Konsol staf',
     node: 'Nod · 01 / staf',
-    clinicDispatch: 'Klinik',
-    dispatchWonk: 'pengedaran',
     dispatchDesc:
       'Alat kecil untuk mencetak kod QR pesakit. Hanya untuk staf di tablet ini.',
     volume: 'Versi I · 2026',

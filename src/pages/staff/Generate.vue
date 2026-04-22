@@ -157,7 +157,7 @@ function logout() { clearStaffUnlocked(); router.replace('/staff') }
     <header class="max-w-[1200px] mx-auto px-6 lg:px-10 pt-8 pb-5 hairline-b flex items-center justify-between print:hidden">
       <div class="flex items-center gap-4">
         <div class="dot-pulse"></div>
-        <div class="eyebrow whitespace-nowrap">{{ $t('staff.consoleLabelDispatch') }}</div>
+        <div class="eyebrow whitespace-nowrap">{{ $t('staff.consoleLabel') }}</div>
       </div>
       <div class="flex items-center gap-5">
         <button class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="logout">{{ $t('staff.lockConsole') }}</button>
