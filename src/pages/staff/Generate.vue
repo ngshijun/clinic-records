@@ -160,7 +160,6 @@ function logout() { clearStaffUnlocked(); router.replace('/staff') }
         <div class="eyebrow whitespace-nowrap">{{ $t('staff.consoleLabelDispatch') }}</div>
       </div>
       <div class="flex items-center gap-5">
-        <div class="folio whitespace-nowrap">{{ $t('staff.session', { id: id.slice(0, 8) }) }}</div>
         <button class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="logout">{{ $t('staff.lockConsole') }}</button>
       </div>
     </header>
@@ -352,7 +351,6 @@ function logout() { clearStaffUnlocked(); router.replace('/staff') }
             <div class="flex items-start justify-between pb-4 mb-6 hairline-b print:border-black/20">
               <div>
                 <div class="eyebrow print:text-black" style="color: var(--color-staff-muted)">{{ $t('staff.patientRecordLabel') }}</div>
-                <div class="folio mt-1">ref {{ id.slice(0, 10) }}</div>
               </div>
               <div class="folio text-right">
                 {{ kind === 'v' ? 'Rx' : 'Lab' }} / v1<br/>
