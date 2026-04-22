@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ulid } from 'ulid'
 import { useI18n } from 'vue-i18n'
 import { encodePayload, type QrPayload } from '@/lib/qr-payload'
@@ -52,6 +52,17 @@ onBeforeUnmount(() => {
 })
 
 const suggestions = computed(() => (kind.value === 'v' ? VACCINE_NAMES : TEST_NAMES))
+
+const seriesComplete = computed(() =>
+  kind.value === 'v'
+  && doseNumber.value != null
+  && totalDoses.value != null
+  && doseNumber.value >= totalDoses.value,
+)
+
+watch(seriesComplete, (complete) => {
+  if (complete) nextDueDays.value = null
+})
 
 const payload = computed<QrPayload | null>(() => {
   if (!name.value || !performedOn.value) return null
@@ -320,10 +331,15 @@ function printPage() { window.print() }
               </label>
             </div>
 
-            <label v-if="kind === 'v'" class="block">
-              <span class="field-label">{{ $t('staff.nextDoseInDays') }}</span>
-              <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums" />
-            </label>
+            <template v-if="kind === 'v'">
+              <p v-if="seriesComplete" class="font-display-wonk italic text-sm" style="color: var(--color-staff-muted)">
+                {{ $t('staff.seriesCompleteNote') }}
+              </p>
+              <label v-else class="block">
+                <span class="field-label">{{ $t('staff.nextDoseInDays') }}</span>
+                <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums" />
+              </label>
+            </template>
 
             <div class="flex gap-3 pt-4 hairline-t">
               <button type="button" class="btn-primary flex-1" @click="printPage">

@@ -72,6 +72,14 @@ export const useRecordsStore = defineStore('records', () => {
 
   async function createReminderForRecord(user_id: string, rec: Record, payload: QrPayload) {
     if (payload.nd === undefined) return
+    // Guard against pre-existing QRs generated before the UI caught completed
+    // series: if this is the final dose, don't schedule a 'next dose' reminder.
+    if (
+      rec.kind === 'vaccination'
+      && rec.dose_number != null
+      && rec.total_doses != null
+      && rec.dose_number >= rec.total_doses
+    ) return
     const title = rec.kind === 'vaccination' && payload.dn && payload.td
       ? `${payload.n} Dose ${payload.dn + 1} due`
       : `Follow-up ${payload.n} due`

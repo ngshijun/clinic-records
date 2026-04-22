@@ -284,6 +284,7 @@ export default {
     of: 'Daripada',
     nextDueDays: 'Seterusnya (hari)',
     nextDoseInDays: 'Dos seterusnya (hari)',
+    seriesCompleteNote: 'Siri selesai — tiada dos seterusnya.',
     print: 'Cetak',
     newForNext: 'Baharu · pesakit seterusnya',
     preview: 'Pratonton',
