@@ -400,10 +400,6 @@ function logout() { clearStaffUnlocked(); router.replace('/staff') }
               </p>
             </div>
           </div>
-
-          <p class="text-xs font-mono-app break-all text-center print:hidden" style="color: var(--color-staff-muted)">
-            {{ qrUrl || '—' }}
-          </p>
         </section>
       </div>
     </div>
