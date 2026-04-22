@@ -2,6 +2,7 @@
 import type { QrPayload } from '@/lib/qr-payload'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { MY_TIMEZONE } from '@/lib/dates'
 
 const props = defineProps<{ payload: QrPayload }>()
 const emit = defineEmits<{ (e: 'confirm'): void; (e: 'cancel'): void }>()
@@ -22,9 +23,13 @@ const dueDate = computed(() => {
   if (!props.payload.nd) return null
   const due = new Date(props.payload.d)
   due.setDate(due.getDate() + props.payload.nd)
-  return due.toLocaleDateString(dtLocale.value, { day: '2-digit', month: 'long', year: 'numeric' })
+  return due.toLocaleDateString(dtLocale.value, {
+    day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
+  })
 })
-const givenDate = computed(() => new Date(props.payload.d).toLocaleDateString(dtLocale.value, { day: '2-digit', month: 'long', year: 'numeric' }))
+const givenDate = computed(() => new Date(props.payload.d).toLocaleDateString(dtLocale.value, {
+  day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
+}))
 const reminderLine = computed(() => {
   if (!dueDate.value) return null
   if (props.payload.k === 'v') return t('ingest.remindAroundDose', { date: dueDate.value })

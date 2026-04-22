@@ -152,7 +152,6 @@ export default {
   },
   recordDetail: {
     filed: 'filed {date}',
-    ref: 'ref {id}',
     forPerson: 'for {name}',
     administered: 'Administered',
     seriesPosition: 'Series position',
@@ -173,7 +172,6 @@ export default {
     confirmDelete: 'Delete this record?',
     vaccinationLabel: 'Vaccination',
     bloodTestLabel: 'Blood test',
-    recordLabel: 'Record · {id}',
   },
   profiles: {
     profilesLabel: 'Profiles · № {count}',

@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore, type Reminder } from '@/stores/records'
+import { MY_TIMEZONE } from '@/lib/dates'
 import { useAuthStore } from '@/stores/auth'
 import ProfileSwitcher from '@/components/ProfileSwitcher.vue'
 
@@ -72,13 +73,22 @@ function dateFmtLocale(): string {
   return locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB'
 }
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString(dateFmtLocale(), { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(d).toLocaleDateString(dateFmtLocale(), {
+    day: '2-digit', month: 'short', year: 'numeric', timeZone: MY_TIMEZONE,
+  })
 }
 function formatMonthDay(d: string) {
-  return new Date(d).toLocaleDateString(dateFmtLocale(), { day: '2-digit', month: 'short' })
+  return new Date(d).toLocaleDateString(dateFmtLocale(), {
+    day: '2-digit', month: 'short', timeZone: MY_TIMEZONE,
+  })
 }
 function relativeDue(iso: string) {
-  const days = Math.round((new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: MY_TIMEZONE })
+  const [dy, dm, dd] = fmt.format(new Date(iso)).split('-').map(Number)
+  const [ny, nm, nd] = fmt.format(new Date()).split('-').map(Number)
+  const days = Math.round(
+    (Date.UTC(dy, dm - 1, dd) - Date.UTC(ny, nm - 1, nd)) / 86400000,
+  )
   if (days < -1) return t('home.rel_daysAgo', { n: Math.abs(days) })
   if (days === -1) return t('home.rel_yesterday')
   if (days === 0) return t('home.rel_today')

@@ -155,7 +155,6 @@ export default {
   },
   recordDetail: {
     filed: 'disimpan pada {date}',
-    ref: 'ruj {id}',
     forPerson: 'untuk {name}',
     administered: 'Diberikan',
     seriesPosition: 'Kedudukan siri',
@@ -176,7 +175,6 @@ export default {
     confirmDelete: 'Padam rekod ini?',
     vaccinationLabel: 'Vaksinasi',
     bloodTestLabel: 'Ujian darah',
-    recordLabel: 'Rekod · {id}',
   },
   profiles: {
     profilesLabel: 'Profil · № {count}',

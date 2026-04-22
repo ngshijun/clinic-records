@@ -152,7 +152,6 @@ export default {
   },
   recordDetail: {
     filed: '归档于 {date}',
-    ref: '编号 {id}',
     forPerson: '属于 {name}',
     administered: '接种日期',
     seriesPosition: '剂次',
@@ -173,7 +172,6 @@ export default {
     confirmDelete: '确定删除此记录?',
     vaccinationLabel: '疫苗接种',
     bloodTestLabel: '血液检查',
-    recordLabel: '记录 · {id}',
   },
   profiles: {
     profilesLabel: '档案 · № {count}',

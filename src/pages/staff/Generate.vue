@@ -4,7 +4,7 @@ import { ulid } from 'ulid'
 import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { encodePayload, type QrPayload, type QrKind } from '@/lib/qr-payload'
-import { todayLocalIso } from '@/lib/dates'
+import { todayLocalIso, MY_TIMEZONE } from '@/lib/dates'
 import { clearStaffUnlocked } from '@/lib/staff-auth'
 import { VACCINE_NAMES, TEST_NAMES } from '@/lib/dictionary'
 import {
@@ -23,6 +23,7 @@ import {
 } from '@/lib/templates'
 import QrPreview from '@/components/QrPreview.vue'
 import { useRouter } from 'vue-router'
+import { useDialog } from '@/lib/dialog'
 
 interface Group {
   key: string
@@ -32,6 +33,7 @@ interface Group {
 
 const router = useRouter()
 const { t, locale } = useI18n()
+const dialog = useDialog()
 
 const stage = ref<'picker' | 'compose'>('picker')
 
@@ -139,7 +141,9 @@ const qrUrl = computed(() => payload.value ? encodePayload(window.location.origi
 
 function formatDate(d: string) {
   const l = locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB'
-  return new Date(d).toLocaleDateString(l, { day: '2-digit', month: 'long', year: 'numeric' })
+  return new Date(d).toLocaleDateString(l, {
+    day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
+  })
 }
 
 function resetForm() {
@@ -185,7 +189,7 @@ async function saveCurrentAsTemplate() {
     reminder_only: reminderOnly.value,
   }
   const suggested = autoLabel(draft)
-  const label = window.prompt(t('staff.labelForTemplate'), suggested)
+  const label = await dialog.prompt({ title: t('staff.labelForTemplate'), defaultValue: suggested })
   if (label === null) return
   try {
     savedFlash.value = t('staff.saving')
@@ -195,49 +199,60 @@ async function saveCurrentAsTemplate() {
     setTimeout(() => { savedFlash.value = null }, 1800)
   } catch (e: any) {
     savedFlash.value = null
-    alert(t('staff.saveTemplateFailed', { err: e.message ?? 'unknown' }))
+    await dialog.alert({ title: t('staff.saveTemplateFailed', { err: e.message ?? 'unknown' }) })
   }
 }
 
 async function removeTemplate(tpl: Template) {
-  if (!window.confirm(t('staff.confirmDeleteTemplate', { label: tpl.label }))) return
+  const ok = await dialog.confirm({
+    title: t('staff.confirmDeleteTemplate', { label: tpl.label }),
+    confirmLabel: t('common.delete'),
+  })
+  if (!ok) return
   try {
     await deleteTemplateFn(tpl.id)
     await refreshAll()
   } catch (e: any) {
-    alert(t('staff.deleteFailed', { err: e.message ?? 'unknown' }))
+    await dialog.alert({ title: t('staff.deleteFailed', { err: e.message ?? 'unknown' }) })
   }
 }
 
 async function addCategory() {
-  const label = window.prompt(t('staff.categoryNamePrompt'))
+  const label = await dialog.prompt({ title: t('staff.categoryNamePrompt') })
   if (!label || !label.trim()) return
   try {
     await createCategoryFn(kind.value, label)
     await refreshAll()
   } catch (e: any) {
-    alert(e.message ?? 'Failed to create category')
+    await dialog.alert({ title: e.message ?? 'Failed to create category' })
   }
 }
 
 async function onRenameCategory(cat: TemplateCategory) {
-  const label = window.prompt(t('staff.renameCategoryPrompt', { label: cat.label }), cat.label)
+  const label = await dialog.prompt({
+    title: t('staff.renameCategoryPrompt', { label: cat.label }),
+    defaultValue: cat.label,
+  })
   if (!label || !label.trim() || label.trim() === cat.label) return
   try {
     await renameCategoryFn(cat.id, label)
     await refreshAll()
   } catch (e: any) {
-    alert(e.message ?? 'Failed to rename category')
+    await dialog.alert({ title: e.message ?? 'Failed to rename category' })
   }
 }
 
 async function onDeleteCategory(cat: TemplateCategory) {
-  if (!window.confirm(t('staff.confirmDeleteCategory', { label: cat.label }))) return
+  const ok = await dialog.confirm({
+    title: t('staff.confirmDeleteCategory', { label: cat.label }),
+    confirmLabel: t('common.delete'),
+  })
+  if (!ok) return
   try {
     await deleteCategoryFn(cat.id)
     await refreshAll()
   } catch (e: any) {
-    alert(e.message ?? 'Failed to delete category')
+    await dialog.alert({ title: e.message ?? 'Failed to delete category' })
   }
 }
 
@@ -248,7 +263,7 @@ async function onCategoryReorder() {
     const byId = new Map(categories.value.map(c => [c.id, c]))
     ids.forEach((id, i) => { const c = byId.get(id); if (c) c.sort_order = i })
   } catch (e: any) {
-    alert(e.message ?? 'Failed to reorder')
+    await dialog.alert({ title: e.message ?? 'Failed to reorder' })
     await refreshAll()
   }
 }
@@ -262,7 +277,7 @@ async function onTemplateChange(group: Group, evt: any) {
     const src = templates.value.find(t => t.id === tpl.id)
     if (src) src.category_id = targetId
   } catch (e: any) {
-    alert(e.message ?? 'Failed to move template')
+    await dialog.alert({ title: e.message ?? 'Failed to move template' })
     await refreshAll()
   }
 }

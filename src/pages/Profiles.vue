@@ -3,11 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useProfilesStore, type Profile } from '@/stores/profiles'
+import { useDialog } from '@/lib/dialog'
+import { MY_TIMEZONE } from '@/lib/dates'
 
 const store = useProfilesStore()
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
+const dialog = useDialog()
 const name = ref('')
 const dob = ref('')
 const error = ref<string | null>(null)
@@ -37,8 +40,12 @@ async function add() {
 }
 
 async function del(id: string) {
-  if (!confirm(t('profiles.confirmDelete'))) return
-  try { await store.remove(id) } catch (e: any) { alert(e.message) }
+  const ok = await dialog.confirm({
+    title: t('profiles.confirmDelete'),
+    confirmLabel: t('common.delete'),
+  })
+  if (!ok) return
+  try { await store.remove(id) } catch (e: any) { await dialog.alert({ title: e.message }) }
 }
 
 async function setDefault(id: string) { await store.setDefault(id) }
@@ -70,7 +77,9 @@ async function saveEdit() {
 function formatDob(d: string | null) {
   if (!d) return null
   const l = locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB'
-  return new Date(d).toLocaleDateString(l, { day: '2-digit', month: 'long', year: 'numeric' })
+  return new Date(d).toLocaleDateString(l, {
+    day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
+  })
 }
 </script>
 

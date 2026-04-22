@@ -5,12 +5,15 @@ import { useI18n } from 'vue-i18n'
 import { useRecordsStore, type Record } from '@/stores/records'
 import { useProfilesStore } from '@/stores/profiles'
 import { supabase } from '@/lib/supabase'
+import { useDialog } from '@/lib/dialog'
+import { MY_TIMEZONE } from '@/lib/dates'
 
 const route = useRoute()
 const router = useRouter()
 const records = useRecordsStore()
 const profiles = useProfilesStore()
 const { t, locale } = useI18n()
+const dialog = useDialog()
 
 const rec = ref<Record | null>(null)
 const editing = ref(false)
@@ -19,7 +22,7 @@ const showMove = ref(false)
 
 onMounted(async () => {
   const { data, error } = await supabase.from('records').select('*').eq('id', route.params.id).single()
-  if (error) { alert(error.message); router.push('/home'); return }
+  if (error) { await dialog.alert({ title: error.message }); router.push('/home'); return }
   rec.value = data
   form.value = { ...data }
   await profiles.fetchAll()
@@ -45,26 +48,31 @@ async function moveToProfile(profile_id: string) {
 
 async function del() {
   if (!rec.value) return
-  if (!confirm(t('recordDetail.confirmDelete'))) return
+  const ok = await dialog.confirm({
+    title: t('recordDetail.confirmDelete'),
+    confirmLabel: t('common.delete'),
+  })
+  if (!ok) return
   await records.deleteRecord(rec.value.id)
   router.push('/home')
 }
 
 const dtLocale = computed(() => locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB')
 const formattedDate = computed(() => rec.value
-  ? new Date(rec.value.performed_on).toLocaleDateString(dtLocale.value, { day: '2-digit', month: 'long', year: 'numeric' })
+  ? new Date(rec.value.performed_on).toLocaleDateString(dtLocale.value, {
+      day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
+    })
   : ''
 )
 const profileName = computed(() => profiles.profiles.find(p => p.id === rec.value?.profile_id)?.name ?? '')
 const kindLabel = computed(() => rec.value?.kind === 'vaccination' ? t('recordDetail.vaccinationLabel') : t('recordDetail.bloodTestLabel'))
-const filedDate = computed(() => rec.value ? new Date(rec.value.created_at).toLocaleDateString(dtLocale.value) : '')
+const filedDate = computed(() => rec.value ? new Date(rec.value.created_at).toLocaleDateString(dtLocale.value, { timeZone: MY_TIMEZONE }) : '')
 </script>
 
 <template>
   <main v-if="rec" class="min-h-dvh pb-20">
-    <header class="max-w-[720px] w-full mx-auto px-6 pt-8 flex items-center justify-between">
+    <header class="max-w-[720px] w-full mx-auto px-6 pt-8">
       <router-link to="/home" class="folio underline underline-offset-4 decoration-[var(--color-rule)]">{{ $t('common.backToLedger') }}</router-link>
-      <div class="eyebrow">{{ $t('recordDetail.recordLabel', { id: rec.id.slice(0, 8) }) }}</div>
     </header>
 
     <section class="max-w-[720px] w-full mx-auto px-6 pt-10">
@@ -147,7 +155,6 @@ const filedDate = computed(() => rec.value ? new Date(rec.value.created_at).toLo
 
       <footer class="flex items-center justify-between pt-6 text-xs">
         <div class="folio">{{ $t('recordDetail.filed', { date: filedDate }) }}</div>
-        <div class="folio">{{ $t('recordDetail.ref', { id: rec.qr_fingerprint?.slice(0,10) ?? '—' }) }}</div>
       </footer>
     </section>
   </main>
