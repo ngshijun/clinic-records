@@ -8,7 +8,7 @@
 
 **Tech Stack:** Vite, Vue 3, TypeScript, Pinia, Vue Router, Tailwind CSS v4, shadcn-vue, `@supabase/supabase-js`, `vite-plugin-pwa`, `html5-qrcode`, `qrcode`, `ulid`, Vitest, `@vue/test-utils`, Deno + `web-push` (Edge Function).
 
-**Reference spec:** `docs/superpowers/specs/2026-04-22-patient-pwa-design.md`
+**Reference spec:** `docs/superpowers/specs/2026-04-22-clinic-records-design.md`
 
 ---
 
@@ -17,7 +17,7 @@
 Files that will exist when the plan is complete:
 
 ```
-patient-pwa/
+clinic-records/
 ├── package.json
 ├── vite.config.ts
 ├── tsconfig.json
@@ -106,7 +106,7 @@ patient-pwa/
 
 ---
 
-See `docs/superpowers/specs/2026-04-22-patient-pwa-design.md` for the authoritative design.
+See `docs/superpowers/specs/2026-04-22-clinic-records-design.md` for the authoritative design.
 
 Detailed task-by-task steps (with code blocks, test cases, and commit messages) are maintained by the implementation controller on a per-task basis. Controllers will dispatch each task with the full text required for that task, rather than the engineer reading this file section-by-section.
 
