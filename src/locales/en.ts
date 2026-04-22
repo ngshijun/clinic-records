@@ -82,6 +82,8 @@ export default {
     reminderKind: 'Reminder',
     due: 'Due {date}',
     dueAround: 'due {date}',
+    nextDoseTitle: '{name} · Dose {n}',
+    followupTitle: '{name} · Follow-up',
     doseOf: 'Dose {n} of {total}',
     bloodTest: 'Blood test',
     kindBloodTest: 'blood test',

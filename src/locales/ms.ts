@@ -84,6 +84,8 @@ export default {
     reminderKind: 'Peringatan',
     due: 'Perlu pada {date}',
     dueAround: 'perlu pada {date}',
+    nextDoseTitle: '{name} · Dos ke-{n}',
+    followupTitle: '{name} · Susulan',
     doseOf: 'Dos {n} daripada {total}',
     bloodTest: 'Ujian darah',
     kindBloodTest: 'ujian darah',

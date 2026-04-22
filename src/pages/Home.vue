@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useProfilesStore } from '@/stores/profiles'
-import { useRecordsStore } from '@/stores/records'
+import { useRecordsStore, type Reminder } from '@/stores/records'
 import { useAuthStore } from '@/stores/auth'
 import ProfileSwitcher from '@/components/ProfileSwitcher.vue'
 
@@ -91,6 +91,17 @@ function reminderKindLabel(k: string) {
   if (k === 'next_dose') return t('home.kindNextDose')
   if (k === 'followup_test') return t('home.kindFollowupTest')
   return k.replace('_', ' ')
+}
+function reminderTitle(r: Reminder) {
+  const rec = records.records.find(x => x.id === r.record_id)
+  if (!rec) return r.title
+  if (r.kind === 'next_dose' && rec.kind === 'vaccination' && rec.dose_number != null) {
+    return t('home.nextDoseTitle', { name: rec.name, n: rec.dose_number + 1 })
+  }
+  if (r.kind === 'followup_test') {
+    return t('home.followupTitle', { name: rec.name })
+  }
+  return r.title
 }
 function recordKindLabel(k: string) {
   return k === 'vaccination' ? t('home.kindVaccination') : t('home.kindBloodTest')
@@ -188,7 +199,7 @@ function recordsWord(n: number) {
             <div class="flex items-start justify-between gap-3">
               <div>
                 <div class="eyebrow mb-2">{{ $t('home.reminderKind') }} · {{ reminderKindLabel(r.kind) }}</div>
-                <h3 class="font-display text-xl leading-tight">{{ r.title }}</h3>
+                <h3 class="font-display text-xl leading-tight">{{ reminderTitle(r) }}</h3>
               </div>
               <span class="font-mono-app text-xs text-accent whitespace-nowrap">{{ relativeDue(r.due_at) }}</span>
             </div>
