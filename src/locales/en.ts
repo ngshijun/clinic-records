@@ -256,6 +256,12 @@ export default {
     forTests: 'tests',
     templatesCount: '({count} for {what})',
     saveCurrent: '+ save current',
+    pickerTitle: 'Choose a template.',
+    pickerSubtitle: 'Templates save the common fields. Or start fresh.',
+    newFromScratch: 'New from scratch',
+    newFromScratchHint: 'Fill every field yourself.',
+    backToTemplates: '← templates',
+    emptyNoTemplates: 'No templates saved yet. Start from scratch to make one.',
     savedFlash: '✓ saved',
     saving: 'saving…',
     noTemplates:

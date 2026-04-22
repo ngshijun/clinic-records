@@ -259,6 +259,12 @@ export default {
     forTests: 'ujian',
     templatesCount: '({count} untuk {what})',
     saveCurrent: '+ simpan semasa',
+    pickerTitle: 'Pilih sebuah templat.',
+    pickerSubtitle: 'Templat menyimpan medan biasa. Atau mula dari awal.',
+    newFromScratch: 'Mula dari awal',
+    newFromScratchHint: 'Isi semua medan secara manual.',
+    backToTemplates: '← templat',
+    emptyNoTemplates: 'Belum ada templat tersimpan. Mula dari awal untuk buat satu.',
     savedFlash: '✓ disimpan',
     saving: 'menyimpan…',
     noTemplates:

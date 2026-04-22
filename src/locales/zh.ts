@@ -256,6 +256,12 @@ export default {
     forTests: '检验',
     templatesCount: '({what} · {count} 个)',
     saveCurrent: '+ 保存当前',
+    pickerTitle: '选择一个模板。',
+    pickerSubtitle: '模板会预填常用字段。或从头开始。',
+    newFromScratch: '从头开始',
+    newFromScratchHint: '手动填写所有字段。',
+    backToTemplates: '← 模板',
+    emptyNoTemplates: '尚未保存任何模板。从头开始以创建一个。',
     savedFlash: '✓ 已保存',
     saving: '保存中…',
     noTemplates:
