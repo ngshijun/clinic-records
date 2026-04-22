@@ -250,13 +250,13 @@ function recordsWord(n: number) {
 
     <!-- Scan FAB + nav bar -->
     <nav class="fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-0 paper-card !shadow-xl rounded-none">
-      <router-link to="/profiles" class="px-5 py-3 text-xs eyebrow hover:text-ink">{{ $t('home.navProfiles') }}</router-link>
+      <router-link to="/profiles" class="px-5 py-3 text-xs eyebrow hover:text-ink whitespace-nowrap">{{ $t('home.navProfiles') }}</router-link>
       <div class="w-px h-6 bg-[var(--color-rule)]"></div>
-      <router-link to="/scan" class="px-6 py-3 bg-ink text-paper font-display text-lg flex items-center gap-2">
+      <router-link to="/scan" class="px-6 py-3 bg-ink text-paper font-display text-lg flex items-center gap-2 whitespace-nowrap">
         {{ $t('home.navScan') }} <span aria-hidden>↗</span>
       </router-link>
       <div class="w-px h-6 bg-[var(--color-rule)]"></div>
-      <router-link to="/settings" class="px-5 py-3 text-xs eyebrow hover:text-ink">{{ $t('home.navSettings') }}</router-link>
+      <router-link to="/settings" class="px-5 py-3 text-xs eyebrow hover:text-ink whitespace-nowrap">{{ $t('home.navSettings') }}</router-link>
     </nav>
   </main>
 </template>
