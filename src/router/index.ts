@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', name: 'landing', component: () => import('@/pages/Landing.vue') },
@@ -16,4 +17,16 @@ const routes: RouteRecordRaw[] = [
 export const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+  if (!auth.loaded) await auth.init()
+
+  if (to.meta.requiresAuth && !auth.user) {
+    return { name: 'landing', query: { next: to.fullPath } }
+  }
+  if ((to.name === 'landing' || to.name === 'signup') && auth.user) {
+    return { name: 'home' }
+  }
 })
