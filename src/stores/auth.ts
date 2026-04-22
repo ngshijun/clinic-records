@@ -32,5 +32,22 @@ export const useAuthStore = defineStore('auth', () => {
     session.value = null
   }
 
-  return { session, user, loaded, init, signIn, signUp, signOut }
+  const isAnonymous = computed<boolean>(() => user.value?.is_anonymous === true)
+
+  async function signInAnonymously() {
+    const { data, error } = await supabase.auth.signInAnonymously()
+    if (error) throw error
+    session.value = data.session
+  }
+
+  async function upgradeToEmail(email: string, password: string) {
+    const { data, error } = await supabase.auth.updateUser({ email, password })
+    if (error) throw error
+    // Session user updates via onAuthStateChange; force-refresh just in case
+    const { data: s } = await supabase.auth.getSession()
+    session.value = s.session
+    return data.user
+  }
+
+  return { session, user, loaded, isAnonymous, init, signIn, signUp, signInAnonymously, upgradeToEmail, signOut }
 })

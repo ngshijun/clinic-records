@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore } from '@/stores/records'
+import { useAuthStore } from '@/stores/auth'
 import ProfileSwitcher from '@/components/ProfileSwitcher.vue'
 
 const profiles = useProfilesStore()
 const records = useRecordsStore()
+const auth = useAuthStore()
+const dismissed = ref(localStorage.getItem('guest_nudge_dismissed') === '1')
+function dismiss() {
+  localStorage.setItem('guest_nudge_dismissed', '1')
+  dismissed.value = true
+}
 
 async function refresh() {
   if (profiles.activeId) await records.fetchForProfile(profiles.activeId)
@@ -24,6 +31,18 @@ watch(() => profiles.activeId, refresh)
       <h1 class="text-xl font-semibold">Health records</h1>
       <ProfileSwitcher />
     </header>
+
+    <div v-if="auth.isAnonymous && !dismissed"
+      class="bg-amber-50 border border-amber-200 rounded p-3 text-sm flex items-start justify-between gap-3">
+      <div>
+        <div class="font-medium">Guest mode</div>
+        <div class="text-gray-700">Add an email + password in Settings so you can sign in on another device.</div>
+      </div>
+      <div class="flex flex-col gap-1 shrink-0">
+        <router-link to="/settings" class="underline text-xs">Set up</router-link>
+        <button @click="dismiss" class="text-xs text-gray-500">Not now</button>
+      </div>
+    </div>
 
     <section class="space-y-2">
       <h2 class="text-sm font-medium text-gray-600">Upcoming</h2>

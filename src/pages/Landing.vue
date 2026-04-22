@@ -22,6 +22,19 @@ async function submit() {
     busy.value = false
   }
 }
+
+async function guest() {
+  error.value = null
+  busy.value = true
+  try {
+    await auth.signInAnonymously()
+    router.push('/profiles?first=1')
+  } catch (e: any) {
+    error.value = e.message ?? 'Could not start as guest'
+  } finally {
+    busy.value = false
+  }
+}
 </script>
 
 <template>
@@ -35,6 +48,15 @@ async function submit() {
       </button>
       <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
     </form>
+
+    <div class="flex items-center gap-3 text-gray-400 text-xs">
+      <div class="h-px flex-1 bg-gray-200"></div><span>OR</span><div class="h-px flex-1 bg-gray-200"></div>
+    </div>
+
+    <button :disabled="busy" class="w-full border rounded py-2" @click="guest">
+      Continue as guest
+    </button>
+
     <p class="text-sm">No account? <router-link to="/signup" class="underline">Sign up</router-link></p>
   </main>
 </template>
