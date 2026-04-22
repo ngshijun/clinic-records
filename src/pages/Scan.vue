@@ -32,8 +32,8 @@ function onDecoded(raw: string) {
         <p class="text-sm text-muted-app max-w-[32ch]">{{ $t('scan.description') }}</p>
       </div>
 
-      <div class="relative anim-rise-2">
-        <div class="relative w-full max-w-[320px] aspect-square">
+      <div class="relative anim-rise-2 w-full flex flex-col items-center">
+        <div class="relative w-full max-w-[440px] aspect-square">
           <div class="absolute inset-0 overflow-hidden">
             <QrScanner @decoded="onDecoded" @error="(m) => error = m" />
           </div>

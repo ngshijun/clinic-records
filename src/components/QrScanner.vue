@@ -29,5 +29,14 @@ onBeforeUnmount(async () => {
 </script>
 
 <template>
-  <div ref="container" class="w-full max-w-sm aspect-square bg-black rounded overflow-hidden"></div>
+  <div ref="container" class="w-full h-full bg-black overflow-hidden"></div>
 </template>
+
+<style scoped>
+:deep(video) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  display: block;
+}
+</style>
