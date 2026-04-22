@@ -70,6 +70,22 @@ export const useRecordsStore = defineStore('records', () => {
     return data?.[0] ?? null
   }
 
+  async function createReminderForRecord(user_id: string, rec: Record, payload: QrPayload) {
+    if (payload.nd === undefined) return
+    const title = rec.kind === 'vaccination' && payload.dn && payload.td
+      ? `${payload.n} Dose ${payload.dn + 1} due`
+      : `Follow-up ${payload.n} due`
+    const { error } = await supabase.from('reminders').insert({
+      user_id,
+      profile_id: rec.profile_id,
+      record_id: rec.id,
+      kind: rec.kind === 'vaccination' ? 'next_dose' : 'followup_test',
+      title,
+      due_at: computeDueAt(payload.d, payload.nd),
+    })
+    if (error) throw error
+  }
+
   async function insertWithReminder(input: InsertInput) {
     const { data: userData } = await supabase.auth.getUser()
     const user_id = userData.user?.id
@@ -90,23 +106,14 @@ export const useRecordsStore = defineStore('records', () => {
     }).select().single()
     if (e1) throw e1
 
-    if (payload.nd !== undefined) {
-      const title = kind === 'vaccination' && payload.dn && payload.td
-        ? `${payload.n} Dose ${payload.dn + 1} due`
-        : `Follow-up ${payload.n} due`
-      await supabase.from('reminders').insert({
-        user_id,
-        profile_id: input.profile_id,
-        record_id: rec.id,
-        kind: kind === 'vaccination' ? 'next_dose' : 'followup_test',
-        title,
-        due_at: computeDueAt(payload.d, payload.nd),
-      })
-    }
+    await createReminderForRecord(user_id, rec as Record, payload)
     return rec as Record
   }
 
   async function replaceRecord(oldId: string, input: InsertInput) {
+    const { data: userData } = await supabase.auth.getUser()
+    const user_id = userData.user?.id
+    if (!user_id) throw new Error('not authenticated')
     const { payload } = input
     const kind = payload.k === 'v' ? 'vaccination' : 'blood_test'
     const { data, error } = await supabase.rpc('replace_record', {
@@ -123,6 +130,7 @@ export const useRecordsStore = defineStore('records', () => {
       },
     })
     if (error) throw error
+    await createReminderForRecord(user_id, data as Record, payload)
     return data as Record
   }
 
