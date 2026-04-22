@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore } from '@/stores/records'
 import { useAuthStore } from '@/stores/auth'
@@ -14,13 +14,38 @@ function dismiss() {
   dismissed.value = true
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+const installPrompt = ref<BeforeInstallPromptEvent | null>(null)
+const installDismissed = ref(localStorage.getItem('install_dismissed') === '1')
+function onBeforeInstallPrompt(e: Event) {
+  e.preventDefault()
+  installPrompt.value = e as BeforeInstallPromptEvent
+}
+async function doInstall() {
+  if (!installPrompt.value) return
+  await installPrompt.value.prompt()
+  const { outcome } = await installPrompt.value.userChoice
+  if (outcome === 'accepted') installPrompt.value = null
+}
+function dismissInstall() {
+  localStorage.setItem('install_dismissed', '1')
+  installDismissed.value = true
+}
+
 async function refresh() {
   if (profiles.activeId) await records.fetchForProfile(profiles.activeId)
 }
 
 onMounted(async () => {
+  window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
   await profiles.fetchAll()
   await refresh()
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
 })
 watch(() => profiles.activeId, refresh)
 </script>
@@ -41,6 +66,15 @@ watch(() => profiles.activeId, refresh)
       <div class="flex flex-col gap-1 shrink-0">
         <router-link to="/settings" class="underline text-xs">Set up</router-link>
         <button @click="dismiss" class="text-xs text-gray-500">Not now</button>
+      </div>
+    </div>
+
+    <div v-if="installPrompt && !installDismissed"
+      class="bg-blue-50 border border-blue-200 rounded p-3 text-sm flex items-center justify-between gap-3">
+      <div>Install this app for faster access and reminders.</div>
+      <div class="flex gap-2 shrink-0">
+        <button class="text-xs text-gray-500" @click="dismissInstall">Not now</button>
+        <button class="bg-black text-white rounded px-3 py-1 text-xs" @click="doInstall">Install</button>
       </div>
     </div>
 
