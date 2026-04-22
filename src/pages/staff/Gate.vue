@@ -43,9 +43,8 @@ async function submit() {
         </svg>
       </div>
 
-      <header class="flex items-start justify-between relative z-10">
+      <header class="relative z-10">
         <div class="eyebrow"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('staff.consoleLabel') }}</div>
-        <div class="folio">{{ $t('staff.node') }}</div>
       </header>
 
       <div class="relative z-10 space-y-6">
@@ -58,13 +57,7 @@ async function submit() {
         </p>
       </div>
 
-      <footer class="relative z-10 flex items-end justify-between text-[11px]">
-        <div class="eyebrow space-y-1">
-          <div>Poliklinik Ng</div>
-          <div>{{ $t('staff.volume') }}</div>
-        </div>
-        <div class="folio">PGN·CR / s</div>
-      </footer>
+      <div class="relative z-10 eyebrow">Poliklinik Ng</div>
     </aside>
 
     <section class="flex items-center justify-center px-6 py-10">
@@ -89,7 +82,6 @@ async function submit() {
           </p>
         </form>
 
-        <p class="text-[11px] folio pt-6 hairline-t">{{ $t('staff.unauthorisedNote') }}</p>
       </div>
     </section>
   </main>

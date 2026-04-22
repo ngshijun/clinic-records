@@ -147,7 +147,6 @@ function printPage() { window.print() }
     <section class="max-w-[1200px] mx-auto px-6 lg:px-10 pt-6 print:hidden">
       <div class="flex items-baseline justify-between mb-3">
         <div class="flex items-baseline gap-3">
-          <span class="folio">§ 0</span>
           <h2 class="font-display text-xl" style="color: var(--color-staff-ink)">{{ $t('staff.savedTemplates') }}</h2>
           <span class="eyebrow">{{ $t('staff.templatesCount', { count: visibleTemplates.length, what: kind === 'v' ? $t('staff.forVaccines') : $t('staff.forTests') }) }}</span>
         </div>

@@ -54,9 +54,8 @@ function onLocaleChange(e: Event) {
 
 <template>
   <main class="min-h-dvh pb-20">
-    <header class="max-w-[720px] w-full mx-auto px-6 pt-8 flex items-center justify-between">
+    <header class="max-w-[720px] w-full mx-auto px-6 pt-8">
       <router-link to="/home" class="folio underline underline-offset-4 decoration-[var(--color-rule)]">{{ $t('settings.backToLedger') }}</router-link>
-      <div class="eyebrow">{{ $t('settings.sectionLabel') }}</div>
     </header>
 
     <section class="max-w-[720px] w-full mx-auto px-6 py-10 space-y-12">
@@ -68,8 +67,6 @@ function onLocaleChange(e: Event) {
 
       <!-- Guest upgrade -->
       <section v-if="auth.isAnonymous" class="paper-card brackets p-7 anim-rise-2 relative" style="background: #faf0dc;">
-        <span class="br-tr"></span><span class="br-bl"></span>
-        <div class="eyebrow mb-2" style="color: var(--color-accent)">{{ $t('settings.chapterSaveWork') }}</div>
         <h2 class="font-display text-3xl leading-tight mb-2">
           {{ $t('settings.yourLedgerIsPre') }}
           <span class="font-display-wonk">{{ $t('settings.yourLedgerIsWonk') }}</span>{{ $t('settings.yourLedgerIsSuffix') }}
@@ -103,10 +100,7 @@ function onLocaleChange(e: Event) {
 
       <!-- Notifications -->
       <section class="space-y-5 anim-rise-3">
-        <div class="flex items-baseline gap-3">
-          <span class="folio">§ I</span>
-          <h2 class="font-display text-2xl">{{ $t('settings.reminders') }}</h2>
-        </div>
+        <h2 class="font-display text-2xl">{{ $t('settings.reminders') }}</h2>
         <p v-if="isIosSafari" class="paper-card p-4 text-sm" style="background: #faf0dc; border-color: var(--color-accent-soft);">
           <span class="eyebrow block mb-1" style="color: var(--color-accent)">{{ $t('settings.iPhoneNote') }}</span>
           {{ $t('settings.iPhoneNoteText') }}
@@ -129,10 +123,7 @@ function onLocaleChange(e: Event) {
 
       <!-- Language -->
       <section class="space-y-5 anim-rise-3">
-        <div class="flex items-baseline gap-3">
-          <span class="folio">§ II</span>
-          <h2 class="font-display text-2xl">{{ $t('settings.language') }}</h2>
-        </div>
+        <h2 class="font-display text-2xl">{{ $t('settings.language') }}</h2>
         <div class="flex items-center justify-between hairline-t hairline-b py-5 gap-4">
           <div class="min-w-0">
             <div class="font-display text-xl">{{ AVAILABLE_LOCALES.find(l => l.code === locale)?.native }}</div>
@@ -153,10 +144,7 @@ function onLocaleChange(e: Event) {
 
       <!-- Session -->
       <section class="space-y-5 anim-rise-4">
-        <div class="flex items-baseline gap-3">
-          <span class="folio">§ III</span>
-          <h2 class="font-display text-2xl">{{ $t('settings.session') }}</h2>
-        </div>
+        <h2 class="font-display text-2xl">{{ $t('settings.session') }}</h2>
         <div class="flex items-center justify-between hairline-t hairline-b py-5">
           <div>
             <div class="font-display text-xl">{{ auth.isAnonymous ? $t('settings.guestSession') : $t('settings.signedIn') }}</div>
@@ -168,10 +156,6 @@ function onLocaleChange(e: Event) {
         </div>
       </section>
 
-      <footer class="flex items-center justify-between pt-6 text-xs hairline-t">
-        <div class="folio">PGN·CR / v1 · 2026</div>
-        <div class="folio">{{ $t('settings.endOfSettings') }}</div>
-      </footer>
     </section>
   </main>
 </template>

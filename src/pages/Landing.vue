@@ -42,9 +42,8 @@ async function guest() {
 <template>
   <main class="min-h-dvh grid lg:grid-cols-[1.1fr_0.9fr]">
     <aside class="hidden lg:flex flex-col justify-between px-12 py-10 hairline-b lg:hairline-b-0 lg:border-r border-[var(--color-rule)]">
-      <header class="flex items-start justify-between anim-rise">
+      <header class="anim-rise">
         <div class="eyebrow"><span class="tick"></span>{{ $t('brand.label') }}</div>
-        <div class="folio">Est. ·  № I</div>
       </header>
 
       <div class="space-y-6 anim-rise-2">
@@ -54,13 +53,7 @@ async function guest() {
         <p class="text-ink-2 max-w-md text-[15px] leading-relaxed">{{ $t('landing.description') }}</p>
       </div>
 
-      <footer class="flex items-end justify-between text-[11px] anim-rise-3">
-        <div class="space-y-1 eyebrow">
-          <div>{{ $t('landing.volume') }}</div>
-          <div>{{ $t('landing.issue') }}</div>
-        </div>
-        <div class="folio">PGN·CR / v1</div>
-      </footer>
+      <div></div>
     </aside>
 
     <section class="flex flex-col justify-center px-6 lg:px-16 py-12">

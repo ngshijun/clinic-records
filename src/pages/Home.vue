@@ -170,10 +170,7 @@ function recordsWord(n: number) {
       <!-- Upcoming -->
       <section class="space-y-5 anim-rise-3">
         <div class="flex items-baseline justify-between">
-          <div class="flex items-baseline gap-3">
-            <span class="folio">I.</span>
-            <h2 class="font-display text-2xl">{{ $t('home.upcoming') }}</h2>
-          </div>
+          <h2 class="font-display text-2xl">{{ $t('home.upcoming') }}</h2>
           <span class="eyebrow">
             <span v-if="records.reminders.length > 0" class="dot-pulse inline-block mr-2 align-middle"></span>
             {{ $t('home.pendingCount', { count: records.reminders.length }) }}
@@ -208,10 +205,7 @@ function recordsWord(n: number) {
       <!-- History -->
       <section class="space-y-6 pt-4 anim-rise-4">
         <div class="flex items-baseline justify-between">
-          <div class="flex items-baseline gap-3">
-            <span class="folio">II.</span>
-            <h2 class="font-display text-2xl">{{ $t('home.history') }}</h2>
-          </div>
+          <h2 class="font-display text-2xl">{{ $t('home.history') }}</h2>
           <span class="eyebrow">{{ $t('home.entriesCount', { count: totalCount }) }}</span>
         </div>
 

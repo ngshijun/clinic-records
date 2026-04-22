@@ -69,19 +69,8 @@ const filedDate = computed(() => rec.value ? new Date(rec.value.created_at).toLo
 
     <section class="max-w-[720px] w-full mx-auto px-6 pt-10">
       <article class="paper-card relative overflow-hidden p-8 md:p-12 anim-rise">
-        <svg class="absolute top-4 left-4 w-8 h-8 text-[var(--color-rule)]" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1" aria-hidden>
-          <circle cx="16" cy="16" r="15" />
-          <circle cx="16" cy="16" r="10" />
-          <path d="M16 2 v28 M2 16 h28" stroke-dasharray="2 3" />
-        </svg>
-        <div class="absolute top-5 right-6 folio">{{ rec.kind === 'vaccination' ? 'Rx' : 'Lab' }} · № {{ rec.id.slice(0,4) }}</div>
-
-        <div aria-hidden class="absolute -right-4 -bottom-16 font-display text-[12rem] leading-none text-ink opacity-[0.04] select-none pointer-events-none">
-          {{ rec.kind === 'vaccination' ? '℞' : 'Lab' }}
-        </div>
-
         <div v-if="!editing" class="space-y-8">
-          <div class="space-y-2 pt-8">
+          <div class="space-y-2">
             <div class="eyebrow">{{ kindLabel }}</div>
             <h1 class="font-display text-5xl md:text-6xl leading-[0.9]">{{ rec.name }}</h1>
             <p v-if="profileName" class="font-display-wonk text-muted-app text-lg">{{ $t('recordDetail.forPerson', { name: profileName }) }}</p>

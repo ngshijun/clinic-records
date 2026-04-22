@@ -34,9 +34,8 @@ async function submit() {
 
 <template>
   <main class="min-h-dvh flex flex-col">
-    <header class="max-w-[920px] w-full mx-auto px-6 lg:px-12 pt-8 flex items-center justify-between">
+    <header class="max-w-[920px] w-full mx-auto px-6 lg:px-12 pt-8">
       <div class="eyebrow"><span class="tick"></span>{{ $t('brand.label') }}</div>
-      <div class="folio">{{ $t('signup.enrolmentLabel') }}</div>
     </header>
 
     <section class="flex-1 flex items-center">
@@ -84,9 +83,5 @@ async function submit() {
       </div>
     </section>
 
-    <footer class="max-w-[920px] w-full mx-auto px-6 lg:px-12 pb-6 flex items-center justify-between">
-      <div class="folio">PGN·CR / enrol</div>
-      <div class="eyebrow">{{ $t('signup.page02') }}</div>
-    </footer>
   </main>
 </template>

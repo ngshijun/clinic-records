@@ -115,10 +115,7 @@ function formatDob(d: string | null) {
 
       <div v-if="store.profiles.length" class="space-y-4 anim-rise-3">
         <div class="flex items-baseline justify-between">
-          <div class="flex items-baseline gap-3">
-            <span class="folio">§</span>
-            <h2 class="font-display text-2xl">{{ $t('profiles.roster') }}</h2>
-          </div>
+          <h2 class="font-display text-2xl">{{ $t('profiles.roster') }}</h2>
           <span class="eyebrow">{{ $t('profiles.onFile', { count: store.profiles.length }) }}</span>
         </div>
 

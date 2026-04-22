@@ -58,8 +58,7 @@ function onDecoded(raw: string) {
       </p>
     </section>
 
-    <footer class="max-w-[560px] w-full mx-auto px-6 pb-6 flex items-center justify-between text-xs">
-      <div class="folio">PGN·CR / viewfinder</div>
+    <footer class="max-w-[560px] w-full mx-auto px-6 pb-6 flex items-center justify-end text-xs">
       <router-link to="/home" class="btn-ghost !py-2 !px-4">{{ $t('common.cancel') }}</router-link>
     </footer>
   </main>

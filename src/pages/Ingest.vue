@@ -103,7 +103,6 @@ async function doKeepBoth() {
 
       <template v-else-if="payload">
         <div class="space-y-2 anim-rise">
-          <div class="eyebrow"><span class="tick"></span>§ Entry verification</div>
           <h1 class="font-display text-4xl md:text-5xl leading-[0.95]">
             {{ $t('ingest.titlePre') }} <span class="font-display-wonk">{{ $t('ingest.titleWonk') }}</span>.
           </h1>
@@ -136,9 +135,5 @@ async function doKeepBoth() {
       </div>
     </section>
 
-    <footer class="max-w-[620px] w-full mx-auto px-6 pb-6 flex items-center justify-between">
-      <div class="folio">PGN·CR / ingest</div>
-      <div v-if="payload" class="folio">ref {{ payload.id.slice(0, 6) }}</div>
-    </footer>
   </main>
 </template>
