@@ -62,6 +62,7 @@
   body.staff-theme {
     background: var(--color-staff-paper);
     color: var(--color-staff-ink);
+    color-scheme: dark;
     background-image:
       radial-gradient(
         900px 500px at 110% -10%,

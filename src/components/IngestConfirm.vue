@@ -7,7 +7,12 @@ const props = defineProps<{ payload: QrPayload }>()
 const emit = defineEmits<{ (e: 'confirm'): void; (e: 'cancel'): void }>()
 const { t, locale } = useI18n()
 
-const kindLabel = computed(() => props.payload.k === 'v' ? t('ingest.vaccination') : t('ingest.bloodTest'))
+const isReminder = computed(() => props.payload.k === 'r')
+const kindLabel = computed(() => {
+  if (props.payload.k === 'v') return t('ingest.vaccination')
+  if (props.payload.k === 'r') return t('ingest.reminder')
+  return t('ingest.bloodTest')
+})
 const doseLine = computed(() => {
   if (props.payload.k !== 'v' || !props.payload.dn || !props.payload.td) return null
   return t('home.doseOf', { n: props.payload.dn, total: props.payload.td })
@@ -22,9 +27,9 @@ const dueDate = computed(() => {
 const givenDate = computed(() => new Date(props.payload.d).toLocaleDateString(dtLocale.value, { day: '2-digit', month: 'long', year: 'numeric' }))
 const reminderLine = computed(() => {
   if (!dueDate.value) return null
-  return props.payload.k === 'v'
-    ? t('ingest.remindAroundDose', { date: dueDate.value })
-    : t('ingest.remindAroundTest', { date: dueDate.value })
+  if (props.payload.k === 'v') return t('ingest.remindAroundDose', { date: dueDate.value })
+  if (props.payload.k === 'r') return t('ingest.scheduleOn', { date: dueDate.value })
+  return t('ingest.remindAroundTest', { date: dueDate.value })
 })
 </script>
 
@@ -33,7 +38,7 @@ const reminderLine = computed(() => {
     <div class="paper-card brackets p-6 md:p-8 relative overflow-hidden">
       <span class="br-tr"></span><span class="br-bl"></span>
       <div aria-hidden class="absolute -right-6 -bottom-10 font-display text-[9rem] leading-none text-ink opacity-[0.05] select-none pointer-events-none">
-        {{ payload.k === 'v' ? 'Rx' : 'Lab' }}
+        {{ payload.k === 'v' ? 'Rx' : payload.k === 'r' ? 'R' : 'Lab' }}
       </div>
 
       <div class="flex items-start justify-between mb-5">
@@ -45,7 +50,7 @@ const reminderLine = computed(() => {
 
       <dl class="grid grid-cols-1 sm:grid-cols-3 gap-6 hairline-t pt-5">
         <div>
-          <dt class="eyebrow">{{ $t('ingest.givenOn') }}</dt>
+          <dt class="eyebrow">{{ isReminder ? $t('ingest.issuedOn') : $t('ingest.givenOn') }}</dt>
           <dd class="font-display text-lg mt-1">{{ givenDate }}</dd>
         </div>
         <div v-if="doseLine">
@@ -53,7 +58,7 @@ const reminderLine = computed(() => {
           <dd class="font-display text-lg mt-1">{{ doseLine }}</dd>
         </div>
         <div v-if="dueDate">
-          <dt class="eyebrow">{{ $t('ingest.nextDue') }}</dt>
+          <dt class="eyebrow">{{ isReminder ? $t('ingest.due') : $t('ingest.nextDue') }}</dt>
           <dd class="font-display text-lg mt-1 text-accent">~ {{ dueDate }}</dd>
         </div>
       </dl>
@@ -65,7 +70,7 @@ const reminderLine = computed(() => {
 
     <div class="flex gap-3">
       <button class="btn-primary flex-1" @click="emit('confirm')">
-        {{ $t('ingest.addToLedger') }} <span aria-hidden>→</span>
+        {{ isReminder ? $t('ingest.scheduleReminder') : $t('ingest.addToLedger') }} <span aria-hidden>→</span>
       </button>
       <button class="btn-ghost" @click="emit('cancel')">{{ $t('common.cancel') }}</button>
     </div>

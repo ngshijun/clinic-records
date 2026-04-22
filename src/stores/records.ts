@@ -25,6 +25,7 @@ export interface Reminder {
   record_id: string | null
   kind: 'next_dose' | 'followup_test' | 'other'
   title: string
+  name: string | null
   due_at: string
   window_days: number
   sent_at: string | null
@@ -166,6 +167,25 @@ export const useRecordsStore = defineStore('records', () => {
     return data as Record
   }
 
+  async function insertReminderOnly(input: { profile_id: string; payload: QrPayload }) {
+    const { data: userData } = await supabase.auth.getUser()
+    const user_id = userData.user?.id
+    if (!user_id) throw new Error('not authenticated')
+    const { payload } = input
+    if (payload.nd === undefined) throw new Error('reminder requires nd (days)')
+    const { data, error } = await supabase.from('reminders').insert({
+      user_id,
+      profile_id: input.profile_id,
+      record_id: null,
+      kind: 'followup_test',
+      title: `${payload.n} reminder`,
+      name: payload.n,
+      due_at: computeDueAt(payload.d, payload.nd),
+    }).select().single()
+    if (error) throw error
+    return data as Reminder
+  }
+
   async function updateRecord(id: string, patch: Partial<Record>) {
     const { data, error } = await supabase.from('records').update(patch).eq('id', id).select().single()
     if (error) throw error
@@ -177,5 +197,5 @@ export const useRecordsStore = defineStore('records', () => {
     if (error) throw error
   }
 
-  return { records, reminders, fetchForProfile, findSimilar, insertWithReminder, replaceRecord, updateRecord, deleteRecord }
+  return { records, reminders, fetchForProfile, findSimilar, insertWithReminder, insertReminderOnly, replaceRecord, updateRecord, deleteRecord }
 })

@@ -7,3 +7,16 @@ export function computeDueAt(performedOnIso: string, days: number): string {
   local.setDate(local.getDate() + days)
   return local.toISOString()
 }
+
+/**
+ * Today as a YYYY-MM-DD string in the device's local timezone.
+ * Avoid `new Date().toISOString().slice(0,10)` — that's UTC, which is
+ * yesterday for users east of UTC when local time is before the UTC offset.
+ */
+export function todayLocalIso(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}

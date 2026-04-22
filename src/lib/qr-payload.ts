@@ -1,4 +1,4 @@
-export type QrKind = 'v' | 'b'
+export type QrKind = 'v' | 'b' | 'r'
 
 export interface QrPayload {
   id: string

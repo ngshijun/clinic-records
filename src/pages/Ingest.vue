@@ -39,6 +39,15 @@ async function confirm() {
   busy.value = true
   errorMsg.value = null
   try {
+    if (payload.value.k === 'r') {
+      await records.insertReminderOnly({
+        profile_id: selectedProfile.value,
+        payload: payload.value,
+      })
+      if (Notification.permission === 'default') await requestAndSubscribe()
+      router.replace('/home')
+      return
+    }
     const kind = payload.value.k === 'v' ? 'vaccination' : 'blood_test'
     const match = await records.findSimilar(selectedProfile.value, kind, payload.value.n, payload.value.d)
     if (match) { similar.value = match; busy.value = false; return }

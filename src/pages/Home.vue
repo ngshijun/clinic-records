@@ -94,12 +94,16 @@ function reminderKindLabel(k: string) {
 }
 function reminderTitle(r: Reminder) {
   const rec = records.records.find(x => x.id === r.record_id)
-  if (!rec) return r.title
-  if (r.kind === 'next_dose' && rec.kind === 'vaccination' && rec.dose_number != null) {
-    return t('home.nextDoseTitle', { name: rec.name, n: rec.dose_number + 1 })
+  if (rec) {
+    if (r.kind === 'next_dose' && rec.kind === 'vaccination' && rec.dose_number != null) {
+      return t('home.nextDoseTitle', { name: rec.name, n: rec.dose_number + 1 })
+    }
+    if (r.kind === 'followup_test') {
+      return t('home.followupTitle', { name: rec.name })
+    }
   }
-  if (r.kind === 'followup_test') {
-    return t('home.followupTitle', { name: rec.name })
+  if (r.kind === 'followup_test' && r.name) {
+    return t('home.followupTitle', { name: r.name })
   }
   return r.title
 }
