@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useProfilesStore } from '@/stores/profiles'
+import { useProfilesStore, type Profile } from '@/stores/profiles'
 
 const store = useProfilesStore()
 const route = useRoute()
@@ -9,6 +9,11 @@ const router = useRouter()
 const name = ref('')
 const dob = ref('')
 const error = ref<string | null>(null)
+
+const editingId = ref<string | null>(null)
+const editName = ref('')
+const editDob = ref('')
+const editError = ref<string | null>(null)
 
 const isFirst = computed(() => route.query.first === '1' && store.profiles.length === 0)
 
@@ -35,6 +40,30 @@ async function del(id: string) {
 }
 
 async function setDefault(id: string) { await store.setDefault(id) }
+
+function startEdit(p: Profile) {
+  editingId.value = p.id
+  editName.value = p.name
+  editDob.value = p.date_of_birth ?? ''
+  editError.value = null
+}
+
+function cancelEdit() {
+  editingId.value = null
+  editError.value = null
+}
+
+async function saveEdit() {
+  if (!editingId.value) return
+  editError.value = null
+  try {
+    await store.update(editingId.value, {
+      name: editName.value.trim(),
+      date_of_birth: editDob.value || null,
+    })
+    editingId.value = null
+  } catch (e: any) { editError.value = e.message ?? 'Could not save' }
+}
 
 function formatDob(d: string | null) {
   if (!d) return null
@@ -98,21 +127,50 @@ function formatDob(d: string | null) {
         </div>
 
         <ul class="divide-y divide-[var(--color-rule-soft)] hairline-t hairline-b">
-          <li v-for="(p, i) in store.profiles" :key="p.id" class="grid grid-cols-[auto_1fr_auto] items-center gap-5 py-5 px-1">
-            <span class="folio tabular-nums w-8">№{{ String(i+1).padStart(2,'0') }}</span>
-            <div>
-              <div class="flex items-baseline gap-3">
-                <span class="font-display text-2xl">{{ p.name }}</span>
-                <span v-if="p.is_default" class="eyebrow" style="color: var(--color-moss)">· default</span>
+          <li v-for="(p, i) in store.profiles" :key="p.id" class="py-5 px-1">
+            <!-- View mode -->
+            <div v-if="editingId !== p.id" class="grid grid-cols-[auto_1fr_auto] items-center gap-5">
+              <span class="folio tabular-nums w-8">№{{ String(i+1).padStart(2,'0') }}</span>
+              <div>
+                <div class="flex items-baseline gap-3 flex-wrap">
+                  <span class="font-display text-2xl">{{ p.name }}</span>
+                  <span v-if="p.is_default" class="eyebrow" style="color: var(--color-moss)">· default</span>
+                </div>
+                <div class="text-xs text-muted-app mt-0.5" v-if="p.date_of_birth">
+                  born {{ formatDob(p.date_of_birth) }}
+                </div>
               </div>
-              <div class="text-xs text-muted-app mt-0.5" v-if="p.date_of_birth">
-                born {{ formatDob(p.date_of_birth) }}
+              <div class="flex items-center gap-1 flex-wrap justify-end">
+                <button class="btn-ghost text-xs !py-1.5 !px-3" @click="startEdit(p)">edit</button>
+                <button v-if="!p.is_default" class="btn-ghost text-xs !py-1.5 !px-3" @click="setDefault(p.id)">make default</button>
+                <button class="btn-danger text-xs !py-1.5 !px-3" @click="del(p.id)">delete</button>
               </div>
             </div>
-            <div class="flex items-center gap-1">
-              <button v-if="!p.is_default" class="btn-ghost text-xs !py-1.5 !px-3" @click="setDefault(p.id)">make default</button>
-              <button class="btn-danger text-xs !py-1.5 !px-3" @click="del(p.id)">delete</button>
-            </div>
+
+            <!-- Edit mode -->
+            <form v-else class="grid grid-cols-[auto_1fr] gap-5 items-start" @submit.prevent="saveEdit">
+              <span class="folio tabular-nums w-8 pt-6">№{{ String(i+1).padStart(2,'0') }}</span>
+              <div class="space-y-4">
+                <div class="eyebrow" style="color: var(--color-accent)">Amending profile</div>
+                <div class="grid sm:grid-cols-[1.2fr_1fr] gap-4">
+                  <label class="block">
+                    <span class="field-label">Name</span>
+                    <input v-model="editName" required class="field font-display text-xl" />
+                  </label>
+                  <label class="block">
+                    <span class="field-label">Born</span>
+                    <input v-model="editDob" type="date" class="field tabular-nums" />
+                  </label>
+                </div>
+                <p v-if="editError" class="text-crimson text-xs">
+                  <span class="eyebrow" style="color:var(--color-crimson)">Error ·</span> {{ editError }}
+                </p>
+                <div class="flex items-center gap-2 pt-1">
+                  <button class="btn-primary !py-2 !px-4 text-sm">Save</button>
+                  <button type="button" class="btn-ghost !py-2 !px-4 text-sm" @click="cancelEdit">Cancel</button>
+                </div>
+              </div>
+            </form>
           </li>
         </ul>
       </div>

@@ -17,8 +17,4 @@ const store = useProfilesStore()
       <span aria-hidden class="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-muted-app pointer-events-none">▾</span>
     </span>
   </label>
-  <span v-else-if="store.active" class="inline-flex items-center gap-2 text-sm">
-    <span class="eyebrow">Reader</span>
-    <span class="font-display text-lg">{{ store.active.name }}</span>
-  </span>
 </template>

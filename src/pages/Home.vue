@@ -87,17 +87,14 @@ function relativeDue(iso: string) {
 <template>
   <main class="min-h-dvh pb-36">
     <!-- Masthead -->
-    <header class="max-w-[1100px] mx-auto px-6 lg:px-10 pt-8 pb-6 anim-rise">
-      <div class="flex items-center justify-between gap-4 hairline-b pb-4">
+    <header class="max-w-[1100px] mx-auto px-6 lg:px-10 pt-6 pb-4 anim-rise">
+      <div class="flex items-center justify-between gap-4 hairline-b pb-3">
         <div class="eyebrow"><span class="tick"></span>Clinic Records · Poliklinik Ng</div>
-        <div class="flex items-center gap-4">
-          <span class="folio hidden sm:inline">№ {{ String(profiles.profiles.length).padStart(2, '0') }} · profile</span>
-          <ProfileSwitcher />
-        </div>
+        <ProfileSwitcher />
       </div>
     </header>
 
-    <div class="max-w-[1100px] mx-auto px-6 lg:px-10 space-y-10">
+    <div class="max-w-[1100px] mx-auto px-6 lg:px-10 space-y-6">
       <!-- Banners -->
       <div v-if="(auth.isAnonymous && !dismissed) || (installPrompt && !installDismissed)" class="space-y-3 anim-rise-2">
         <div v-if="auth.isAnonymous && !dismissed"
@@ -128,30 +125,27 @@ function relativeDue(iso: string) {
         </div>
       </div>
 
-      <!-- Hero / stats -->
-      <section class="grid md:grid-cols-[1.3fr_1fr] gap-10 items-end anim-rise-2">
-        <div class="space-y-3">
-          <div class="eyebrow">Your ledger</div>
-          <h1 class="font-display leading-[0.92] text-[clamp(2.75rem,7vw,5rem)]">
-            <span class="block">{{ ledgerName }}<span class="text-accent">’s</span></span>
-            <span class="block font-display-wonk">health record.</span>
+      <!-- Compact hero + inline stats -->
+      <section class="flex flex-wrap items-end justify-between gap-4 anim-rise-2 pb-1">
+        <div class="min-w-0">
+          <div class="eyebrow mb-1">Your ledger</div>
+          <h1 class="font-display leading-[0.95] text-[clamp(1.75rem,4vw,2.5rem)]">
+            {{ ledgerName }}<span class="text-accent">’s</span>
+            <span class="font-display-wonk">health record.</span>
           </h1>
-          <p class="text-ink-2 text-sm max-w-[42ch]">
-            {{ totalCount > 0 ? `A quiet catalogue of what has been. Scan your next QR to add to it.` : `Not a single entry yet. When your clinic hands you a QR, scan it — and it will land here.` }}
-          </p>
         </div>
-        <dl class="grid grid-cols-3 gap-0 hairline-t pt-6">
-          <div class="space-y-1">
-            <dt class="eyebrow">Total</dt>
-            <dd class="font-display text-4xl tabular-nums">{{ String(totalCount).padStart(2, '0') }}</dd>
+        <dl class="flex items-baseline gap-5 tabular-nums shrink-0">
+          <div class="flex items-baseline gap-1.5">
+            <dd class="font-display text-2xl">{{ String(totalCount).padStart(2, '0') }}</dd>
+            <dt class="eyebrow">total</dt>
           </div>
-          <div class="space-y-1 pl-5 border-l border-[var(--color-rule-soft)]">
-            <dt class="eyebrow">Vaccines</dt>
-            <dd class="font-display text-4xl tabular-nums">{{ String(vaccinationCount).padStart(2, '0') }}</dd>
+          <div class="flex items-baseline gap-1.5">
+            <dd class="font-display text-2xl">{{ String(vaccinationCount).padStart(2, '0') }}</dd>
+            <dt class="eyebrow">vax</dt>
           </div>
-          <div class="space-y-1 pl-5 border-l border-[var(--color-rule-soft)]">
-            <dt class="eyebrow">Tests</dt>
-            <dd class="font-display text-4xl tabular-nums">{{ String(testCount).padStart(2, '0') }}</dd>
+          <div class="flex items-baseline gap-1.5">
+            <dd class="font-display text-2xl">{{ String(testCount).padStart(2, '0') }}</dd>
+            <dt class="eyebrow">tests</dt>
           </div>
         </dl>
       </section>
