@@ -125,32 +125,33 @@ function relativeDue(iso: string) {
         </div>
       </div>
 
-      <!-- Compact hero + inline stats -->
-      <section class="flex flex-wrap items-end justify-between gap-4 anim-rise-2 pb-1">
-        <div class="min-w-0">
-          <div class="eyebrow mb-1">Your ledger</div>
-          <h1 class="font-display leading-[0.95] text-[clamp(1.75rem,4vw,2.5rem)]">
-            {{ ledgerName }}<span class="text-accent">’s</span>
-            <span class="font-display-wonk">health record.</span>
+      <!-- Hero / stats -->
+      <section class="grid md:grid-cols-[1.3fr_1fr] gap-6 items-end anim-rise-2">
+        <div class="space-y-2">
+          <div class="eyebrow">Your ledger</div>
+          <h1 class="font-display leading-[0.92] text-[clamp(2.5rem,6vw,4.25rem)]">
+            <span class="block">{{ ledgerName }}<span class="text-accent">’s</span></span>
+            <span class="block font-display-wonk">health record.</span>
           </h1>
+          <p class="text-ink-2 text-sm max-w-[42ch] pt-1">
+            {{ totalCount > 0 ? `A quiet catalogue of what has been. Scan your next QR to add to it.` : `Not a single entry yet. When your clinic hands you a QR, scan it — and it will land here.` }}
+          </p>
         </div>
-        <dl class="flex items-baseline gap-5 tabular-nums shrink-0">
-          <div class="flex items-baseline gap-1.5">
-            <dd class="font-display text-2xl">{{ String(totalCount).padStart(2, '0') }}</dd>
-            <dt class="eyebrow">total</dt>
+        <dl class="grid grid-cols-3 gap-0 hairline-t pt-3">
+          <div>
+            <dt class="eyebrow">Total</dt>
+            <dd class="font-display text-3xl tabular-nums leading-tight">{{ String(totalCount).padStart(2, '0') }}</dd>
           </div>
-          <div class="flex items-baseline gap-1.5">
-            <dd class="font-display text-2xl">{{ String(vaccinationCount).padStart(2, '0') }}</dd>
-            <dt class="eyebrow">vax</dt>
+          <div class="pl-4 border-l border-[var(--color-rule-soft)]">
+            <dt class="eyebrow">Vaccines</dt>
+            <dd class="font-display text-3xl tabular-nums leading-tight">{{ String(vaccinationCount).padStart(2, '0') }}</dd>
           </div>
-          <div class="flex items-baseline gap-1.5">
-            <dd class="font-display text-2xl">{{ String(testCount).padStart(2, '0') }}</dd>
-            <dt class="eyebrow">tests</dt>
+          <div class="pl-4 border-l border-[var(--color-rule-soft)]">
+            <dt class="eyebrow">Tests</dt>
+            <dd class="font-display text-3xl tabular-nums leading-tight">{{ String(testCount).padStart(2, '0') }}</dd>
           </div>
         </dl>
       </section>
-
-      <div class="rule-line"></div>
 
       <!-- Upcoming -->
       <section class="space-y-5 anim-rise-3">
