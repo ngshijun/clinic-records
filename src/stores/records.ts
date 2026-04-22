@@ -1,0 +1,141 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { supabase } from '@/lib/supabase'
+import type { QrPayload } from '@/lib/qr-payload'
+import { computeDueAt } from '@/lib/dates'
+
+export interface Record {
+  id: string
+  user_id: string
+  profile_id: string
+  kind: 'vaccination' | 'blood_test'
+  name: string
+  performed_on: string
+  dose_number: number | null
+  total_doses: number | null
+  notes: string | null
+  qr_fingerprint: string | null
+  created_at: string
+}
+
+export interface Reminder {
+  id: string
+  user_id: string
+  profile_id: string
+  record_id: string | null
+  kind: 'next_dose' | 'followup_test' | 'other'
+  title: string
+  due_at: string
+  window_days: number
+  sent_at: string | null
+  dismissed_at: string | null
+  completed_at: string | null
+  created_at: string
+}
+
+export interface InsertInput {
+  profile_id: string
+  payload: QrPayload
+  fingerprint: string
+  notes?: string
+}
+
+export const useRecordsStore = defineStore('records', () => {
+  const records = ref<Record[]>([])
+  const reminders = ref<Reminder[]>([])
+
+  async function fetchForProfile(profile_id: string) {
+    const [{ data: recs, error: re }, { data: rems, error: me }] = await Promise.all([
+      supabase.from('records').select('*').eq('profile_id', profile_id).order('performed_on', { ascending: false }),
+      supabase.from('reminders').select('*').eq('profile_id', profile_id).is('dismissed_at', null).is('completed_at', null).order('due_at'),
+    ])
+    if (re) throw re
+    if (me) throw me
+    records.value = recs ?? []
+    reminders.value = rems ?? []
+  }
+
+  async function findSimilar(profile_id: string, kind: string, name: string, performed_on: string) {
+    const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString()
+    const { data, error } = await supabase
+      .from('records')
+      .select('*')
+      .eq('profile_id', profile_id)
+      .eq('kind', kind)
+      .eq('name', name)
+      .eq('performed_on', performed_on)
+      .gte('created_at', since)
+      .limit(1)
+    if (error) throw error
+    return data?.[0] ?? null
+  }
+
+  async function insertWithReminder(input: InsertInput) {
+    const { data: userData } = await supabase.auth.getUser()
+    const user_id = userData.user?.id
+    if (!user_id) throw new Error('not authenticated')
+    const { payload } = input
+    const kind = payload.k === 'v' ? 'vaccination' : 'blood_test'
+
+    const { data: rec, error: e1 } = await supabase.from('records').insert({
+      user_id,
+      profile_id: input.profile_id,
+      kind,
+      name: payload.n,
+      performed_on: payload.d,
+      dose_number: payload.dn ?? null,
+      total_doses: payload.td ?? null,
+      notes: input.notes ?? null,
+      qr_fingerprint: input.fingerprint,
+    }).select().single()
+    if (e1) throw e1
+
+    if (payload.nd !== undefined) {
+      const title = kind === 'vaccination' && payload.dn && payload.td
+        ? `${payload.n} Dose ${payload.dn + 1} due`
+        : `Follow-up ${payload.n} due`
+      await supabase.from('reminders').insert({
+        user_id,
+        profile_id: input.profile_id,
+        record_id: rec.id,
+        kind: kind === 'vaccination' ? 'next_dose' : 'followup_test',
+        title,
+        due_at: computeDueAt(payload.d, payload.nd),
+      })
+    }
+    return rec as Record
+  }
+
+  async function replaceRecord(oldId: string, input: InsertInput) {
+    const { payload } = input
+    const kind = payload.k === 'v' ? 'vaccination' : 'blood_test'
+    const { data, error } = await supabase.rpc('replace_record', {
+      old_id: oldId,
+      new_record: {
+        profile_id: input.profile_id,
+        kind,
+        name: payload.n,
+        performed_on: payload.d,
+        dose_number: payload.dn ?? null,
+        total_doses: payload.td ?? null,
+        notes: input.notes ?? null,
+        qr_fingerprint: input.fingerprint,
+      },
+    })
+    if (error) throw error
+    return data as Record
+  }
+
+  async function updateRecord(id: string, patch: Partial<Record>) {
+    const { data, error } = await supabase.from('records').update(patch).eq('id', id).select().single()
+    if (error) throw error
+    return data as Record
+  }
+
+  async function deleteRecord(id: string) {
+    const { error } = await supabase.from('records').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  return { records, reminders, fetchForProfile, findSimilar, insertWithReminder, replaceRecord, updateRecord, deleteRecord }
+})

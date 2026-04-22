@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useProfilesStore } from '@/stores/profiles'
+import { useRecordsStore } from '@/stores/records'
 import ProfileSwitcher from '@/components/ProfileSwitcher.vue'
 
-const store = useProfilesStore()
+const profiles = useProfilesStore()
+const records = useRecordsStore()
 
-onMounted(async () => { await store.fetchAll() })
+async function refresh() {
+  if (profiles.activeId) await records.fetchForProfile(profiles.activeId)
+}
+
+onMounted(async () => {
+  await profiles.fetchAll()
+  await refresh()
+})
+watch(() => profiles.activeId, refresh)
 </script>
 
 <template>
@@ -17,12 +27,29 @@ onMounted(async () => { await store.fetchAll() })
 
     <section class="space-y-2">
       <h2 class="text-sm font-medium text-gray-600">Upcoming</h2>
-      <p class="text-sm text-gray-400">No reminders yet.</p>
+      <p v-if="records.reminders.length === 0" class="text-sm text-gray-400">No upcoming reminders.</p>
+      <ul v-else class="space-y-2">
+        <li v-for="r in records.reminders" :key="r.id" class="border rounded p-3">
+          <div class="font-medium">{{ r.title }}</div>
+          <div class="text-sm text-gray-500">Due {{ new Date(r.due_at).toLocaleDateString() }}</div>
+        </li>
+      </ul>
     </section>
 
     <section class="space-y-2">
       <h2 class="text-sm font-medium text-gray-600">History</h2>
-      <p class="text-sm text-gray-400">No records yet. Scan a QR from your clinic to begin.</p>
+      <p v-if="records.records.length === 0" class="text-sm text-gray-400">No records yet. Scan a QR from your clinic to begin.</p>
+      <ul v-else class="space-y-2">
+        <li v-for="r in records.records" :key="r.id">
+          <router-link :to="`/records/${r.id}`" class="block border rounded p-3">
+            <div class="font-medium">{{ r.name }}</div>
+            <div class="text-sm text-gray-500">
+              {{ r.kind === 'vaccination' ? `Dose ${r.dose_number} of ${r.total_doses}` : 'Blood test' }}
+              · {{ r.performed_on }}
+            </div>
+          </router-link>
+        </li>
+      </ul>
     </section>
 
     <router-link to="/scan"
