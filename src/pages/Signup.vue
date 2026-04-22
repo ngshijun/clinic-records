@@ -2,9 +2,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useProfilesStore } from '@/stores/profiles'
 
 const auth = useAuthStore()
+const profiles = useProfilesStore()
 const router = useRouter()
+const name = ref('')
 const email = ref('')
 const password = ref('')
 const error = ref<string | null>(null)
@@ -15,7 +18,14 @@ async function submit() {
   busy.value = true
   try {
     await auth.signUp(email.value.trim(), password.value)
-    router.push('/profiles?first=1')
+    // If a session is established (email confirmation disabled), create the
+    // first profile immediately. Otherwise fall back to the profiles page.
+    if (auth.user) {
+      await profiles.create({ name: name.value.trim() })
+      router.push('/home')
+    } else {
+      router.push('/profiles?first=1')
+    }
   } catch (e: any) {
     error.value = e.message ?? 'Sign-up failed'
   } finally {
@@ -44,6 +54,11 @@ async function submit() {
         </div>
 
         <form class="space-y-6 anim-rise-2" @submit.prevent="submit">
+          <label class="block">
+            <span class="field-label">Your name</span>
+            <input v-model="name" type="text" autocomplete="name" class="field font-display text-2xl" placeholder="e.g. Ahmad" required />
+            <span class="text-[11px] text-muted-app mt-1 block">Your first profile. You can add more later.</span>
+          </label>
           <label class="block">
             <span class="field-label">Email</span>
             <input v-model="email" type="email" autocomplete="email" class="field" required />

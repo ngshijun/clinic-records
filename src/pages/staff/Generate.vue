@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ulid } from 'ulid'
 import { encodePayload, type QrPayload } from '@/lib/qr-payload'
 import { clearStaffUnlocked } from '@/lib/staff-auth'
 import { VACCINE_NAMES, TEST_NAMES } from '@/lib/dictionary'
+import {
+  listTemplates,
+  saveTemplate as saveTemplateFn,
+  deleteTemplate as deleteTemplateFn,
+  autoLabel,
+  type Template,
+} from '@/lib/templates'
 import QrPreview from '@/components/QrPreview.vue'
 import { useRouter } from 'vue-router'
 
@@ -16,6 +23,29 @@ const doseNumber = ref<number | null>(1)
 const totalDoses = ref<number | null>(3)
 const nextDueDays = ref<number | null>(30)
 const id = ref(ulid())
+
+const templates = ref<Template[]>([])
+const templatesLoading = ref(false)
+const savedFlash = ref<string | null>(null)
+
+async function refreshTemplates() {
+  templatesLoading.value = true
+  try { templates.value = await listTemplates() }
+  catch (e) { console.error('Failed to load templates', e) }
+  finally { templatesLoading.value = false }
+}
+
+function onVisible() {
+  if (document.visibilityState === 'visible') refreshTemplates()
+}
+
+onMounted(() => {
+  refreshTemplates()
+  document.addEventListener('visibilitychange', onVisible)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', onVisible)
+})
 
 const suggestions = computed(() => (kind.value === 'v' ? VACCINE_NAMES : TEST_NAMES))
 
@@ -32,6 +62,8 @@ const payload = computed<QrPayload | null>(() => {
 
 const qrUrl = computed(() => payload.value ? encodePayload(window.location.origin, payload.value) : '')
 
+const visibleTemplates = computed(() => templates.value.filter((t) => t.kind === kind.value))
+
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
 }
@@ -43,6 +75,50 @@ function newQr() {
   doseNumber.value = 1
   totalDoses.value = 3
   nextDueDays.value = 30
+}
+
+function applyTemplate(t: Template) {
+  kind.value = t.kind
+  name.value = t.name
+  doseNumber.value = t.dose_number
+  totalDoses.value = t.total_doses
+  nextDueDays.value = t.next_due_days
+  performedOn.value = new Date().toISOString().slice(0, 10)
+  id.value = ulid()
+}
+
+async function saveCurrentAsTemplate() {
+  if (!name.value.trim()) return
+  const draft = {
+    kind: kind.value,
+    name: name.value.trim(),
+    dose_number: kind.value === 'v' ? (doseNumber.value ?? null) : null,
+    total_doses: kind.value === 'v' ? (totalDoses.value ?? null) : null,
+    next_due_days: nextDueDays.value ?? null,
+  }
+  const suggested = autoLabel(draft)
+  const label = window.prompt('Label for this template:', suggested)
+  if (label === null) return
+  try {
+    savedFlash.value = 'saving…'
+    await saveTemplateFn({ ...draft, label: label.trim() || suggested })
+    await refreshTemplates()
+    savedFlash.value = '✓ saved'
+    setTimeout(() => { savedFlash.value = null }, 1800)
+  } catch (e: any) {
+    savedFlash.value = null
+    alert('Could not save template: ' + (e.message ?? 'unknown error'))
+  }
+}
+
+async function removeTemplate(t: Template) {
+  if (!window.confirm(`Delete template "${t.label}"?`)) return
+  try {
+    await deleteTemplateFn(t.id)
+    await refreshTemplates()
+  } catch (e: any) {
+    alert('Could not delete: ' + (e.message ?? 'unknown error'))
+  }
 }
 
 function logout() { clearStaffUnlocked(); router.replace('/staff') }
@@ -64,7 +140,58 @@ function printPage() { window.print() }
       </div>
     </header>
 
-    <div class="max-w-[1200px] mx-auto px-6 lg:px-10 py-10 grid lg:grid-cols-[1fr_1fr] gap-10 print:block">
+    <!-- Templates strip -->
+    <section class="max-w-[1200px] mx-auto px-6 lg:px-10 pt-6 print:hidden">
+      <div class="flex items-baseline justify-between mb-3">
+        <div class="flex items-baseline gap-3">
+          <span class="folio">§ 0</span>
+          <h2 class="font-display text-xl" style="color: var(--color-staff-ink)">Saved templates</h2>
+          <span class="eyebrow">({{ visibleTemplates.length }} for {{ kind === 'v' ? 'vaccines' : 'tests' }})</span>
+        </div>
+        <button
+          type="button"
+          :disabled="!name.trim()"
+          class="btn-ghost !py-1.5 !px-3 text-xs"
+          :title="!name.trim() ? 'Enter a name first' : 'Save current form as a template'"
+          @click="saveCurrentAsTemplate"
+        >
+          {{ savedFlash ?? '+ save current' }}
+        </button>
+      </div>
+
+      <div v-if="templatesLoading && visibleTemplates.length === 0" class="folio text-xs italic" style="color: var(--color-staff-muted)">
+        — loading…
+      </div>
+      <div v-else-if="visibleTemplates.length === 0" class="folio text-xs italic" style="color: var(--color-staff-muted)">
+        — none yet. Fill the form below and tap "save current" to keep it for next time.
+      </div>
+
+      <div v-else class="flex flex-wrap gap-2">
+        <div
+          v-for="t in visibleTemplates"
+          :key="t.id"
+          class="group inline-flex items-stretch hairline overflow-hidden"
+        >
+          <button
+            type="button"
+            class="px-3 py-2 text-sm flex items-center gap-2 transition-colors"
+            style="color: var(--color-staff-ink)"
+            @click="applyTemplate(t)"
+          >
+            <span class="font-display">{{ t.label }}</span>
+          </button>
+          <button
+            type="button"
+            class="px-2.5 border-l hairline opacity-40 hover:opacity-100 transition-opacity"
+            aria-label="Delete template"
+            style="color: var(--color-staff-muted)"
+            @click="removeTemplate(t)"
+          >×</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="max-w-[1200px] mx-auto px-6 lg:px-10 py-8 grid lg:grid-cols-[1fr_1fr] gap-10 print:block">
       <!-- LEFT: form -->
       <section class="space-y-8 print:hidden">
         <div class="space-y-2 anim-rise">
@@ -139,7 +266,6 @@ function printPage() { window.print() }
         <div class="eyebrow print:hidden"><span class="tick" style="background: var(--color-staff-accent)"></span>Preview</div>
 
         <div class="paper-card p-8 md:p-12 print:shadow-none print:border-0 print:p-0 anim-rise-3 print:bg-white print:text-black">
-          <!-- PRINT HEADER -->
           <div class="flex items-start justify-between pb-4 mb-6 hairline-b print:border-black/20">
             <div>
               <div class="eyebrow print:text-black" style="color: var(--color-staff-muted)">Poliklinik Ng · Patient record</div>
@@ -151,7 +277,6 @@ function printPage() { window.print() }
             </div>
           </div>
 
-          <!-- QR -->
           <div class="flex justify-center mb-6">
             <div class="p-4 bg-white border hairline">
               <QrPreview v-if="qrUrl" :text="qrUrl" />
@@ -161,7 +286,6 @@ function printPage() { window.print() }
             </div>
           </div>
 
-          <!-- SUMMARY -->
           <div v-if="payload" class="space-y-4">
             <h2 class="font-display text-3xl md:text-4xl leading-[0.95] text-center print:text-black" style="color: var(--color-staff-ink)">
               {{ payload.n }}
@@ -189,7 +313,6 @@ function printPage() { window.print() }
             </p>
           </div>
 
-          <!-- Patient instruction -->
           <div class="mt-6 pt-4 hairline-t text-center">
             <p class="font-display-wonk text-lg leading-snug" style="color: var(--color-staff-muted)">
               Scan with your phone's camera to add this to your records.
