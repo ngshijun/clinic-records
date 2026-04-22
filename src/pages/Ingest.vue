@@ -6,6 +6,8 @@ import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore, type Record } from '@/stores/records'
 import IngestConfirm from '@/components/IngestConfirm.vue'
 import SimilarityDialog from '@/components/SimilarityDialog.vue'
+import { requestAndSubscribe } from '@/lib/push'
+import { supabase } from '@/lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,6 +45,10 @@ async function confirm() {
       payload: payload.value,
       fingerprint: fingerprint.value,
     })
+    const { count } = await supabase.from('records').select('*', { count: 'exact', head: true })
+    if ((count ?? 0) === 1 && Notification.permission === 'default') {
+      await requestAndSubscribe()
+    }
     router.replace({ name: 'record', params: { id: rec.id } })
   } catch (e: any) {
     if (String(e.message).includes('qr_fingerprint')) {
