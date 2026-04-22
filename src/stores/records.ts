@@ -70,6 +70,28 @@ export const useRecordsStore = defineStore('records', () => {
     return data?.[0] ?? null
   }
 
+  async function closePriorSeriesReminders(rec: Record) {
+    const { data: priors, error: pe } = await supabase
+      .from('records')
+      .select('id')
+      .eq('profile_id', rec.profile_id)
+      .eq('kind', rec.kind)
+      .eq('name', rec.name)
+      .neq('id', rec.id)
+    if (pe) throw pe
+    const priorIds = (priors ?? []).map(p => p.id)
+    if (priorIds.length === 0) return
+    const reminderKind = rec.kind === 'vaccination' ? 'next_dose' : 'followup_test'
+    const { error: ue } = await supabase
+      .from('reminders')
+      .update({ completed_at: new Date().toISOString() })
+      .in('record_id', priorIds)
+      .eq('kind', reminderKind)
+      .is('completed_at', null)
+      .is('dismissed_at', null)
+    if (ue) throw ue
+  }
+
   async function createReminderForRecord(user_id: string, rec: Record, payload: QrPayload) {
     if (payload.nd === undefined) return
     // Guard against pre-existing QRs generated before the UI caught completed
@@ -114,6 +136,7 @@ export const useRecordsStore = defineStore('records', () => {
     }).select().single()
     if (e1) throw e1
 
+    await closePriorSeriesReminders(rec as Record)
     await createReminderForRecord(user_id, rec as Record, payload)
     return rec as Record
   }
@@ -138,6 +161,7 @@ export const useRecordsStore = defineStore('records', () => {
       },
     })
     if (error) throw error
+    await closePriorSeriesReminders(data as Record)
     await createReminderForRecord(user_id, data as Record, payload)
     return data as Record
   }
