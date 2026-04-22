@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { decodeUrl, computeFingerprint, type QrPayload } from '@/lib/qr-payload'
 import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore, type Record } from '@/stores/records'
@@ -13,6 +14,7 @@ const route = useRoute()
 const router = useRouter()
 const profiles = useProfilesStore()
 const records = useRecordsStore()
+const { t } = useI18n()
 
 const payload = ref<QrPayload | null>(null)
 const fingerprint = ref<string>('')
@@ -52,7 +54,7 @@ async function confirm() {
     router.replace({ name: 'record', params: { id: rec.id } })
   } catch (e: any) {
     if (String(e.message).includes('qr_fingerprint')) {
-      errorMsg.value = 'This record is already in your history.'
+      errorMsg.value = t('ingest.alreadyInHistory')
     } else { errorMsg.value = e.message ?? 'Insert failed' }
   } finally { busy.value = false }
 }
@@ -87,30 +89,30 @@ async function doKeepBoth() {
 <template>
   <main class="min-h-dvh flex flex-col">
     <header class="max-w-[620px] w-full mx-auto px-6 pt-8 pb-4 flex items-center justify-between">
-      <div class="eyebrow"><span class="tick"></span>Ingest · new entry</div>
-      <router-link to="/home" class="folio underline underline-offset-4 decoration-[var(--color-rule)]">← home</router-link>
+      <div class="eyebrow"><span class="tick"></span>{{ $t('ingest.eyebrow') }}</div>
+      <router-link to="/home" class="folio underline underline-offset-4 decoration-[var(--color-rule)]">{{ $t('ingest.home') }}</router-link>
     </header>
 
     <section class="flex-1 max-w-[620px] w-full mx-auto px-6 py-6 space-y-8">
       <div v-if="parseError" class="paper-card p-6 anim-rise">
-        <div class="eyebrow mb-2" style="color: var(--color-crimson)">Unreadable</div>
+        <div class="eyebrow mb-2" style="color: var(--color-crimson)">{{ $t('ingest.unreadable') }}</div>
         <h1 class="font-display text-3xl">{{ parseError }}</h1>
-        <p class="text-sm text-muted-app mt-3">Ask your clinic to regenerate the code, or return home to try again.</p>
-        <router-link to="/home" class="btn-ghost mt-5 inline-flex">Return home</router-link>
+        <p class="text-sm text-muted-app mt-3">{{ $t('ingest.unreadableHint') }}</p>
+        <router-link to="/home" class="btn-ghost mt-5 inline-flex">{{ $t('ingest.returnHome') }}</router-link>
       </div>
 
       <template v-else-if="payload">
         <div class="space-y-2 anim-rise">
           <div class="eyebrow"><span class="tick"></span>§ Entry verification</div>
           <h1 class="font-display text-4xl md:text-5xl leading-[0.95]">
-            A new entry <span class="font-display-wonk">awaits</span>.
+            {{ $t('ingest.titlePre') }} <span class="font-display-wonk">{{ $t('ingest.titleWonk') }}</span>.
           </h1>
         </div>
 
         <div v-if="profiles.profiles.length > 1" class="paper-card p-5 anim-rise-2 flex items-center justify-between gap-4">
           <div>
-            <div class="eyebrow mb-1">File under</div>
-            <div class="text-sm text-muted-app">Choose which ledger receives this entry.</div>
+            <div class="eyebrow mb-1">{{ $t('ingest.fileUnder') }}</div>
+            <div class="text-sm text-muted-app">{{ $t('ingest.fileUnderHint') }}</div>
           </div>
           <select v-model="selectedProfile" class="bg-transparent hairline-b font-display text-xl px-0 pr-6 py-1 focus:outline-none focus:border-ink">
             <option v-for="p in profiles.profiles" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -125,12 +127,12 @@ async function doKeepBoth() {
           @replace="doReplace" @keep-both="doKeepBoth" @cancel="similar = null" />
 
         <p v-if="errorMsg" class="text-crimson text-sm paper-card p-4">
-          <span class="eyebrow" style="color: var(--color-crimson)">Error ·</span> {{ errorMsg }}
+          <span class="eyebrow" style="color: var(--color-crimson)">{{ $t('common.error') }} ·</span> {{ errorMsg }}
         </p>
       </template>
 
       <div v-if="busy" class="text-center text-sm text-muted-app font-display-wonk">
-        Committing to the ledger…
+        {{ $t('ingest.committing') }}
       </div>
     </section>
 

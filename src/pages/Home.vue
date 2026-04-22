@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore } from '@/stores/records'
 import { useAuthStore } from '@/stores/auth'
@@ -8,6 +9,8 @@ import ProfileSwitcher from '@/components/ProfileSwitcher.vue'
 const profiles = useProfilesStore()
 const records = useRecordsStore()
 const auth = useAuthStore()
+const { t, locale } = useI18n()
+
 const dismissed = ref(localStorage.getItem('guest_nudge_dismissed') === '1')
 function dismiss() {
   localStorage.setItem('guest_nudge_dismissed', '1')
@@ -49,12 +52,11 @@ onBeforeUnmount(() => {
 })
 watch(() => profiles.activeId, refresh)
 
-const ledgerName = computed(() => profiles.active?.name ?? 'Your')
+const ledgerName = computed(() => profiles.active?.name ?? '')
 const totalCount = computed(() => records.records.length)
 const vaccinationCount = computed(() => records.records.filter(r => r.kind === 'vaccination').length)
 const testCount = computed(() => records.records.filter(r => r.kind === 'blood_test').length)
 
-// Group records by year for the "history" section
 const recordsByYear = computed(() => {
   const groups: { year: string; items: typeof records.records }[] = []
   for (const r of records.records) {
@@ -66,21 +68,35 @@ const recordsByYear = computed(() => {
   return groups
 })
 
+function dateFmtLocale(): string {
+  return locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB'
+}
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(d).toLocaleDateString(dateFmtLocale(), { day: '2-digit', month: 'short', year: 'numeric' })
 }
 function formatMonthDay(d: string) {
-  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+  return new Date(d).toLocaleDateString(dateFmtLocale(), { day: '2-digit', month: 'short' })
 }
 function relativeDue(iso: string) {
   const days = Math.round((new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  if (days < -1) return `${Math.abs(days)} days ago`
-  if (days === -1) return 'yesterday'
-  if (days === 0) return 'today'
-  if (days === 1) return 'tomorrow'
-  if (days <= 30) return `in ${days} days`
-  if (days <= 60) return `in ${Math.round(days / 7)} weeks`
-  return `in ${Math.round(days / 30)} months`
+  if (days < -1) return t('home.rel_daysAgo', { n: Math.abs(days) })
+  if (days === -1) return t('home.rel_yesterday')
+  if (days === 0) return t('home.rel_today')
+  if (days === 1) return t('home.rel_tomorrow')
+  if (days <= 30) return t('home.rel_inDays', { n: days })
+  if (days <= 60) return t('home.rel_inWeeks', { n: Math.round(days / 7) })
+  return t('home.rel_inMonths', { n: Math.round(days / 30) })
+}
+function reminderKindLabel(k: string) {
+  if (k === 'next_dose') return t('home.kindNextDose')
+  if (k === 'followup_test') return t('home.kindFollowupTest')
+  return k.replace('_', ' ')
+}
+function recordKindLabel(k: string) {
+  return k === 'vaccination' ? t('home.kindVaccination') : t('home.kindBloodTest')
+}
+function recordsWord(n: number) {
+  return n === 1 ? t('home.recordOne', { count: n }) : t('home.recordMany', { count: n })
 }
 </script>
 
@@ -89,7 +105,7 @@ function relativeDue(iso: string) {
     <!-- Masthead -->
     <header class="max-w-[1100px] mx-auto px-6 lg:px-10 pt-6 pb-4 anim-rise">
       <div class="flex items-center justify-between gap-4 hairline-b pb-3">
-        <div class="eyebrow"><span class="tick"></span>Clinic Records · Poliklinik Ng</div>
+        <div class="eyebrow"><span class="tick"></span>{{ $t('brand.labelShort') }}</div>
         <ProfileSwitcher />
       </div>
     </header>
@@ -101,26 +117,24 @@ function relativeDue(iso: string) {
           class="paper-card brackets p-4 flex items-start gap-4">
           <span class="br-tr"></span><span class="br-bl"></span>
           <div class="flex-1">
-            <div class="eyebrow mb-1">Guest mode</div>
-            <div class="text-sm text-ink-2 leading-relaxed">
-              Records live only on this device. Add credentials in Settings to carry them elsewhere.
-            </div>
+            <div class="eyebrow mb-1">{{ $t('home.guestMode') }}</div>
+            <div class="text-sm text-ink-2 leading-relaxed">{{ $t('home.guestBannerText') }}</div>
           </div>
           <div class="flex flex-col gap-2 shrink-0 text-xs">
-            <router-link to="/settings" class="underline underline-offset-4 decoration-[var(--color-accent)] text-ink">Set up →</router-link>
-            <button @click="dismiss" class="text-muted-app">Not now</button>
+            <router-link to="/settings" class="underline underline-offset-4 decoration-[var(--color-accent)] text-ink">{{ $t('home.setUp') }}</router-link>
+            <button @click="dismiss" class="text-muted-app">{{ $t('common.notNow') }}</button>
           </div>
         </div>
 
         <div v-if="installPrompt && !installDismissed"
           class="paper-card p-4 flex items-center justify-between gap-4">
           <div>
-            <div class="eyebrow mb-1">Install to Home Screen</div>
-            <div class="text-sm text-ink-2">Faster access and receive reminders when a dose is due.</div>
+            <div class="eyebrow mb-1">{{ $t('home.installBanner') }}</div>
+            <div class="text-sm text-ink-2">{{ $t('home.installText') }}</div>
           </div>
           <div class="flex gap-3 items-center shrink-0">
-            <button class="text-xs text-muted-app" @click="dismissInstall">Not now</button>
-            <button class="btn-primary !py-2 !px-4 text-sm" @click="doInstall">Install</button>
+            <button class="text-xs text-muted-app" @click="dismissInstall">{{ $t('common.notNow') }}</button>
+            <button class="btn-primary !py-2 !px-4 text-sm" @click="doInstall">{{ $t('home.install') }}</button>
           </div>
         </div>
       </div>
@@ -128,26 +142,26 @@ function relativeDue(iso: string) {
       <!-- Hero / stats -->
       <section class="grid md:grid-cols-[1.3fr_1fr] gap-6 items-end anim-rise-2">
         <div class="space-y-2">
-          <div class="eyebrow">Your ledger</div>
+          <div class="eyebrow">{{ $t('home.yourLedger') }}</div>
           <h1 class="font-display leading-[0.92] text-[clamp(2.5rem,6vw,4.25rem)]">
             <span class="block">{{ ledgerName }}<span class="text-accent">’s</span></span>
-            <span class="block font-display-wonk">health record.</span>
+            <span class="block font-display-wonk">{{ $t('home.healthRecord') }}</span>
           </h1>
           <p class="text-ink-2 text-sm max-w-[42ch] pt-1">
-            {{ totalCount > 0 ? `A quiet catalogue of what has been. Scan your next QR to add to it.` : `Not a single entry yet. When your clinic hands you a QR, scan it — and it will land here.` }}
+            {{ totalCount > 0 ? $t('home.catalogueHasRecords') : $t('home.catalogueEmpty') }}
           </p>
         </div>
         <dl class="grid grid-cols-3 gap-0 hairline-t pt-3">
           <div>
-            <dt class="eyebrow">Total</dt>
+            <dt class="eyebrow">{{ $t('home.total') }}</dt>
             <dd class="font-display text-3xl tabular-nums leading-tight">{{ String(totalCount).padStart(2, '0') }}</dd>
           </div>
           <div class="pl-4 border-l border-[var(--color-rule-soft)]">
-            <dt class="eyebrow">Vaccines</dt>
+            <dt class="eyebrow">{{ $t('home.vaccines') }}</dt>
             <dd class="font-display text-3xl tabular-nums leading-tight">{{ String(vaccinationCount).padStart(2, '0') }}</dd>
           </div>
           <div class="pl-4 border-l border-[var(--color-rule-soft)]">
-            <dt class="eyebrow">Tests</dt>
+            <dt class="eyebrow">{{ $t('home.tests') }}</dt>
             <dd class="font-display text-3xl tabular-nums leading-tight">{{ String(testCount).padStart(2, '0') }}</dd>
           </div>
         </dl>
@@ -158,17 +172,17 @@ function relativeDue(iso: string) {
         <div class="flex items-baseline justify-between">
           <div class="flex items-baseline gap-3">
             <span class="folio">I.</span>
-            <h2 class="font-display text-2xl">Upcoming</h2>
+            <h2 class="font-display text-2xl">{{ $t('home.upcoming') }}</h2>
           </div>
           <span class="eyebrow">
             <span v-if="records.reminders.length > 0" class="dot-pulse inline-block mr-2 align-middle"></span>
-            {{ records.reminders.length }} pending
+            {{ $t('home.pendingCount', { count: records.reminders.length }) }}
           </span>
         </div>
 
         <div v-if="records.reminders.length === 0" class="paper-card p-8 text-center">
-          <p class="font-display-wonk text-2xl text-ink-2">No reminders in view.</p>
-          <p class="text-sm text-muted-app mt-2">When a follow-up is due, it will surface here.</p>
+          <p class="font-display-wonk text-2xl text-ink-2">{{ $t('home.noReminders') }}</p>
+          <p class="text-sm text-muted-app mt-2">{{ $t('home.noRemindersHint') }}</p>
         </div>
 
         <ul v-else class="grid sm:grid-cols-2 gap-4">
@@ -176,15 +190,15 @@ function relativeDue(iso: string) {
             <span class="br-tr"></span><span class="br-bl"></span>
             <div class="flex items-start justify-between gap-3">
               <div>
-                <div class="eyebrow mb-2">Reminder · {{ r.kind.replace('_', ' ') }}</div>
+                <div class="eyebrow mb-2">{{ $t('home.reminderKind') }} · {{ reminderKindLabel(r.kind) }}</div>
                 <h3 class="font-display text-xl leading-tight">{{ r.title }}</h3>
               </div>
               <span class="font-mono-app text-xs text-accent whitespace-nowrap">{{ relativeDue(r.due_at) }}</span>
             </div>
             <div class="flex items-center justify-between pt-4 mt-4 hairline-t text-xs">
-              <span class="folio">due {{ formatDate(r.due_at) }}</span>
+              <span class="folio">{{ $t('home.dueAround', { date: formatDate(r.due_at) }) }}</span>
               <router-link v-if="r.record_id" :to="`/records/${r.record_id}`" class="underline underline-offset-4 decoration-[var(--color-accent)]">
-                view record →
+                {{ $t('home.viewRecord') }}
               </router-link>
             </div>
           </li>
@@ -196,26 +210,24 @@ function relativeDue(iso: string) {
         <div class="flex items-baseline justify-between">
           <div class="flex items-baseline gap-3">
             <span class="folio">II.</span>
-            <h2 class="font-display text-2xl">History</h2>
+            <h2 class="font-display text-2xl">{{ $t('home.history') }}</h2>
           </div>
-          <span class="eyebrow">{{ totalCount }} entries</span>
+          <span class="eyebrow">{{ $t('home.entriesCount', { count: totalCount }) }}</span>
         </div>
 
         <div v-if="totalCount === 0" class="paper-card p-10 text-center">
-          <div class="eyebrow mb-3">Chapter I · The first page</div>
+          <div class="eyebrow mb-3">{{ $t('home.emptyChapter') }}</div>
           <p class="font-display text-3xl leading-snug max-w-[32ch] mx-auto">
-            An empty page is still a <span class="font-display-wonk">beginning</span>.
+            {{ $t('home.emptyTitlePre') }} <span class="font-display-wonk">{{ $t('home.emptyTitleWonk') }}</span>.
           </p>
-          <p class="text-sm text-muted-app mt-3 max-w-[40ch] mx-auto">
-            Tap the Scan button below to read your first QR from the clinic.
-          </p>
+          <p class="text-sm text-muted-app mt-3 max-w-[40ch] mx-auto">{{ $t('home.emptyHint') }}</p>
         </div>
 
         <div v-else class="space-y-10">
           <div v-for="group in recordsByYear" :key="group.year" class="grid sm:grid-cols-[120px_1fr] gap-6">
             <div class="sm:text-right">
               <div class="font-display text-5xl leading-none tabular-nums">{{ group.year }}</div>
-              <div class="eyebrow mt-2">{{ group.items.length }} record{{ group.items.length > 1 ? 's' : '' }}</div>
+              <div class="eyebrow mt-2">{{ recordsWord(group.items.length) }}</div>
             </div>
             <ul class="divide-y divide-[var(--color-rule-soft)] hairline-t hairline-b">
               <li v-for="r in group.items" :key="r.id">
@@ -227,10 +239,10 @@ function relativeDue(iso: string) {
                   <div>
                     <div class="font-display text-lg leading-tight">{{ r.name }}</div>
                     <div class="text-xs text-muted-app mt-0.5">
-                      <span v-if="r.kind === 'vaccination'">Dose {{ r.dose_number }} of {{ r.total_doses }}</span>
-                      <span v-else>Blood test</span>
+                      <span v-if="r.kind === 'vaccination'">{{ $t('home.doseOf', { n: r.dose_number, total: r.total_doses }) }}</span>
+                      <span v-else>{{ $t('home.bloodTest') }}</span>
                       <span class="mx-2">·</span>
-                      <span class="uppercase tracking-wider">{{ r.kind.replace('_', ' ') }}</span>
+                      <span class="uppercase tracking-wider">{{ recordKindLabel(r.kind) }}</span>
                     </div>
                   </div>
                   <span class="text-accent opacity-0 group-hover:opacity-100 transition-opacity">→</span>
@@ -244,13 +256,13 @@ function relativeDue(iso: string) {
 
     <!-- Scan FAB + nav bar -->
     <nav class="fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-0 paper-card !shadow-xl rounded-none">
-      <router-link to="/profiles" class="px-5 py-3 text-xs eyebrow hover:text-ink">Profiles</router-link>
+      <router-link to="/profiles" class="px-5 py-3 text-xs eyebrow hover:text-ink">{{ $t('home.navProfiles') }}</router-link>
       <div class="w-px h-6 bg-[var(--color-rule)]"></div>
       <router-link to="/scan" class="px-6 py-3 bg-ink text-paper font-display text-lg flex items-center gap-2">
-        Scan <span aria-hidden>↗</span>
+        {{ $t('home.navScan') }} <span aria-hidden>↗</span>
       </router-link>
       <div class="w-px h-6 bg-[var(--color-rule)]"></div>
-      <router-link to="/settings" class="px-5 py-3 text-xs eyebrow hover:text-ink">Settings</router-link>
+      <router-link to="/settings" class="px-5 py-3 text-xs eyebrow hover:text-ink">{{ $t('home.navSettings') }}</router-link>
     </nav>
   </main>
 </template>

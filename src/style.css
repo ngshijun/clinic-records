@@ -23,11 +23,15 @@
   --color-staff-rule: #30373b;
   --color-staff-accent: #d9a35d;
 
-  /* Type */
-  --font-display: "Fraunces", "Times New Roman", serif;
+  /* Type — CJK fallbacks (PingFang / Noto / Source Han) kick in only for
+     Chinese glyphs Fraunces/Plex Sans don't cover. */
+  --font-display:
+    "Fraunces", "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC",
+    "Times New Roman", serif;
   --font-sans:
-    "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Helvetica, Arial, sans-serif;
+    "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Source Han Sans SC", "Noto Sans CJK SC", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
@@ -207,21 +211,19 @@
   }
   .staff-theme .folio { color: var(--color-staff-muted); }
 
-  /* Corner brackets for archival cards */
+  /* Corner brackets for archival cards — only TL + BR (library-card convention).
+     Previous 4-corner variant used child spans that drifted on complex layouts. */
   .brackets { position: relative; }
-  .brackets::before, .brackets::after,
-  .brackets > .br-tr, .brackets > .br-bl {
+  .brackets::before, .brackets::after {
     content: ""; position: absolute; width: 14px; height: 14px;
-    border: 1px solid var(--color-ink); opacity: 0.7;
+    border: 1px solid var(--color-ink); opacity: 0.7; pointer-events: none;
   }
   .brackets::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
   .brackets::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
-  .brackets > .br-tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
-  .brackets > .br-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
   .staff-theme .brackets::before,
-  .staff-theme .brackets::after,
-  .staff-theme .brackets > .br-tr,
-  .staff-theme .brackets > .br-bl { border-color: var(--color-staff-accent); }
+  .staff-theme .brackets::after { border-color: var(--color-staff-accent); }
+  /* Legacy helper spans are now zero-size no-ops. Safe to leave in templates. */
+  .br-tr, .br-bl { display: none; }
 
   /* Small decorative pulse dot for "live" / active states */
   .dot-pulse {

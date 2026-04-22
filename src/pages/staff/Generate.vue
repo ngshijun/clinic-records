@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ulid } from 'ulid'
+import { useI18n } from 'vue-i18n'
 import { encodePayload, type QrPayload } from '@/lib/qr-payload'
 import { clearStaffUnlocked } from '@/lib/staff-auth'
 import { VACCINE_NAMES, TEST_NAMES } from '@/lib/dictionary'
@@ -15,6 +16,7 @@ import QrPreview from '@/components/QrPreview.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const { t, locale } = useI18n()
 
 const kind = ref<'v' | 'b'>('v')
 const name = ref('')
@@ -65,7 +67,8 @@ const qrUrl = computed(() => payload.value ? encodePayload(window.location.origi
 const visibleTemplates = computed(() => templates.value.filter((t) => t.kind === kind.value))
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+  const l = locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB'
+  return new Date(d).toLocaleDateString(l, { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
 function newQr() {
@@ -97,27 +100,27 @@ async function saveCurrentAsTemplate() {
     next_due_days: nextDueDays.value ?? null,
   }
   const suggested = autoLabel(draft)
-  const label = window.prompt('Label for this template:', suggested)
+  const label = window.prompt(t('staff.labelForTemplate'), suggested)
   if (label === null) return
   try {
-    savedFlash.value = 'saving…'
+    savedFlash.value = t('staff.saving')
     await saveTemplateFn({ ...draft, label: label.trim() || suggested })
     await refreshTemplates()
-    savedFlash.value = '✓ saved'
+    savedFlash.value = t('staff.savedFlash')
     setTimeout(() => { savedFlash.value = null }, 1800)
   } catch (e: any) {
     savedFlash.value = null
-    alert('Could not save template: ' + (e.message ?? 'unknown error'))
+    alert(t('staff.saveTemplateFailed', { err: e.message ?? 'unknown' }))
   }
 }
 
-async function removeTemplate(t: Template) {
-  if (!window.confirm(`Delete template "${t.label}"?`)) return
+async function removeTemplate(tpl: Template) {
+  if (!window.confirm(t('staff.confirmDeleteTemplate', { label: tpl.label }))) return
   try {
-    await deleteTemplateFn(t.id)
+    await deleteTemplateFn(tpl.id)
     await refreshTemplates()
   } catch (e: any) {
-    alert('Could not delete: ' + (e.message ?? 'unknown error'))
+    alert(t('staff.deleteFailed', { err: e.message ?? 'unknown' }))
   }
 }
 
@@ -132,11 +135,11 @@ function printPage() { window.print() }
     <header class="max-w-[1200px] mx-auto px-6 lg:px-10 pt-8 pb-5 hairline-b flex items-center justify-between print:hidden">
       <div class="flex items-center gap-4">
         <div class="dot-pulse"></div>
-        <div class="eyebrow">Staff console · dispatch</div>
+        <div class="eyebrow">{{ $t('staff.consoleLabelDispatch') }}</div>
       </div>
       <div class="flex items-center gap-5">
-        <div class="folio">session · {{ id.slice(0, 8) }}</div>
-        <button class="btn-ghost !py-1.5 !px-3 text-xs" @click="logout">lock console</button>
+        <div class="folio">{{ $t('staff.session', { id: id.slice(0, 8) }) }}</div>
+        <button class="btn-ghost !py-1.5 !px-3 text-xs" @click="logout">{{ $t('staff.lockConsole') }}</button>
       </div>
     </header>
 
@@ -145,84 +148,80 @@ function printPage() { window.print() }
       <div class="flex items-baseline justify-between mb-3">
         <div class="flex items-baseline gap-3">
           <span class="folio">§ 0</span>
-          <h2 class="font-display text-xl" style="color: var(--color-staff-ink)">Saved templates</h2>
-          <span class="eyebrow">({{ visibleTemplates.length }} for {{ kind === 'v' ? 'vaccines' : 'tests' }})</span>
+          <h2 class="font-display text-xl" style="color: var(--color-staff-ink)">{{ $t('staff.savedTemplates') }}</h2>
+          <span class="eyebrow">{{ $t('staff.templatesCount', { count: visibleTemplates.length, what: kind === 'v' ? $t('staff.forVaccines') : $t('staff.forTests') }) }}</span>
         </div>
         <button
           type="button"
           :disabled="!name.trim()"
           class="btn-ghost !py-1.5 !px-3 text-xs"
-          :title="!name.trim() ? 'Enter a name first' : 'Save current form as a template'"
           @click="saveCurrentAsTemplate"
         >
-          {{ savedFlash ?? '+ save current' }}
+          {{ savedFlash ?? $t('staff.saveCurrent') }}
         </button>
       </div>
 
       <div v-if="templatesLoading && visibleTemplates.length === 0" class="folio text-xs italic" style="color: var(--color-staff-muted)">
-        — loading…
+        {{ $t('staff.templatesLoading') }}
       </div>
       <div v-else-if="visibleTemplates.length === 0" class="folio text-xs italic" style="color: var(--color-staff-muted)">
-        — none yet. Fill the form below and tap "save current" to keep it for next time.
+        {{ $t('staff.noTemplates') }}
       </div>
 
       <div v-else class="flex flex-wrap gap-2">
         <div
-          v-for="t in visibleTemplates"
-          :key="t.id"
+          v-for="tpl in visibleTemplates"
+          :key="tpl.id"
           class="group inline-flex items-stretch hairline overflow-hidden"
         >
           <button
             type="button"
             class="px-3 py-2 text-sm flex items-center gap-2 transition-colors"
             style="color: var(--color-staff-ink)"
-            @click="applyTemplate(t)"
+            @click="applyTemplate(tpl)"
           >
-            <span class="font-display">{{ t.label }}</span>
+            <span class="font-display">{{ tpl.label }}</span>
           </button>
           <button
             type="button"
             class="px-2.5 border-l hairline opacity-40 hover:opacity-100 transition-opacity"
-            aria-label="Delete template"
             style="color: var(--color-staff-muted)"
-            @click="removeTemplate(t)"
+            @click="removeTemplate(tpl)"
           >×</button>
         </div>
       </div>
     </section>
 
     <div class="max-w-[1200px] mx-auto px-6 lg:px-10 py-8 grid lg:grid-cols-[1fr_1fr] gap-10 print:block">
-      <!-- LEFT: form -->
       <section class="space-y-8 print:hidden">
         <div class="space-y-2 anim-rise">
-          <div class="eyebrow"><span class="tick" style="background: var(--color-staff-accent)"></span>Compose</div>
+          <div class="eyebrow"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('staff.compose') }}</div>
           <h1 class="font-display text-4xl md:text-5xl leading-[0.95]" style="color: var(--color-staff-ink)">
-            New <span class="font-display-wonk" style="color: var(--color-staff-accent)">QR</span>.
+            {{ $t('staff.newQrPre') }} <span class="font-display-wonk" style="color: var(--color-staff-accent)">{{ $t('staff.newQrWonk') }}</span>.
           </h1>
-          <p class="text-sm" style="color: var(--color-staff-muted)">Issue one code per patient visit.</p>
+          <p class="text-sm" style="color: var(--color-staff-muted)">{{ $t('staff.oneQrPerVisit') }}</p>
         </div>
 
         <form class="space-y-7 anim-rise-2">
-          <!-- Kind toggle -->
           <div>
-            <span class="field-label">Kind of record</span>
+            <span class="field-label">{{ $t('staff.kindOfRecord') }}</span>
             <div class="grid grid-cols-2 gap-0 hairline mt-1">
               <label class="px-4 py-3 flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 :style="kind === 'v' ? 'background: var(--color-staff-accent); color: var(--color-staff-paper);' : ''">
                 <input type="radio" value="v" v-model="kind" class="sr-only" />
-                <span class="font-display text-lg">Vaccination</span>
+                <span class="font-display text-lg">{{ $t('staff.vaccination') }}</span>
               </label>
               <label class="px-4 py-3 flex items-center justify-center gap-2 cursor-pointer transition-colors border-l hairline"
                 :style="kind === 'b' ? 'background: var(--color-staff-accent); color: var(--color-staff-paper);' : ''">
                 <input type="radio" value="b" v-model="kind" class="sr-only" />
-                <span class="font-display text-lg">Blood test</span>
+                <span class="font-display text-lg">{{ $t('staff.bloodTest') }}</span>
               </label>
             </div>
           </div>
 
           <label class="block">
-            <span class="field-label">Name</span>
-            <input v-model="name" list="names" class="field font-display text-2xl" placeholder="e.g. Hepatitis B" />
+            <span class="field-label">{{ $t('staff.nameLabel') }}</span>
+            <input v-model="name" list="names" class="field font-display text-2xl" :placeholder="$t('staff.namePlaceholder')" />
             <datalist id="names">
               <option v-for="n in suggestions" :key="n" :value="n" />
             </datalist>
@@ -230,50 +229,50 @@ function printPage() { window.print() }
 
           <div class="grid grid-cols-[1fr_1fr_1fr] gap-4">
             <label class="block">
-              <span class="field-label">Given on</span>
+              <span class="field-label">{{ $t('staff.givenOn') }}</span>
               <input v-model="performedOn" type="date" class="field tabular-nums" />
             </label>
             <label v-if="kind === 'v'" class="block">
-              <span class="field-label">Dose №</span>
+              <span class="field-label">{{ $t('staff.doseNumber') }}</span>
               <input v-model.number="doseNumber" type="number" min="1" class="field tabular-nums text-2xl font-display" />
             </label>
             <label v-if="kind === 'v'" class="block">
-              <span class="field-label">Of</span>
+              <span class="field-label">{{ $t('staff.of') }}</span>
               <input v-model.number="totalDoses" type="number" min="1" class="field tabular-nums text-2xl font-display" />
             </label>
             <label v-if="kind === 'b'" class="block col-span-2">
-              <span class="field-label">Next due (days)</span>
+              <span class="field-label">{{ $t('staff.nextDueDays') }}</span>
               <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums text-2xl font-display" />
             </label>
           </div>
 
           <label v-if="kind === 'v'" class="block">
-            <span class="field-label">Next dose in (days)</span>
+            <span class="field-label">{{ $t('staff.nextDoseInDays') }}</span>
             <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums" />
           </label>
 
           <div class="flex gap-3 pt-4 hairline-t">
             <button type="button" class="btn-primary flex-1" @click="printPage">
-              Print <span aria-hidden>↗</span>
+              {{ $t('staff.print') }} <span aria-hidden>↗</span>
             </button>
-            <button type="button" class="btn-ghost" @click="newQr">New · next patient</button>
+            <button type="button" class="btn-ghost" @click="newQr">{{ $t('staff.newForNext') }}</button>
           </div>
         </form>
       </section>
 
       <!-- RIGHT: preview + print surface -->
       <section class="space-y-6">
-        <div class="eyebrow print:hidden"><span class="tick" style="background: var(--color-staff-accent)"></span>Preview</div>
+        <div class="eyebrow print:hidden"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('staff.preview') }}</div>
 
         <div class="paper-card p-8 md:p-12 print:shadow-none print:border-0 print:p-0 anim-rise-3 print:bg-white print:text-black">
           <div class="flex items-start justify-between pb-4 mb-6 hairline-b print:border-black/20">
             <div>
-              <div class="eyebrow print:text-black" style="color: var(--color-staff-muted)">Poliklinik Ng · Patient record</div>
+              <div class="eyebrow print:text-black" style="color: var(--color-staff-muted)">{{ $t('staff.patientRecordLabel') }}</div>
               <div class="folio mt-1">ref {{ id.slice(0, 10) }}</div>
             </div>
             <div class="folio text-right">
               {{ kind === 'v' ? 'Rx' : 'Lab' }} / v1<br/>
-              {{ new Date().toLocaleDateString('en-GB') }}
+              {{ formatDate(new Date().toISOString().slice(0,10)) }}
             </div>
           </div>
 
@@ -281,7 +280,7 @@ function printPage() { window.print() }
             <div class="p-4 bg-white border hairline">
               <QrPreview v-if="qrUrl" :text="qrUrl" />
               <div v-else class="w-[280px] h-[280px] grid place-items-center font-display-wonk text-muted-app">
-                awaiting entry
+                {{ $t('staff.awaitingEntry') }}
               </div>
             </div>
           </div>
@@ -292,30 +291,30 @@ function printPage() { window.print() }
             </h2>
             <dl class="grid grid-cols-3 gap-3 hairline-t hairline-b py-4 text-center">
               <div>
-                <dt class="eyebrow">Kind</dt>
-                <dd class="font-display text-lg mt-1">{{ kind === 'v' ? 'Vaccine' : 'Blood test' }}</dd>
+                <dt class="eyebrow">{{ $t('staff.kind') }}</dt>
+                <dd class="font-display text-lg mt-1">{{ kind === 'v' ? $t('staff.vaccine') : $t('staff.bloodTestShort') }}</dd>
               </div>
               <div v-if="kind === 'v' && payload.dn && payload.td" class="border-x hairline">
-                <dt class="eyebrow">Series</dt>
-                <dd class="font-display text-lg mt-1 tabular-nums">{{ payload.dn }} of {{ payload.td }}</dd>
+                <dt class="eyebrow">{{ $t('staff.series') }}</dt>
+                <dd class="font-display text-lg mt-1 tabular-nums">{{ $t('staff.seriesOf', { n: payload.dn, total: payload.td }) }}</dd>
               </div>
               <div v-else-if="payload.nd" class="border-x hairline">
-                <dt class="eyebrow">Next test</dt>
-                <dd class="font-display text-lg mt-1 tabular-nums">in {{ payload.nd }}d</dd>
+                <dt class="eyebrow">{{ $t('staff.nextTest') }}</dt>
+                <dd class="font-display text-lg mt-1 tabular-nums">{{ $t('staff.inDays', { n: payload.nd }) }}</dd>
               </div>
               <div>
-                <dt class="eyebrow">Given</dt>
+                <dt class="eyebrow">{{ $t('staff.given') }}</dt>
                 <dd class="font-display text-lg mt-1 tabular-nums">{{ formatDate(payload.d) }}</dd>
               </div>
             </dl>
             <p v-if="kind === 'v' && payload.nd" class="text-center text-sm font-display-wonk italic" style="color: var(--color-staff-muted)">
-              Next dose due in {{ payload.nd }} days.
+              {{ $t('staff.nextDoseDueIn', { n: payload.nd }) }}
             </p>
           </div>
 
           <div class="mt-6 pt-4 hairline-t text-center">
             <p class="font-display-wonk text-lg leading-snug" style="color: var(--color-staff-muted)">
-              Scan with your phone's camera to add this to your records.
+              {{ $t('staff.scanInstruction') }}
             </p>
           </div>
         </div>
