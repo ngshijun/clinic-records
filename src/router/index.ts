@@ -29,4 +29,8 @@ router.beforeEach(async (to) => {
   if ((to.name === 'landing' || to.name === 'signup') && auth.user) {
     return { name: 'home' }
   }
+  if (to.meta.requiresStaff) {
+    const { isStaffUnlocked } = await import('@/lib/staff-auth')
+    if (!isStaffUnlocked()) return { name: 'staff' }
+  }
 })
