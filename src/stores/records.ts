@@ -137,8 +137,10 @@ export const useRecordsStore = defineStore('records', () => {
     }).select().single()
     if (e1) throw e1
 
-    await closePriorSeriesReminders(rec as Record)
-    await createReminderForRecord(user_id, rec as Record, payload)
+    await Promise.all([
+      closePriorSeriesReminders(rec as Record),
+      createReminderForRecord(user_id, rec as Record, payload),
+    ])
     return rec as Record
   }
 
@@ -162,8 +164,10 @@ export const useRecordsStore = defineStore('records', () => {
       },
     })
     if (error) throw error
-    await closePriorSeriesReminders(data as Record)
-    await createReminderForRecord(user_id, data as Record, payload)
+    await Promise.all([
+      closePriorSeriesReminders(data as Record),
+      createReminderForRecord(user_id, data as Record, payload),
+    ])
     return data as Record
   }
 

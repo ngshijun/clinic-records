@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore, type Reminder } from '@/stores/records'
-import { MY_TIMEZONE } from '@/lib/dates'
+import { dateInMY, formatDateShort, formatMonthDay } from '@/lib/dates'
 import { useAuthStore } from '@/stores/auth'
 import ProfileSwitcher from '@/components/ProfileSwitcher.vue'
 
@@ -69,23 +69,15 @@ const recordsByYear = computed(() => {
   return groups
 })
 
-function dateFmtLocale(): string {
-  return locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB'
-}
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString(dateFmtLocale(), {
-    day: '2-digit', month: 'short', year: 'numeric', timeZone: MY_TIMEZONE,
-  })
+  return formatDateShort(d, locale.value)
 }
-function formatMonthDay(d: string) {
-  return new Date(d).toLocaleDateString(dateFmtLocale(), {
-    day: '2-digit', month: 'short', timeZone: MY_TIMEZONE,
-  })
+function fmtMonthDay(d: string) {
+  return formatMonthDay(d, locale.value)
 }
 function relativeDue(iso: string) {
-  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: MY_TIMEZONE })
-  const [dy, dm, dd] = fmt.format(new Date(iso)).split('-').map(Number)
-  const [ny, nm, nd] = fmt.format(new Date()).split('-').map(Number)
+  const [dy, dm, dd] = dateInMY(iso).split('-').map(Number)
+  const [ny, nm, nd] = dateInMY(new Date()).split('-').map(Number)
   const days = Math.round(
     (Date.UTC(dy, dm - 1, dd) - Date.UTC(ny, nm - 1, nd)) / 86400000,
   )
@@ -254,7 +246,7 @@ function recordsWord(n: number) {
                   :to="`/records/${r.id}`"
                   class="group grid grid-cols-[auto_1fr_auto] items-baseline gap-4 py-4 px-1 hover:bg-[var(--color-paper-2)] transition-colors"
                 >
-                  <span class="folio w-[54px]">{{ formatMonthDay(r.performed_on) }}</span>
+                  <span class="folio w-[54px]">{{ fmtMonthDay(r.performed_on) }}</span>
                   <div>
                     <div class="font-display text-lg leading-tight">{{ r.name }}</div>
                     <div class="text-xs text-muted-app mt-0.5">

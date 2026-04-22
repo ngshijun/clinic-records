@@ -6,7 +6,7 @@ import { useRecordsStore, type Record } from '@/stores/records'
 import { useProfilesStore } from '@/stores/profiles'
 import { supabase } from '@/lib/supabase'
 import { useDialog } from '@/lib/dialog'
-import { MY_TIMEZONE } from '@/lib/dates'
+import { MY_TIMEZONE, dateFmtLocale, formatDateLong } from '@/lib/dates'
 
 const route = useRoute()
 const router = useRouter()
@@ -57,16 +57,13 @@ async function del() {
   router.push('/home')
 }
 
-const dtLocale = computed(() => locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB')
-const formattedDate = computed(() => rec.value
-  ? new Date(rec.value.performed_on).toLocaleDateString(dtLocale.value, {
-      day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
-    })
-  : ''
-)
+const formattedDate = computed(() => rec.value ? formatDateLong(rec.value.performed_on, locale.value) : '')
 const profileName = computed(() => profiles.profiles.find(p => p.id === rec.value?.profile_id)?.name ?? '')
 const kindLabel = computed(() => rec.value?.kind === 'vaccination' ? t('recordDetail.vaccinationLabel') : t('recordDetail.bloodTestLabel'))
-const filedDate = computed(() => rec.value ? new Date(rec.value.created_at).toLocaleDateString(dtLocale.value, { timeZone: MY_TIMEZONE }) : '')
+const filedDate = computed(() => rec.value
+  ? new Date(rec.value.created_at).toLocaleDateString(dateFmtLocale(locale.value), { timeZone: MY_TIMEZONE })
+  : ''
+)
 </script>
 
 <template>

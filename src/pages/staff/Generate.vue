@@ -4,7 +4,7 @@ import { ulid } from 'ulid'
 import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { encodePayload, type QrPayload, type QrKind } from '@/lib/qr-payload'
-import { todayLocalIso, MY_TIMEZONE } from '@/lib/dates'
+import { todayLocalIso, formatDateLong } from '@/lib/dates'
 import { clearStaffUnlocked } from '@/lib/staff-auth'
 import { VACCINE_NAMES, TEST_NAMES } from '@/lib/dictionary'
 import {
@@ -22,6 +22,7 @@ import {
   type TemplateCategory,
 } from '@/lib/templates'
 import QrPreview from '@/components/QrPreview.vue'
+import TemplateCard from '@/components/staff/TemplateCard.vue'
 import { useRouter } from 'vue-router'
 import { useDialog } from '@/lib/dialog'
 
@@ -140,10 +141,7 @@ const payload = computed<QrPayload | null>(() => {
 const qrUrl = computed(() => payload.value ? encodePayload(window.location.origin, payload.value) : '')
 
 function formatDate(d: string) {
-  const l = locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB'
-  return new Date(d).toLocaleDateString(l, {
-    day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
-  })
+  return formatDateLong(d, locale.value)
 }
 
 function resetForm() {
@@ -223,8 +221,8 @@ async function addCategory() {
   try {
     await createCategoryFn(kind.value, label)
     await refreshAll()
-  } catch (e: any) {
-    await dialog.alert({ title: e.message ?? 'Failed to create category' })
+  } catch (e) {
+    await dialog.alertError(e, 'Failed to create category')
   }
 }
 
@@ -237,8 +235,8 @@ async function onRenameCategory(cat: TemplateCategory) {
   try {
     await renameCategoryFn(cat.id, label)
     await refreshAll()
-  } catch (e: any) {
-    await dialog.alert({ title: e.message ?? 'Failed to rename category' })
+  } catch (e) {
+    await dialog.alertError(e, 'Failed to rename category')
   }
 }
 
@@ -251,8 +249,8 @@ async function onDeleteCategory(cat: TemplateCategory) {
   try {
     await deleteCategoryFn(cat.id)
     await refreshAll()
-  } catch (e: any) {
-    await dialog.alert({ title: e.message ?? 'Failed to delete category' })
+  } catch (e) {
+    await dialog.alertError(e, 'Failed to delete category')
   }
 }
 
@@ -262,8 +260,8 @@ async function onCategoryReorder() {
     await reorderCategories(ids)
     const byId = new Map(categories.value.map(c => [c.id, c]))
     ids.forEach((id, i) => { const c = byId.get(id); if (c) c.sort_order = i })
-  } catch (e: any) {
-    await dialog.alert({ title: e.message ?? 'Failed to reorder' })
+  } catch (e) {
+    await dialog.alertError(e, 'Failed to reorder')
     await refreshAll()
   }
 }
@@ -276,8 +274,8 @@ async function onTemplateChange(group: Group, evt: any) {
     await moveTemplateToCategory(tpl.id, targetId)
     const src = templates.value.find(t => t.id === tpl.id)
     if (src) src.category_id = targetId
-  } catch (e: any) {
-    await dialog.alert({ title: e.message ?? 'Failed to move template' })
+  } catch (e) {
+    await dialog.alertError(e, 'Failed to move template')
     await refreshAll()
   }
 }
@@ -366,38 +364,7 @@ function logout() { clearStaffUnlocked(); router.replace('/staff') }
           @change="(evt: any) => onTemplateChange(uncatGroup, evt)"
         >
           <template #item="{ element: tpl }">
-            <div class="group relative hairline min-h-[140px] flex cursor-grab active:cursor-grabbing">
-              <button
-                type="button"
-                class="flex-1 p-6 text-left flex flex-col justify-between transition-colors hover:bg-white/[0.03]"
-                @click="applyTemplate(tpl)"
-              >
-                <div>
-                  <div class="font-display text-xl leading-tight mb-2" style="color: var(--color-staff-ink)">
-                    {{ tpl.name }}
-                  </div>
-                  <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs" style="color: var(--color-staff-muted)">
-                    <span v-if="tpl.kind === 'v' && tpl.dose_number && tpl.total_doses" class="tabular-nums">
-                      {{ $t('staff.seriesOf', { n: tpl.dose_number, total: tpl.total_doses }) }}
-                    </span>
-                    <span v-if="tpl.next_due_days" class="tabular-nums">
-                      {{ $t('staff.inDays', { n: tpl.next_due_days }) }}
-                    </span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="eyebrow" style="color: var(--color-staff-accent)">{{ tpl.label }}</span>
-                  <span class="opacity-0 group-hover:opacity-100 transition-opacity" style="color: var(--color-staff-accent)">→</span>
-                </div>
-              </button>
-              <button
-                type="button"
-                class="px-3 border-l hairline opacity-40 hover:opacity-100 transition-opacity"
-                :aria-label="'Delete ' + tpl.label"
-                style="color: var(--color-staff-muted)"
-                @click.stop="removeTemplate(tpl)"
-              >×</button>
-            </div>
+            <TemplateCard :tpl="tpl" @apply="applyTemplate" @remove="removeTemplate" />
           </template>
         </draggable>
       </div>
@@ -440,38 +407,7 @@ function logout() { clearStaffUnlocked(); router.replace('/staff') }
               @change="(evt: any) => onTemplateChange(group, evt)"
             >
               <template #item="{ element: tpl }">
-                <div class="group relative hairline min-h-[140px] flex cursor-grab active:cursor-grabbing">
-                  <button
-                    type="button"
-                    class="flex-1 p-6 text-left flex flex-col justify-between transition-colors hover:bg-white/[0.03]"
-                    @click="applyTemplate(tpl)"
-                  >
-                    <div>
-                      <div class="font-display text-xl leading-tight mb-2" style="color: var(--color-staff-ink)">
-                        {{ tpl.name }}
-                      </div>
-                      <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs" style="color: var(--color-staff-muted)">
-                        <span v-if="tpl.kind === 'v' && tpl.dose_number && tpl.total_doses" class="tabular-nums">
-                          {{ $t('staff.seriesOf', { n: tpl.dose_number, total: tpl.total_doses }) }}
-                        </span>
-                        <span v-if="tpl.next_due_days" class="tabular-nums">
-                          {{ $t('staff.inDays', { n: tpl.next_due_days }) }}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="eyebrow" style="color: var(--color-staff-accent)">{{ tpl.label }}</span>
-                      <span class="opacity-0 group-hover:opacity-100 transition-opacity" style="color: var(--color-staff-accent)">→</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    class="px-3 border-l hairline opacity-40 hover:opacity-100 transition-opacity"
-                    :aria-label="'Delete ' + tpl.label"
-                    style="color: var(--color-staff-muted)"
-                    @click.stop="removeTemplate(tpl)"
-                  >×</button>
-                </div>
+                <TemplateCard :tpl="tpl" @apply="applyTemplate" @remove="removeTemplate" />
               </template>
             </draggable>
           </div>

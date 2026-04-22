@@ -49,5 +49,10 @@ export function useDialog() {
     return push<void>({ kind: 'alert', variant: opts.variant ?? 'default', ...opts })
   }
 
-  return { confirm, prompt, alert, state }
+  function alertError(e: unknown, fallback: string): Promise<void> {
+    const msg = (e as { message?: string } | null)?.message ?? fallback
+    return alert({ title: msg })
+  }
+
+  return { confirm, prompt, alert, alertError, state }
 }

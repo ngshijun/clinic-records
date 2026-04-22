@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Record } from '@/stores/records'
-import { MY_TIMEZONE } from '@/lib/dates'
+import { MY_TIMEZONE, dateFmtLocale } from '@/lib/dates'
 
 const props = defineProps<{ existing: Record }>()
 const emit = defineEmits<{
@@ -12,8 +12,7 @@ const emit = defineEmits<{
 }>()
 
 const { locale } = useI18n()
-const dtLocale = computed(() => locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB')
-const recordedAt = computed(() => new Date(props.existing.created_at).toLocaleString(dtLocale.value, {
+const recordedAt = computed(() => new Date(props.existing.created_at).toLocaleString(dateFmtLocale(locale.value), {
   day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: MY_TIMEZONE,
 }))
 </script>

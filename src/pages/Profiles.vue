@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useProfilesStore, type Profile } from '@/stores/profiles'
 import { useDialog } from '@/lib/dialog'
-import { MY_TIMEZONE } from '@/lib/dates'
+import { formatDateLong } from '@/lib/dates'
 
 const store = useProfilesStore()
 const route = useRoute()
@@ -75,11 +75,7 @@ async function saveEdit() {
 }
 
 function formatDob(d: string | null) {
-  if (!d) return null
-  const l = locale.value === 'zh' ? 'zh-CN' : locale.value === 'ms' ? 'ms-MY' : 'en-GB'
-  return new Date(d).toLocaleDateString(l, {
-    day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
-  })
+  return d ? formatDateLong(d, locale.value) : null
 }
 </script>
 
