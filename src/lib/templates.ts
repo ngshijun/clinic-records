@@ -8,6 +8,7 @@ export interface Template {
   dose_number: number | null
   total_doses: number | null
   next_due_days: number | null
+  reminder_only: boolean
   category_id: string | null
   created_at: string
 }
@@ -41,6 +42,7 @@ export async function saveTemplate(input: TemplateInput): Promise<Template> {
       dose_number: input.dose_number,
       total_doses: input.total_doses,
       next_due_days: input.next_due_days,
+      reminder_only: input.reminder_only,
       category_id: input.category_id ?? null,
     })
     .select()
@@ -113,8 +115,10 @@ export async function reorderCategories(orderedIds: string[]): Promise<void> {
 }
 
 export function autoLabel(t: Omit<TemplateInput, 'label'>): string {
-  const parts: string[] = [t.name.trim() || 'Untitled']
-  if (t.kind === 'v' && t.dose_number && t.total_doses) {
+  const parts: string[] = []
+  if (t.reminder_only) parts.push('Reminder')
+  parts.push(t.name.trim() || 'Untitled')
+  if (!t.reminder_only && t.kind === 'v' && t.dose_number && t.total_doses) {
     parts.push(`Dose ${t.dose_number} of ${t.total_doses}`)
   }
   if (t.next_due_days) parts.push(`+${t.next_due_days}d`)

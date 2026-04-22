@@ -165,7 +165,7 @@ function applyTemplate(tpl: Template) {
   totalDoses.value = tpl.total_doses
   nextDueDays.value = tpl.next_due_days
   performedOn.value = todayLocalIso()
-  reminderOnly.value = false
+  reminderOnly.value = tpl.reminder_only
   id.value = ulid()
   stage.value = 'compose'
 }
@@ -179,9 +179,10 @@ async function saveCurrentAsTemplate() {
   const draft = {
     kind: kind.value,
     name: name.value.trim(),
-    dose_number: kind.value === 'v' ? (doseNumber.value ?? null) : null,
-    total_doses: kind.value === 'v' ? (totalDoses.value ?? null) : null,
+    dose_number: kind.value === 'v' && !reminderOnly.value ? (doseNumber.value ?? null) : null,
+    total_doses: kind.value === 'v' && !reminderOnly.value ? (totalDoses.value ?? null) : null,
     next_due_days: nextDueDays.value ?? null,
+    reminder_only: reminderOnly.value,
   }
   const suggested = autoLabel(draft)
   const label = window.prompt(t('staff.labelForTemplate'), suggested)
