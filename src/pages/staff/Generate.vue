@@ -25,6 +25,7 @@ import QrPreview from '@/components/QrPreview.vue'
 import TemplateCard from '@/components/staff/TemplateCard.vue'
 import { useRouter } from 'vue-router'
 import { useDialog } from '@/lib/dialog'
+import { AVAILABLE_LOCALES, setLocale, type Locale } from '@/lib/i18n'
 
 interface Group {
   key: string
@@ -281,6 +282,10 @@ async function onTemplateChange(group: Group, evt: any) {
 }
 
 function logout() { clearStaffUnlocked(); router.replace('/staff') }
+
+function onLocaleChange(e: Event) {
+  setLocale((e.target as HTMLSelectElement).value as Locale)
+}
 </script>
 
 <template>
@@ -292,6 +297,18 @@ function logout() { clearStaffUnlocked(); router.replace('/staff') }
         <div class="eyebrow whitespace-nowrap">{{ $t('staff.consoleLabel') }}</div>
       </div>
       <div class="flex items-center gap-5">
+        <span class="relative">
+          <select
+            :value="locale"
+            @change="onLocaleChange"
+            :aria-label="$t('settings.language')"
+            class="appearance-none bg-transparent pl-0 pr-5 py-1 text-xs whitespace-nowrap cursor-pointer focus:outline-none"
+            style="color: var(--color-staff-ink); border-bottom: 1px solid var(--color-staff-rule); color-scheme: dark;"
+          >
+            <option v-for="l in AVAILABLE_LOCALES" :key="l.code" :value="l.code">{{ l.native }}</option>
+          </select>
+          <span aria-hidden class="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none" style="color: var(--color-staff-muted)">▾</span>
+        </span>
         <button class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="logout">{{ $t('staff.lockConsole') }}</button>
       </div>
     </header>
