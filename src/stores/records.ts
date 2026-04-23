@@ -181,7 +181,7 @@ export const useRecordsStore = defineStore('records', () => {
       user_id,
       profile_id: input.profile_id,
       record_id: null,
-      kind: 'followup_test',
+      kind: payload.k === 'v' ? 'next_dose' : 'followup_test',
       title: `${payload.n} reminder`,
       name: payload.n,
       due_at: computeDueAt(payload.d, payload.nd),

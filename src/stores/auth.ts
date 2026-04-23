@@ -2,6 +2,14 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { i18n } from '@/lib/i18n'
+
+function seedLocaleMetadata(u: User | null) {
+  if (!u) return
+  const current = i18n.global.locale.value as string
+  if (u.user_metadata?.locale === current) return
+  supabase.auth.updateUser({ data: { locale: current } }).catch(() => {})
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const session = ref<Session | null>(null)
@@ -12,7 +20,11 @@ export const useAuthStore = defineStore('auth', () => {
     const { data } = await supabase.auth.getSession()
     session.value = data.session
     loaded.value = true
-    supabase.auth.onAuthStateChange((_e, s) => { session.value = s })
+    seedLocaleMetadata(session.value?.user ?? null)
+    supabase.auth.onAuthStateChange((_e, s) => {
+      session.value = s
+      seedLocaleMetadata(s?.user ?? null)
+    })
   }
 
   async function signIn(email: string, password: string) {

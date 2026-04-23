@@ -33,6 +33,16 @@ export function setLocale(locale: Locale) {
   i18n.global.locale.value = locale
   localStorage.setItem(STORAGE_KEY, locale)
   document.documentElement.setAttribute('lang', locale)
+  // Best-effort sync the locale onto the authenticated user's metadata so
+  // server-side processes (push notifications, email reminders) can pick the
+  // right language. Dynamic import avoids a hard dep between i18n and supabase.
+  import('@/lib/supabase').then(({ supabase }) => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return
+      if (data.user.user_metadata?.locale === locale) return
+      supabase.auth.updateUser({ data: { locale } }).catch(() => {})
+    }).catch(() => {})
+  }).catch(() => {})
 }
 
 // Initialize <html lang>

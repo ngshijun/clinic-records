@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore, type Reminder } from '@/stores/records'
@@ -11,7 +12,9 @@ import { Camera } from 'lucide-vue-next'
 const profiles = useProfilesStore()
 const records = useRecordsStore()
 const auth = useAuthStore()
+const route = useRoute()
 const { t, locale } = useI18n()
+const flashedReminderId = ref<string | null>(null)
 
 const dismissed = ref(localStorage.getItem('guest_nudge_dismissed') === '1')
 function dismiss() {
@@ -48,6 +51,19 @@ onMounted(async () => {
   window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
   await profiles.fetchAll()
   await refresh()
+  // If landed here via a push notification tap (e.g. /home#r-<id>),
+  // scroll that reminder card into view and briefly highlight it.
+  const match = route.hash.match(/^#r-(.+)$/)
+  if (match) {
+    const id = match[1]
+    await nextTick()
+    const el = document.getElementById('r-' + id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      flashedReminderId.value = id
+      setTimeout(() => { flashedReminderId.value = null }, 2400)
+    }
+  }
 })
 onBeforeUnmount(() => {
   window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
@@ -201,7 +217,13 @@ function recordsWord(n: number) {
         </div>
 
         <ul v-else class="grid sm:grid-cols-2 gap-4">
-          <li v-for="r in records.reminders" :key="r.id" class="paper-card p-5 brackets">
+          <li
+            v-for="r in records.reminders"
+            :key="r.id"
+            :id="'r-' + r.id"
+            class="paper-card p-5 brackets transition-shadow duration-300"
+            :class="{ 'reminder-flash': flashedReminderId === r.id }"
+          >
             <span class="br-tr"></span><span class="br-bl"></span>
             <div class="flex items-start justify-between gap-3">
               <div>
@@ -278,4 +300,13 @@ function recordsWord(n: number) {
 
 <style scoped>
 .bg-ink { background: var(--color-ink); color: var(--color-paper); }
+.reminder-flash {
+  animation: reminder-pulse 2.4s ease-out;
+  box-shadow: 0 0 0 2px var(--color-accent), 0 12px 32px -12px rgba(162, 76, 40, 0.45);
+}
+@keyframes reminder-pulse {
+  0%   { box-shadow: 0 0 0 0   var(--color-accent), 0 12px 32px -12px rgba(162, 76, 40, 0);   }
+  15%  { box-shadow: 0 0 0 3px var(--color-accent), 0 12px 32px -12px rgba(162, 76, 40, 0.45); }
+  100% { box-shadow: 0 0 0 0   transparent,         0 12px 32px -12px rgba(162, 76, 40, 0);   }
+}
 </style>
