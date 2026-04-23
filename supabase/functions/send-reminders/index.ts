@@ -21,17 +21,17 @@ const MESSAGES: Record<Locale, {
   en: {
     vaccination: (name, doseN) => doseN != null ? `Vaccination due: ${name} Dose ${doseN}` : `Vaccination due: ${name}`,
     bloodTest: (name) => `Blood test due: ${name}`,
-    body: 'Visit Poliklinik Ng when convenient. Tap to view details.',
+    body: 'Visit Poliklinik Ng when convenient. Tap to view details.\nWe are closed on Saturdays.',
   },
   zh: {
     vaccination: (name, doseN) => doseN != null ? `疫苗提醒: ${name} 第 ${doseN} 剂` : `疫苗提醒: ${name}`,
     bloodTest: (name) => `验血提醒: ${name}`,
-    body: '请到黄氏药房就诊。点击查看详情。',
+    body: '请到黄氏药房就诊。点击查看详情。\n我们周六休诊。',
   },
   ms: {
     vaccination: (name, doseN) => doseN != null ? `Vaksin: ${name} Dos ke-${doseN}` : `Vaksin: ${name}`,
     bloodTest: (name) => `Ujian darah: ${name}`,
-    body: 'Sila ke Poliklinik Ng bila senang. Ketik untuk butiran.',
+    body: 'Sila ke Poliklinik Ng bila senang. Ketik untuk butiran.\nKami tutup pada hari Sabtu.',
   },
 }
 
@@ -47,6 +47,8 @@ interface ReminderRow {
   kind: string
   title: string
   name: string | null
+  due_at: string
+  sent_count: number
   record: { name: string; dose_number: number | null } | null
 }
 
@@ -54,28 +56,47 @@ function formatNotification(r: ReminderRow, locale: Locale): { title: string; bo
   const m = MESSAGES[locale]
   const name = r.record?.name ?? r.name ?? ''
   if (!name) return { title: r.title, body: m.body }
-  // Four cases differ by (kind, has-record):
-  //   next_dose + record  → vaccinationDue (N+1 dose)
-  //   next_dose + no record → vaccinationUpcoming (reminder-only vaccination QR)
-  //   followup_test + record → bloodTestDue
-  //   followup_test + no record → bloodTestUpcoming (reminder-only blood-test QR)
-  // Two templates, chosen by reminder kind. Dose number appended when the
-  // source record has one; otherwise the vaccination template omits it.
   const nextDoseN = r.record?.dose_number != null ? r.record.dose_number + 1 : null
   const title = r.kind === 'next_dose' ? m.vaccination(name, nextDoseN) : m.bloodTest(name)
   return { title, body: m.body }
 }
 
+// YYYY-MM-DD in Malaysia timezone, regardless of where this function runs.
+const MY_DATE_FMT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Kuala_Lumpur',
+  year: 'numeric', month: '2-digit', day: '2-digit',
+})
+function myDateOf(input: Date | string): string {
+  return MY_DATE_FMT.format(typeof input === 'string' ? new Date(input) : input)
+}
+
+// How many of today's three slots (08:00 / 12:00 / 16:00 MY) have
+// elapsed for a reminder whose due date is `dueDateMY` (YYYY-MM-DD).
+// Returns 0–3. Only meaningful when dueDateMY === today in MY tz.
+function slotsElapsed(now: Date, dueDateMY: string): number {
+  const [y, m, d] = dueDateMY.split('-').map(Number)
+  // MY = UTC+8, so 08/12/16 MY = 00/04/08 UTC on the same calendar day.
+  const slotHoursUTC = [0, 4, 8]
+  const nowMs = now.getTime()
+  let n = 0
+  for (const h of slotHoursUTC) {
+    if (nowMs >= Date.UTC(y, m - 1, d, h, 0, 0, 0)) n++
+  }
+  return n
+}
+
 Deno.serve(async () => {
+  const now = new Date()
+  const todayMY = myDateOf(now)
+
   const { data: due, error } = await sb
     .from('reminders')
-    .select('id, user_id, record_id, kind, title, name, record:records(name, dose_number)')
-    .lte('due_at', new Date().toISOString())
-    .is('sent_at', null)
+    .select('id, user_id, record_id, kind, title, name, due_at, sent_count, record:records(name, dose_number)')
+    .lte('due_at', now.toISOString())
+    .lt('sent_count', 3)
   if (error) return new Response(error.message, { status: 500 })
 
-  // Cache user locale per request to avoid one auth lookup per reminder
-  // when multiple reminders belong to the same user.
+  // Cache user locale per request to avoid one auth lookup per reminder.
   const localeCache = new Map<string, Locale>()
   async function getUserLocale(user_id: string): Promise<Locale> {
     const cached = localeCache.get(user_id)
@@ -87,10 +108,19 @@ Deno.serve(async () => {
     return loc
   }
 
+  let processed = 0
   let sent = 0
   let dead = 0
 
   for (const row of (due ?? []) as unknown as ReminderRow[]) {
+    const dueDateMY = myDateOf(row.due_at)
+    // We only fire on the reminder's own due day (MY tz). Reminders that
+    // are past-due but never reached sent_count=3 are intentionally skipped.
+    if (dueDateMY !== todayMY) continue
+    const desired = slotsElapsed(now, dueDateMY)
+    if (desired <= row.sent_count) continue
+
+    processed++
     const locale = await getUserLocale(row.user_id)
     const { title, body } = formatNotification(row, locale)
     const { data: subs } = await sb
@@ -104,9 +134,6 @@ Deno.serve(async () => {
           JSON.stringify({
             title,
             body,
-            // Always land on /home with a scroll-anchor to the reminder card.
-            // Linking to row.record_id would open the *prior* record
-            // (e.g., Dose 1 when reminding about Dose 2), which is confusing.
             url: `/home#r-${row.id}`,
           }),
         )
@@ -119,10 +146,16 @@ Deno.serve(async () => {
         }
       }
     }
-    await sb.from('reminders').update({ sent_at: new Date().toISOString() }).eq('id', row.id)
+    // One slot-fire per cron tick. Late-set reminders that have multiple
+    // elapsed slots catch up over subsequent ticks (15-min cadence), which
+    // also naturally spaces the pushes out so the device isn't slammed.
+    await sb
+      .from('reminders')
+      .update({ sent_at: now.toISOString(), sent_count: row.sent_count + 1 })
+      .eq('id', row.id)
   }
 
-  return new Response(JSON.stringify({ processed: due?.length ?? 0, sent, dead }), {
+  return new Response(JSON.stringify({ processed, sent, dead }), {
     headers: { 'content-type': 'application/json' },
   })
 })
