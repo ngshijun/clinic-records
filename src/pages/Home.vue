@@ -6,6 +6,7 @@ import { useRecordsStore, type Reminder } from '@/stores/records'
 import { dateInMY, formatDateShort, formatMonthDay } from '@/lib/dates'
 import { useAuthStore } from '@/stores/auth'
 import ProfileSwitcher from '@/components/ProfileSwitcher.vue'
+import { Camera } from 'lucide-vue-next'
 
 const profiles = useProfilesStore()
 const records = useRecordsStore()
@@ -270,7 +271,7 @@ function recordsWord(n: number) {
       <router-link to="/profiles" class="px-5 py-3 text-xs eyebrow hover:text-ink whitespace-nowrap">{{ $t('home.navProfiles') }}</router-link>
       <div class="w-px h-6 bg-[var(--color-rule)]"></div>
       <router-link to="/scan" class="px-6 py-3 bg-ink text-paper font-display text-lg flex items-center gap-2 whitespace-nowrap">
-        {{ $t('home.navScan') }} <span aria-hidden>↗</span>
+        {{ $t('home.navScan') }} <Camera :size="20" :stroke-width="1.75" aria-hidden />
       </router-link>
       <div class="w-px h-6 bg-[var(--color-rule)]"></div>
       <router-link to="/settings" class="px-5 py-3 text-xs eyebrow hover:text-ink whitespace-nowrap">{{ $t('home.navSettings') }}</router-link>
