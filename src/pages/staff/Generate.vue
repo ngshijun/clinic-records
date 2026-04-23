@@ -6,7 +6,7 @@ import draggable from 'vuedraggable'
 import { encodePayload, type QrPayload, type QrKind } from '@/lib/qr-payload'
 import { todayLocalIso, formatDateLong } from '@/lib/dates'
 import { clearStaffUnlocked } from '@/lib/staff-auth'
-import { VACCINE_NAMES, TEST_NAMES } from '@/lib/dictionary'
+import { recordName, readNameHistory } from '@/lib/name-history'
 import {
   listTemplates,
   saveTemplate as saveTemplateFn,
@@ -113,7 +113,29 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', onVisible)
 })
 
-const suggestions = computed(() => (kind.value === 'v' ? VACCINE_NAMES : TEST_NAMES))
+const nameHistory = ref(readNameHistory())
+
+// Suggestions = device-typed history first (most-recent), then any names from
+// the clinic's saved templates that aren't already in history. No predefined
+// catalogue — empty until the clinic actually starts using the app.
+const suggestions = computed(() => {
+  const history = nameHistory.value[kind.value]
+  const fromTemplates = templates.value.filter(t => t.kind === kind.value).map(t => t.name)
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const n of [...history, ...fromTemplates]) {
+    const key = n.trim().toLowerCase()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(n.trim())
+  }
+  return out
+})
+
+function rememberName() {
+  if (!name.value.trim()) return
+  nameHistory.value = recordName(kind.value, name.value)
+}
 
 const seriesComplete = computed(() =>
   kind.value === 'v'
@@ -174,6 +196,7 @@ function applyTemplate(tpl: Template) {
 }
 
 function backToPicker() {
+  rememberName()
   stage.value = 'picker'
 }
 
@@ -193,6 +216,7 @@ async function saveCurrentAsTemplate() {
   try {
     savedFlash.value = t('staff.saving')
     await saveTemplateFn({ ...draft, label: label.trim() || suggested })
+    rememberName()
     await refreshAll()
     savedFlash.value = t('staff.savedFlash')
     setTimeout(() => { savedFlash.value = null }, 1800)
