@@ -74,7 +74,7 @@ export default {
     emptyHint: '点击下方的「扫描」按钮,读取诊所给您的第一张二维码。',
     reminderKind: '提醒',
     due: '{date} 到期',
-    dueAround: '约于 {date}',
+    dueAround: '{date} 到期',
     nextDoseTitle: '{name} · 第 {n} 剂',
     followupTitle: '{name} · 再验血',
     doseOf: '第 {n} 剂,共 {total} 剂',
