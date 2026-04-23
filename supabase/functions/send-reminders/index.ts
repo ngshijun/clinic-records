@@ -26,12 +26,12 @@ const MESSAGES: Record<Locale, {
   zh: {
     vaccination: (name, doseN) => doseN != null ? `疫苗提醒: ${name} 第 ${doseN} 剂` : `疫苗提醒: ${name}`,
     bloodTest: (name) => `验血提醒: ${name}`,
-    body: '请到黄氏药房就诊。点击查看详情。\n我们周六休诊。',
+    body: '请到黄氏药房就诊。点击查看详情。\n黄氏药房每逢周六休诊。',
   },
   ms: {
     vaccination: (name, doseN) => doseN != null ? `Vaksin: ${name} Dos ke-${doseN}` : `Vaksin: ${name}`,
     bloodTest: (name) => `Ujian darah: ${name}`,
-    body: 'Sila ke Poliklinik Ng PLT bila senang. Ketik untuk butiran.\nKami tutup pada hari Sabtu.',
+    body: 'Sila ke Poliklinik Ng PLT bila senang. Ketik untuk butiran.\nPoliklinik Ng PLT tutup pada hari Sabtu.',
   },
 }
 
