@@ -28,10 +28,7 @@ const { t } = useI18n()
           </span>
         </div>
       </div>
-      <div class="flex items-center justify-between">
-        <span class="eyebrow" style="color: var(--color-staff-accent)">{{ tpl.label }}</span>
-        <span class="opacity-0 group-hover:opacity-100 transition-opacity" style="color: var(--color-staff-accent)">→</span>
-      </div>
+      <div class="eyebrow" style="color: var(--color-staff-accent)">{{ tpl.label }}</div>
     </button>
     <button
       type="button"

@@ -29,8 +29,6 @@ export interface Reminder {
   due_at: string
   window_days: number
   sent_at: string | null
-  dismissed_at: string | null
-  completed_at: string | null
   created_at: string
 }
 
@@ -48,7 +46,7 @@ export const useRecordsStore = defineStore('records', () => {
   async function fetchForProfile(profile_id: string) {
     const [{ data: recs, error: re }, { data: rems, error: me }] = await Promise.all([
       supabase.from('records').select('*').eq('profile_id', profile_id).order('performed_on', { ascending: false }),
-      supabase.from('reminders').select('*').eq('profile_id', profile_id).is('dismissed_at', null).is('completed_at', null).order('due_at'),
+      supabase.from('reminders').select('*').eq('profile_id', profile_id).order('due_at'),
     ])
     if (re) throw re
     if (me) throw me
@@ -83,14 +81,12 @@ export const useRecordsStore = defineStore('records', () => {
     const priorIds = (priors ?? []).map(p => p.id)
     if (priorIds.length === 0) return
     const reminderKind = rec.kind === 'vaccination' ? 'next_dose' : 'followup_test'
-    const { error: ue } = await supabase
+    const { error: de } = await supabase
       .from('reminders')
-      .update({ completed_at: new Date().toISOString() })
+      .delete()
       .in('record_id', priorIds)
       .eq('kind', reminderKind)
-      .is('completed_at', null)
-      .is('dismissed_at', null)
-    if (ue) throw ue
+    if (de) throw de
   }
 
   async function createReminderForRecord(user_id: string, rec: Record, payload: QrPayload) {

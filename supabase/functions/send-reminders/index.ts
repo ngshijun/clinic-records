@@ -72,8 +72,6 @@ Deno.serve(async () => {
     .select('id, user_id, record_id, kind, title, name, record:records(name, dose_number)')
     .lte('due_at', new Date().toISOString())
     .is('sent_at', null)
-    .is('dismissed_at', null)
-    .is('completed_at', null)
   if (error) return new Response(error.message, { status: 500 })
 
   // Cache user locale per request to avoid one auth lookup per reminder
