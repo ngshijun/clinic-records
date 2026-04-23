@@ -505,7 +505,7 @@ function onLocaleChange(e: Event) {
 
             <label class="block">
               <span class="field-label">{{ $t('staff.nameLabel') }}</span>
-              <input v-model="name" list="names" class="field font-display text-2xl" :placeholder="$t('staff.namePlaceholder')" />
+              <input v-model="name" list="names" class="field font-display text-2xl" :placeholder="$t(kind === 'v' ? 'staff.vaccinePlaceholder' : 'staff.bloodTestPlaceholder')" />
               <datalist id="names">
                 <option v-for="n in suggestions" :key="n" :value="n" />
               </datalist>
