@@ -106,6 +106,7 @@ export default {
     description: "Align the clinic's QR inside the frame.",
     seeking: 'seeking signal',
     invalid: 'QR does not contain a valid record.',
+    toggleZoom: 'Toggle camera zoom',
   },
   ingest: {
     eyebrow: 'Ingest · new entry',

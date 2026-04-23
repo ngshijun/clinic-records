@@ -109,6 +109,7 @@ export default {
     description: 'Jajarkan QR klinik di dalam bingkai.',
     seeking: 'mencari isyarat',
     invalid: 'QR ini tidak mengandungi rekod yang sah.',
+    toggleZoom: 'Tukar zum kamera',
   },
   ingest: {
     eyebrow: 'Masukan · entri baharu',

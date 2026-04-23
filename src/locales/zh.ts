@@ -106,6 +106,7 @@ export default {
     description: '将诊所的二维码对准框内。',
     seeking: '正在寻找信号',
     invalid: '此二维码不包含有效记录。',
+    toggleZoom: '切换镜头缩放',
   },
   ingest: {
     eyebrow: '录入 · 新记录',

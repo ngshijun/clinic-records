@@ -8,6 +8,7 @@ const router = useRouter()
 const { t } = useI18n()
 const error = ref<string | null>(null)
 const handled = ref(false)
+const qr = ref<InstanceType<typeof QrScanner> | null>(null)
 
 function onDecoded(raw: string) {
   if (handled.value) return
@@ -35,7 +36,7 @@ function onDecoded(raw: string) {
       <div class="relative anim-rise-2 w-full flex flex-col items-center">
         <div class="relative w-full max-w-[440px] aspect-square">
           <div class="absolute inset-0 overflow-hidden">
-            <QrScanner @decoded="onDecoded" @error="(m) => error = m" />
+            <QrScanner ref="qr" @decoded="onDecoded" @error="(m) => error = m" />
           </div>
           <svg class="absolute inset-0 pointer-events-none text-ink" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
             <g fill="none" stroke="currentColor" stroke-width="1.25" stroke-opacity="0.7" vector-effect="non-scaling-stroke">
@@ -46,6 +47,15 @@ function onDecoded(raw: string) {
             </g>
           </svg>
           <div class="absolute left-4 right-4 top-0 h-px bg-[var(--color-accent)] shadow-[0_0_10px_rgba(162,76,40,0.6)] scan-line" aria-hidden></div>
+          <button
+            v-if="qr?.state?.zoomSupported"
+            @click="qr?.toggleZoom()"
+            :aria-label="t('scan.toggleZoom')"
+            class="absolute bottom-4 right-4 px-3 py-1.5 text-xs font-mono-app tabular-nums rounded-full transition-opacity hover:opacity-100"
+            style="background: var(--color-paper); color: var(--color-ink); border: 1px solid var(--color-ink); opacity: 0.88;"
+          >
+            {{ (qr?.state?.zoom ?? 1) > 1 ? '1×' : '2×' }}
+          </button>
         </div>
         <div class="text-center mt-4 folio">
           <span class="inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-moss)] mr-2 align-middle dot-pulse"></span>
