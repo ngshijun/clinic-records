@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import QrScanner from '@/components/QrScanner.vue'
@@ -9,6 +9,8 @@ const { t } = useI18n()
 const error = ref<string | null>(null)
 const handled = ref(false)
 const qr = ref<InstanceType<typeof QrScanner> | null>(null)
+const zoomSupported = computed(() => qr.value?.state?.zoomSupported ?? false)
+const zoomLabel = computed(() => ((qr.value?.state?.zoom ?? 1) > 1 ? '1×' : '2×'))
 
 function onDecoded(raw: string) {
   if (handled.value) return
@@ -48,13 +50,13 @@ function onDecoded(raw: string) {
           </svg>
           <div class="absolute left-4 right-4 top-0 h-px bg-[var(--color-accent)] shadow-[0_0_10px_rgba(162,76,40,0.6)] scan-line" aria-hidden></div>
           <button
-            v-if="qr?.state?.zoomSupported"
+            v-if="zoomSupported"
             @click="qr?.toggleZoom()"
             :aria-label="t('scan.toggleZoom')"
             class="absolute bottom-4 right-4 px-3 py-1.5 text-xs font-mono-app tabular-nums rounded-full transition-opacity hover:opacity-100"
             style="background: var(--color-paper); color: var(--color-ink); border: 1px solid var(--color-ink); opacity: 0.88;"
           >
-            {{ (qr?.state?.zoom ?? 1) > 1 ? '1×' : '2×' }}
+            {{ zoomLabel }}
           </button>
         </div>
         <div class="text-center mt-4 folio">
