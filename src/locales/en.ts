@@ -294,4 +294,9 @@ export default {
     deleteFailed: 'Could not delete: {err}',
     confirmDeleteTemplate: 'Delete template "{label}"?',
   },
+  appUpdate: {
+    title: 'A new version is available',
+    description: 'Refresh to get the latest changes.',
+    refresh: 'Refresh',
+  },
 }

@@ -11,6 +11,12 @@ let track: MediaStreamTrack | null = null
 let zoomMin = 1
 let zoomMax = 1
 
+function readZoomSetting(): number | undefined {
+  if (!track) return undefined
+  const s = track.getSettings() as MediaTrackSettings & { zoom?: number }
+  return typeof s.zoom === 'number' ? s.zoom : undefined
+}
+
 async function configureTrack() {
   const video = container.value?.querySelector('video') as HTMLVideoElement | null
   const stream = video?.srcObject as MediaStream | null
@@ -23,10 +29,14 @@ async function configureTrack() {
 
   try {
     const caps = track.getCapabilities() as MediaTrackCapabilities & { zoom?: { min: number; max: number; step: number } }
-    if (caps.zoom && caps.zoom.max > caps.zoom.min) {
+    const current = readZoomSetting()
+    // Only enable if both the capability AND a readable current zoom are present.
+    // iOS Safari sometimes advertises caps.zoom without actually honoring it;
+    // the settings.zoom readback is a better "actually wired up" signal.
+    if (caps.zoom && caps.zoom.max > caps.zoom.min && current !== undefined) {
       zoomMin = caps.zoom.min
       zoomMax = caps.zoom.max
-      state.zoom = zoomMin
+      state.zoom = current
       state.zoomSupported = true
     }
   } catch {}
@@ -37,8 +47,18 @@ async function setZoom(value: number) {
   const clamped = Math.min(zoomMax, Math.max(zoomMin, value))
   try {
     await track.applyConstraints({ advanced: [{ zoom: clamped } as MediaTrackConstraintSet] })
-    state.zoom = clamped
-  } catch {}
+    // Verify the change actually took — some devices accept the constraint
+    // without throwing but don't honor it. If the readback disagrees, the
+    // feature isn't really supported on this device; disable going forward.
+    const actual = readZoomSetting()
+    if (actual === undefined || Math.abs(actual - clamped) > 0.01) {
+      state.zoomSupported = false
+      return
+    }
+    state.zoom = actual
+  } catch {
+    state.zoomSupported = false
+  }
 }
 
 async function toggleZoom() {

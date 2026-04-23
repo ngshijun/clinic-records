@@ -294,4 +294,9 @@ export default {
     deleteFailed: '无法删除:{err}',
     confirmDeleteTemplate: '删除模板「{label}」?',
   },
+  appUpdate: {
+    title: '已有新版本',
+    description: '请刷新以获取最新更新。',
+    refresh: '刷新',
+  },
 }

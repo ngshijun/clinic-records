@@ -2,12 +2,18 @@ import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { webUpdateNotice } from '@plugin-web-update-notification/vite'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
+    webUpdateNotice({
+      logVersion: true,
+      checkInterval: 10 * 60 * 1000,
+      hiddenDefaultNotification: true,
+    }),
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src',

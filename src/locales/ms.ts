@@ -297,4 +297,9 @@ export default {
     deleteFailed: 'Tidak dapat memadam: {err}',
     confirmDeleteTemplate: 'Padam templat "{label}"?',
   },
+  appUpdate: {
+    title: 'Versi baharu tersedia',
+    description: 'Muat semula untuk mendapatkan versi terkini.',
+    refresh: 'Muat semula',
+  },
 }
