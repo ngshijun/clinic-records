@@ -165,6 +165,13 @@ export default {
     vaccinationLabel: 'Vaccination',
     bloodTestLabel: 'Blood test',
   },
+  reminderDetail: {
+    vaccinationLabel: 'Vaccination reminder',
+    bloodTestLabel: 'Blood test reminder',
+    due: 'Due',
+    sourceRecord: 'From record',
+    scheduled: 'scheduled {date}',
+  },
   profiles: {
     profilesLabel: 'Profiles · № {count}',
     firstReader: 'First reader',

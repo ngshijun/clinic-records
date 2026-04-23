@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/scan', name: 'scan', component: () => import('@/pages/Scan.vue'), meta: { requiresAuth: true } },
   { path: '/ingest', name: 'ingest', component: () => import('@/pages/Ingest.vue'), meta: { requiresAuth: true } },
   { path: '/records/:id', name: 'record', component: () => import('@/pages/RecordDetail.vue'), meta: { requiresAuth: true } },
+  { path: '/reminders/:id', name: 'reminder', component: () => import('@/pages/ReminderDetail.vue'), meta: { requiresAuth: true } },
   { path: '/profiles', name: 'profiles', component: () => import('@/pages/Profiles.vue'), meta: { requiresAuth: true } },
   { path: '/settings', name: 'settings', component: () => import('@/pages/Settings.vue'), meta: { requiresAuth: true } },
   { path: '/staff', name: 'staff', component: () => import('@/pages/staff/Gate.vue') },

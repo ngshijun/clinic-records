@@ -239,20 +239,25 @@ function recordsWord(n: number) {
             v-for="r in records.reminders"
             :key="r.id"
             :id="'r-' + r.id"
-            class="paper-card p-5 brackets transition-shadow duration-300"
+            class="paper-card brackets transition-shadow duration-300"
             :class="{ 'reminder-flash': flashedReminderId === r.id }"
           >
             <span class="br-tr"></span><span class="br-bl"></span>
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <div class="eyebrow mb-2">{{ $t('home.reminderKind') }} · {{ reminderKindLabel(r.kind) }}</div>
-                <h3 class="font-display text-xl leading-tight">{{ reminderTitle(r) }}</h3>
+            <router-link
+              :to="`/reminders/${r.id}`"
+              class="block p-5 hover:bg-[var(--color-paper-2)] transition-colors"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="eyebrow mb-2">{{ $t('home.reminderKind') }} · {{ reminderKindLabel(r.kind) }}</div>
+                  <h3 class="font-display text-xl leading-tight">{{ reminderTitle(r) }}</h3>
+                </div>
+                <span class="font-mono-app text-xs text-accent whitespace-nowrap">{{ relativeDue(r.due_at) }}</span>
               </div>
-              <span class="font-mono-app text-xs text-accent whitespace-nowrap">{{ relativeDue(r.due_at) }}</span>
-            </div>
-            <div class="pt-4 mt-4 hairline-t text-xs">
-              <span class="folio">{{ $t('home.dueAround', { date: formatDate(r.due_at) }) }}</span>
-            </div>
+              <div class="pt-4 mt-4 hairline-t text-xs">
+                <span class="folio">{{ $t('home.dueAround', { date: formatDate(r.due_at) }) }}</span>
+              </div>
+            </router-link>
           </li>
         </ul>
       </section>

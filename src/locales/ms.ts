@@ -168,6 +168,13 @@ export default {
     vaccinationLabel: 'Vaksinasi',
     bloodTestLabel: 'Ujian darah',
   },
+  reminderDetail: {
+    vaccinationLabel: 'Peringatan vaksin',
+    bloodTestLabel: 'Peringatan ujian darah',
+    due: 'Perlu pada',
+    sourceRecord: 'Dari rekod',
+    scheduled: 'dijadualkan {date}',
+  },
   profiles: {
     profilesLabel: 'Profil · № {count}',
     firstReader: 'Pembaca pertama',

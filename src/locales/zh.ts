@@ -165,6 +165,13 @@ export default {
     vaccinationLabel: '疫苗接种',
     bloodTestLabel: '血液检查',
   },
+  reminderDetail: {
+    vaccinationLabel: '疫苗提醒',
+    bloodTestLabel: '验血提醒',
+    due: '到期',
+    sourceRecord: '源记录',
+    scheduled: '安排于 {date}',
+  },
   profiles: {
     profilesLabel: '档案 · № {count}',
     firstReader: '第一位持有人',
