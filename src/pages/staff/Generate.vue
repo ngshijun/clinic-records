@@ -137,6 +137,40 @@ function rememberName() {
   nameHistory.value = recordName(kind.value, name.value)
 }
 
+// Custom autocomplete dropdown state for the name input.
+const nameOpen = ref(false)
+const nameHover = ref(0)
+const filteredSuggestions = computed(() => {
+  const q = name.value.trim().toLowerCase()
+  if (!q) return suggestions.value
+  return suggestions.value.filter(s => s.toLowerCase().includes(q))
+})
+function pickSuggestion(s: string) {
+  name.value = s
+  nameOpen.value = false
+}
+function onNameBlur() {
+  // Delay so a click on a suggestion item registers first.
+  setTimeout(() => { nameOpen.value = false }, 120)
+}
+function onNameKey(e: KeyboardEvent) {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    if (!nameOpen.value) { nameOpen.value = true; return }
+    nameHover.value = (nameHover.value + 1) % filteredSuggestions.value.length
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    nameHover.value = (nameHover.value - 1 + filteredSuggestions.value.length) % filteredSuggestions.value.length
+  } else if (e.key === 'Enter' && nameOpen.value && filteredSuggestions.value.length > 0) {
+    e.preventDefault()
+    pickSuggestion(filteredSuggestions.value[nameHover.value])
+  } else if (e.key === 'Escape') {
+    nameOpen.value = false
+  }
+}
+watch(name, () => { nameHover.value = 0 })
+watch(kind, () => { nameOpen.value = false })
+
 const seriesComplete = computed(() =>
   kind.value === 'v'
   && doseNumber.value != null
@@ -503,12 +537,35 @@ function onLocaleChange(e: Event) {
               </div>
             </div>
 
-            <label class="block">
+            <label class="block relative">
               <span class="field-label">{{ $t('staff.nameLabel') }}</span>
-              <input v-model="name" list="names" class="field font-display text-2xl" :placeholder="$t(kind === 'v' ? 'staff.vaccinePlaceholder' : 'staff.bloodTestPlaceholder')" />
-              <datalist id="names">
-                <option v-for="n in suggestions" :key="n" :value="n" />
-              </datalist>
+              <input
+                v-model="name"
+                @focus="nameOpen = true"
+                @blur="onNameBlur"
+                @keydown="onNameKey"
+                autocomplete="off"
+                class="field font-display text-2xl"
+                :placeholder="$t(kind === 'v' ? 'staff.vaccinePlaceholder' : 'staff.bloodTestPlaceholder')"
+              />
+              <ul
+                v-if="nameOpen && filteredSuggestions.length"
+                class="absolute left-0 right-0 top-full mt-1 z-20 max-h-60 overflow-auto hairline shadow-xl"
+                style="background: var(--color-staff-panel); color: var(--color-staff-ink); border-color: var(--color-staff-rule);"
+                role="listbox"
+              >
+                <li
+                  v-for="(s, i) in filteredSuggestions"
+                  :key="s"
+                  :id="'name-opt-' + i"
+                  role="option"
+                  :aria-selected="i === nameHover"
+                  class="px-4 py-2.5 text-base cursor-pointer transition-colors"
+                  :style="i === nameHover ? 'background: var(--color-staff-accent); color: var(--color-staff-paper);' : ''"
+                  @mousedown.prevent="pickSuggestion(s)"
+                  @mouseenter="nameHover = i"
+                >{{ s }}</li>
+              </ul>
             </label>
 
             <label class="flex items-start gap-3 cursor-pointer select-none">
