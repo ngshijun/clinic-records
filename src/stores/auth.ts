@@ -2,13 +2,19 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { i18n } from '@/lib/i18n'
+import { i18n, adoptServerLocale, type Locale } from '@/lib/i18n'
 
-function seedLocaleMetadata(u: User | null) {
+function syncLocaleFromServer(u: User | null) {
   if (!u) return
-  const current = i18n.global.locale.value as string
-  if (u.user_metadata?.locale === current) return
-  supabase.auth.updateUser({ data: { locale: current } }).catch(() => {})
+  const raw = u.user_metadata?.locale as string | undefined
+  if (raw === 'en' || raw === 'zh' || raw === 'ms') {
+    // Server has the user's stored preference — adopt it locally.
+    adoptServerLocale(raw as Locale)
+  } else {
+    // No server-stored locale yet — seed with the device's current value.
+    const current = i18n.global.locale.value as string
+    supabase.auth.updateUser({ data: { locale: current } }).catch(() => {})
+  }
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -20,10 +26,10 @@ export const useAuthStore = defineStore('auth', () => {
     const { data } = await supabase.auth.getSession()
     session.value = data.session
     loaded.value = true
-    seedLocaleMetadata(session.value?.user ?? null)
+    syncLocaleFromServer(session.value?.user ?? null)
     supabase.auth.onAuthStateChange((_e, s) => {
       session.value = s
-      seedLocaleMetadata(s?.user ?? null)
+      syncLocaleFromServer(s?.user ?? null)
     })
   }
 

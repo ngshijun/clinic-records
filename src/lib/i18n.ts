@@ -29,13 +29,26 @@ export const i18n = createI18n({
   messages: { en, zh, ms },
 })
 
-export function setLocale(locale: Locale) {
+function applyLocaleLocal(locale: Locale) {
   i18n.global.locale.value = locale
   localStorage.setItem(STORAGE_KEY, locale)
   document.documentElement.setAttribute('lang', locale)
-  // Best-effort sync the locale onto the authenticated user's metadata so
-  // server-side processes (push notifications, email reminders) can pick the
-  // right language. Dynamic import avoids a hard dep between i18n and supabase.
+}
+
+/**
+ * Apply a server-supplied locale locally without pushing it back to the
+ * server. Called on auth init so devices adopt the user's stored
+ * preference instead of overwriting it with the device's detected default.
+ */
+export function adoptServerLocale(locale: Locale) {
+  if (i18n.global.locale.value !== locale) applyLocaleLocal(locale)
+}
+
+export function setLocale(locale: Locale) {
+  applyLocaleLocal(locale)
+  // Push to the authenticated user's metadata so other devices and
+  // server-side processes (push notifications, email reminders) pick it
+  // up. Dynamic import avoids a hard dep between i18n and supabase.
   import('@/lib/supabase').then(({ supabase }) => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return
