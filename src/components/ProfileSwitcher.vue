@@ -1,19 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useProfilesStore } from '@/stores/profiles'
+import AppDropdown from '@/components/AppDropdown.vue'
+
 const store = useProfilesStore()
+const options = computed(() => store.profiles.map(p => ({ value: p.id, label: p.name })))
 </script>
 
 <template>
-  <label v-if="store.profiles.length > 1" class="inline-flex items-center gap-2 text-sm">
-    <span class="relative">
-      <select
-        :value="store.activeId ?? ''"
-        @change="(e) => store.setActive((e.target as HTMLSelectElement).value)"
-        class="appearance-none bg-transparent hairline-b pl-0 pr-6 py-1 font-display text-lg focus:outline-none focus:border-ink cursor-pointer"
-      >
-        <option v-for="p in store.profiles" :key="p.id" :value="p.id">{{ p.name }}</option>
-      </select>
-      <span aria-hidden class="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-muted-app pointer-events-none">▾</span>
-    </span>
-  </label>
+  <div v-if="store.profiles.length > 1" class="inline-flex items-center gap-2 text-sm">
+    <AppDropdown
+      :model-value="store.activeId ?? ''"
+      :options="options"
+      trigger-class="hairline-b pl-0 pr-6 py-1 font-display text-lg"
+      @update:model-value="(v) => store.setActive(v)"
+    />
+  </div>
 </template>

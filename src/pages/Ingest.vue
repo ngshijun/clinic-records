@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { decodeUrl, computeFingerprint, type QrPayload } from '@/lib/qr-payload'
@@ -7,6 +7,7 @@ import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore, type Record } from '@/stores/records'
 import IngestConfirm from '@/components/IngestConfirm.vue'
 import SimilarityDialog from '@/components/SimilarityDialog.vue'
+import AppDropdown from '@/components/AppDropdown.vue'
 import { requestAndSubscribe } from '@/lib/push'
 import { supabase } from '@/lib/supabase'
 
@@ -20,6 +21,7 @@ const payload = ref<QrPayload | null>(null)
 const fingerprint = ref<string>('')
 const parseError = ref<string | null>(null)
 const selectedProfile = ref<string | null>(null)
+const profileOptions = computed(() => profiles.profiles.map(p => ({ value: p.id, label: p.name })))
 const similar = ref<Record | null>(null)
 const busy = ref(false)
 const errorMsg = ref<string | null>(null)
@@ -122,9 +124,12 @@ async function doKeepBoth() {
             <div class="eyebrow mb-1">{{ $t('ingest.fileUnder') }}</div>
             <div class="text-sm text-muted-app">{{ $t('ingest.fileUnderHint') }}</div>
           </div>
-          <select v-model="selectedProfile" class="bg-transparent hairline-b font-display text-xl px-0 pr-6 py-1 focus:outline-none focus:border-ink">
-            <option v-for="p in profiles.profiles" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
+          <AppDropdown
+            :model-value="selectedProfile ?? ''"
+            :options="profileOptions"
+            trigger-class="hairline-b font-display text-xl px-0 pr-6 py-1"
+            @update:model-value="(v) => selectedProfile = v"
+          />
         </div>
 
         <div class="anim-rise-3">

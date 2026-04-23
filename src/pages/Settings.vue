@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { requestAndSubscribe, unsubscribeCurrent, isSubscribed } from '@/lib/push'
 import { AVAILABLE_LOCALES, setLocale, type Locale } from '@/lib/i18n'
+import AppDropdown from '@/components/AppDropdown.vue'
+
+const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.native })))
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -46,10 +49,6 @@ async function upgrade() {
   }
 }
 
-function onLocaleChange(e: Event) {
-  const code = (e.target as HTMLSelectElement).value as Locale
-  setLocale(code)
-}
 </script>
 
 <template>
@@ -129,16 +128,13 @@ function onLocaleChange(e: Event) {
             <div class="font-display text-xl">{{ AVAILABLE_LOCALES.find(l => l.code === locale)?.native }}</div>
             <div class="text-sm text-muted-app mt-0.5">{{ $t('settings.languageHint') }}</div>
           </div>
-          <span class="relative shrink-0">
-            <select
-              :value="locale"
-              @change="onLocaleChange"
-              class="appearance-none bg-transparent hairline-b pl-0 pr-7 py-1 font-display text-lg focus:outline-none focus:border-ink cursor-pointer"
-            >
-              <option v-for="l in AVAILABLE_LOCALES" :key="l.code" :value="l.code">{{ l.native }}</option>
-            </select>
-            <span aria-hidden class="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-muted-app pointer-events-none">▾</span>
-          </span>
+          <AppDropdown
+            :model-value="locale"
+            :options="localeOptions"
+            :aria-label="$t('settings.language')"
+            trigger-class="shrink-0 hairline-b pl-0 pr-7 py-1 font-display text-lg"
+            @update:model-value="(v) => setLocale(v as Locale)"
+          />
         </div>
       </section>
 

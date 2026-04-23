@@ -17,15 +17,22 @@ const open = ref(false)
 const hover = ref(0)
 const rootEl = ref<HTMLElement | null>(null)
 const btnEl = ref<HTMLButtonElement | null>(null)
+const menuEl = ref<HTMLUListElement | null>(null)
+const triggerRect = ref<DOMRect | null>(null)
 
 const currentLabel = computed(() => {
   const o = props.options.find(x => x.value === props.modelValue)
   return o?.label ?? ''
 })
 
+function refreshRect() {
+  triggerRect.value = btnEl.value?.getBoundingClientRect() ?? null
+}
+
 function toggle() {
   open.value = !open.value
   if (open.value) {
+    refreshRect()
     const i = props.options.findIndex(x => x.value === props.modelValue)
     hover.value = i >= 0 ? i : 0
   }
@@ -62,18 +69,39 @@ function onKey(e: KeyboardEvent) {
 }
 
 function onDocClick(e: MouseEvent) {
-  if (!rootEl.value) return
-  if (!rootEl.value.contains(e.target as Node)) open.value = false
+  const target = e.target as Node
+  if (rootEl.value?.contains(target)) return
+  if (menuEl.value?.contains(target)) return
+  open.value = false
 }
+
+function onWindowScroll() { if (open.value) open.value = false }
+function onWindowResize() { if (open.value) open.value = false }
 
 onMounted(() => {
   document.addEventListener('click', onDocClick, { capture: true })
+  window.addEventListener('scroll', onWindowScroll, { capture: true })
+  window.addEventListener('resize', onWindowResize)
 })
 onBeforeUnmount(() => {
   document.removeEventListener('click', onDocClick, { capture: true })
+  window.removeEventListener('scroll', onWindowScroll, { capture: true })
+  window.removeEventListener('resize', onWindowResize)
 })
 
 watch(() => props.options, () => { hover.value = 0 })
+
+const menuStyle = computed(() => {
+  const r = triggerRect.value
+  if (!r) return {}
+  return {
+    position: 'fixed' as const,
+    top: `${r.bottom + 4}px`,
+    left: `${r.left}px`,
+    minWidth: `${r.width}px`,
+    zIndex: 50,
+  }
+})
 </script>
 
 <template>
@@ -91,21 +119,25 @@ watch(() => props.options, () => { hover.value = 0 })
       <span class="truncate">{{ currentLabel || placeholder }}</span>
       <span aria-hidden class="text-[0.65em] opacity-70 ml-auto">▾</span>
     </button>
-    <ul
-      v-if="open"
-      role="listbox"
-      class="app-dropdown-menu absolute top-full mt-1 z-20 min-w-full max-h-60 overflow-auto hairline shadow-xl left-0"
-    >
-      <li
-        v-for="(o, i) in options"
-        :key="o.value"
-        role="option"
-        :aria-selected="o.value === modelValue"
-        :class="['app-dropdown-item px-4 py-2.5 cursor-pointer transition-colors whitespace-nowrap', i === hover ? 'is-active' : '']"
-        @mousedown.prevent="pick(o)"
-        @mouseenter="hover = i"
-      >{{ o.label }}</li>
-    </ul>
+    <Teleport to="body">
+      <ul
+        v-if="open"
+        ref="menuEl"
+        role="listbox"
+        class="app-dropdown-menu max-h-60 overflow-auto hairline shadow-xl"
+        :style="menuStyle"
+      >
+        <li
+          v-for="(o, i) in options"
+          :key="o.value"
+          role="option"
+          :aria-selected="o.value === modelValue"
+          :class="['app-dropdown-item px-4 py-2.5 cursor-pointer transition-colors whitespace-nowrap', i === hover ? 'is-active' : '']"
+          @mousedown.prevent="pick(o)"
+          @mouseenter="hover = i"
+        >{{ o.label }}</li>
+      </ul>
+    </Teleport>
   </div>
 </template>
 
