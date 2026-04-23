@@ -257,7 +257,7 @@ export default {
     templatesCount: '({what} · {count} 个)',
     saveCurrent: '另存为模板',
     pickerTitle: '选择一个模板。',
-    pickerSubtitle: '模板会预填常用字段。或者从头开始。',
+    pickerSubtitle: '模板会预填常用资料。或从头开始。',
     newFromScratch: '从头开始',
     newFromScratchHint: '手动填写所有字段。',
     backToTemplates: '← 模板',
