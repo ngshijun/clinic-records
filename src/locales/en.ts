@@ -5,8 +5,6 @@ export default {
     cancel: 'Cancel',
     save: 'Save',
     delete: 'Delete',
-    edit: 'edit',
-    loading: 'Loading…',
     error: 'Error',
     continue: 'Continue',
     or: 'or',
@@ -16,7 +14,6 @@ export default {
   brand: {
     label: 'Poliklinik Ng · Patient records',
     labelShort: 'Clinic Records · Poliklinik Ng',
-    clinicName: 'Poliklinik Ng',
   },
   auth: {
     email: 'Email',
@@ -121,7 +118,6 @@ export default {
     unreadableHint: 'Ask your clinic to regenerate the code, or return home to try again.',
     returnHome: 'Return home',
     committing: 'Committing to the ledger…',
-    addThisRecord: 'Add this record?',
     given: 'Given {date}',
     remindAroundDose: 'We’ll remind you around {date} for the next dose.',
     remindAroundTest: 'We’ll remind you around {date} for the next test.',
@@ -227,7 +223,6 @@ export default {
     noEmailOnFile: 'No email on file',
     language: 'Language',
     languageHint: 'Choose how text is displayed throughout the app.',
-    endOfSettings: 'end of settings',
   },
   staff: {
     consoleLabel: 'Staff console',

@@ -5,8 +5,6 @@ export default {
     cancel: '取消',
     save: '保存',
     delete: '删除',
-    edit: '编辑',
-    loading: '加载中…',
     error: '错误',
     continue: '继续',
     or: '或',
@@ -16,7 +14,6 @@ export default {
   brand: {
     label: '黄氏药房 · 病人档案',
     labelShort: '病历档案 · 黄氏药房',
-    clinicName: '黄氏药房',
   },
   auth: {
     email: '电邮',
@@ -121,7 +118,6 @@ export default {
     unreadableHint: '请联系诊所重新生成二维码,或返回主页重试。',
     returnHome: '返回主页',
     committing: '正在录入档案…',
-    addThisRecord: '添加此记录?',
     given: '{date} 完成',
     remindAroundDose: '我们将于 {date} 前后提醒您接种下一剂。',
     remindAroundTest: '我们将于 {date} 前后提醒您下一次检查。',
@@ -227,7 +223,6 @@ export default {
     noEmailOnFile: '档案中未保存电邮',
     language: '语言',
     languageHint: '选择应用显示的语言。',
-    endOfSettings: '设置结束',
   },
   staff: {
     consoleLabel: '员工控制台',

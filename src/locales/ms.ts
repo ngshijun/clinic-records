@@ -5,8 +5,6 @@ export default {
     cancel: 'Batal',
     save: 'Simpan',
     delete: 'Padam',
-    edit: 'sunting',
-    loading: 'Memuat…',
     error: 'Ralat',
     continue: 'Teruskan',
     or: 'atau',
@@ -16,7 +14,6 @@ export default {
   brand: {
     label: 'Poliklinik Ng · Rekod pesakit',
     labelShort: 'Rekod Klinik · Poliklinik Ng',
-    clinicName: 'Poliklinik Ng',
   },
   auth: {
     email: 'E-mel',
@@ -124,7 +121,6 @@ export default {
     unreadableHint: 'Minta klinik menjana semula QR, atau kembali ke laman utama untuk cuba lagi.',
     returnHome: 'Kembali ke utama',
     committing: 'Menyimpan ke buku rekod…',
-    addThisRecord: 'Tambah rekod ini?',
     given: 'Diberikan pada {date}',
     remindAroundDose: 'Kami akan ingatkan anda sekitar {date} untuk dos seterusnya.',
     remindAroundTest: 'Kami akan ingatkan anda sekitar {date} untuk ujian seterusnya.',
@@ -230,7 +226,6 @@ export default {
     noEmailOnFile: 'Tiada e-mel dalam fail',
     language: 'Bahasa',
     languageHint: 'Pilih bahasa paparan aplikasi.',
-    endOfSettings: 'akhir tetapan',
   },
   staff: {
     consoleLabel: 'Konsol staf',
