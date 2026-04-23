@@ -157,7 +157,7 @@ export default {
     note: 'Note',
     editEntry: 'Edit entry',
     reassignProfile: 'Reassign profile',
-    strikeFromLedger: 'Strike from ledger',
+    removeFromLedger: 'Remove from ledger',
     moveToAnotherProfile: 'Move to another profile',
     amending: 'Amending · {kind}',
     name: 'Name',

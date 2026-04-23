@@ -157,7 +157,7 @@ export default {
     note: '备注',
     editEntry: '编辑条目',
     reassignProfile: '转移档案',
-    strikeFromLedger: '从档案中划去',
+    removeFromLedger: '从档案中移除',
     moveToAnotherProfile: '移至另一档案',
     amending: '修订 · {kind}',
     name: '名称',

@@ -94,15 +94,16 @@ const filedDate = computed(() => rec.value
             </div>
           </dl>
 
-          <div v-if="rec.notes">
+          <div>
             <div class="eyebrow mb-2">{{ $t('recordDetail.note') }}</div>
-            <p class="font-display-wonk text-xl leading-snug text-ink-2">{{ rec.notes }}</p>
+            <p v-if="rec.notes" class="font-display-wonk text-xl leading-snug text-ink-2">{{ rec.notes }}</p>
+            <p v-else class="font-display-wonk text-xl leading-snug text-muted-app">—</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-3 pt-4 hairline-t">
             <button class="btn-ghost" @click="editing = true">{{ $t('recordDetail.editEntry') }}</button>
-            <button class="btn-ghost" @click="showMove = !showMove">{{ $t('recordDetail.reassignProfile') }}</button>
-            <button class="btn-danger ml-auto" @click="del">{{ $t('recordDetail.strikeFromLedger') }}</button>
+            <button v-if="profiles.profiles.length > 1" class="btn-ghost" @click="showMove = !showMove">{{ $t('recordDetail.reassignProfile') }}</button>
+            <button class="btn-danger ml-auto" @click="del">{{ $t('recordDetail.removeFromLedger') }}</button>
           </div>
 
           <div v-if="showMove" class="paper-card p-4 bg-paper-2">

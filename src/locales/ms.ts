@@ -160,7 +160,7 @@ export default {
     note: 'Nota',
     editEntry: 'Sunting entri',
     reassignProfile: 'Tukar profil',
-    strikeFromLedger: 'Padam dari buku rekod',
+    removeFromLedger: 'Buang dari buku rekod',
     moveToAnotherProfile: 'Pindah ke profil lain',
     amending: 'Meminda · {kind}',
     name: 'Nama',
