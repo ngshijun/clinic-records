@@ -12,8 +12,9 @@ export default {
     close: 'Tutup',
   },
   brand: {
-    label: 'Poliklinik Ng · Rekod pesakit',
-    labelShort: 'Rekod Klinik · Poliklinik Ng',
+    label: 'Poliklinik Ng PLT · Rekod pesakit',
+    labelShort: 'Rekod Klinik · Poliklinik Ng PLT',
+    clinicName: 'Poliklinik Ng PLT',
   },
   auth: {
     email: 'E-mel',
@@ -173,7 +174,7 @@ export default {
     bloodTestLabel: 'Peringatan ujian darah',
     due: 'Perlu pada',
     pleaseNote: 'Sila ambil perhatian',
-    clinicClosedSat: 'Poliklinik Ng tutup pada hari Sabtu.',
+    clinicClosedSat: 'Poliklinik Ng PLT tutup pada hari Sabtu.',
     scheduled: 'dijadualkan {date}',
   },
   profiles: {
@@ -282,7 +283,7 @@ export default {
     seriesCompleteNote: 'Siri selesai — tiada dos seterusnya.',
     doneScanning: 'Selesai diimbas',
     preview: 'Pratonton',
-    patientRecordLabel: 'Poliklinik Ng · Rekod pesakit',
+    patientRecordLabel: 'Poliklinik Ng PLT · Rekod pesakit',
     awaitingEntry: 'menunggu entri',
     kind: 'Jenis',
     vaccine: 'Vaksin',

@@ -14,6 +14,7 @@ export default {
   brand: {
     label: '黄氏药房 · 病历档案',
     labelShort: '病历档案 · 黄氏药房',
+    clinicName: '黄氏药房',
   },
   auth: {
     email: '电邮',

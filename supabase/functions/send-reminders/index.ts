@@ -21,7 +21,7 @@ const MESSAGES: Record<Locale, {
   en: {
     vaccination: (name, doseN) => doseN != null ? `Vaccination due: ${name} Dose ${doseN}` : `Vaccination due: ${name}`,
     bloodTest: (name) => `Blood test due: ${name}`,
-    body: 'Visit Poliklinik Ng when convenient. Tap to view details.\nPoliklinik Ng is closed on Saturdays.',
+    body: 'Visit Polyclinic Ng PLT when convenient. Tap to view details.\nPolyclinic Ng PLT is closed on Saturdays.',
   },
   zh: {
     vaccination: (name, doseN) => doseN != null ? `疫苗提醒: ${name} 第 ${doseN} 剂` : `疫苗提醒: ${name}`,
@@ -31,7 +31,7 @@ const MESSAGES: Record<Locale, {
   ms: {
     vaccination: (name, doseN) => doseN != null ? `Vaksin: ${name} Dos ke-${doseN}` : `Vaksin: ${name}`,
     bloodTest: (name) => `Ujian darah: ${name}`,
-    body: 'Sila ke Poliklinik Ng bila senang. Ketik untuk butiran.\nKami tutup pada hari Sabtu.',
+    body: 'Sila ke Poliklinik Ng PLT bila senang. Ketik untuk butiran.\nKami tutup pada hari Sabtu.',
   },
 }
 

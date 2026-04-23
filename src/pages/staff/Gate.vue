@@ -56,7 +56,7 @@ async function submit() {
         </p>
       </div>
 
-      <div class="relative z-10 eyebrow">Poliklinik Ng</div>
+      <div class="relative z-10 eyebrow">{{ $t('brand.clinicName') }}</div>
     </aside>
 
     <section class="flex items-center justify-center px-6 py-10">
