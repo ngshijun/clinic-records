@@ -41,10 +41,7 @@ const reminderLine = computed(() => {
         {{ payload.k === 'v' ? 'Rx' : payload.k === 'r' ? 'R' : 'Lab' }}
       </div>
 
-      <div class="flex items-start justify-between mb-5">
-        <div class="eyebrow">{{ $t('ingest.entry') }} · {{ kindLabel }}</div>
-        <div class="folio">{{ payload.id.slice(0, 8) }}…</div>
-      </div>
+      <div class="eyebrow mb-5">{{ $t('ingest.entry') }} · {{ kindLabel }}</div>
 
       <h2 class="font-display text-4xl md:text-5xl leading-[0.95] mb-6">{{ payload.n }}</h2>
 

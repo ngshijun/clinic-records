@@ -115,10 +115,10 @@ export default {
     invalid: '此二维码不包含有效记录。',
   },
   ingest: {
-    eyebrow: '新条目 · 录入',
+    eyebrow: '录入 · 新条目',
     home: '← 主页',
-    titlePre: '一条新记录',
-    titleWonk: '等待中',
+    titlePre: '新条目',
+    titleWonk: '待归档',
     fileUnder: '归入档案',
     fileUnderHint: '选择接收此条目的档案。',
     unreadable: '无法读取',
