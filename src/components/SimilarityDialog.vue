@@ -22,10 +22,7 @@ const recordedAt = computed(() => new Date(props.existing.created_at).toLocaleSt
     <div class="paper-card max-w-md w-full p-7 relative brackets">
       <span class="br-tr"></span><span class="br-bl"></span>
 
-      <div class="flex items-start justify-between mb-4">
-        <div class="eyebrow" style="color: var(--color-accent)">{{ $t('ingest.duplicateWarning') }}</div>
-        <div class="folio">§ 3.2</div>
-      </div>
+      <div class="eyebrow mb-4" style="color: var(--color-accent)">{{ $t('ingest.duplicateWarning') }}</div>
 
       <h3 class="font-display text-3xl leading-tight mb-3">
         {{ $t('ingest.similarExistsTitle') }}

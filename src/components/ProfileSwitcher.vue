@@ -5,7 +5,6 @@ const store = useProfilesStore()
 
 <template>
   <label v-if="store.profiles.length > 1" class="inline-flex items-center gap-2 text-sm">
-    <span class="eyebrow">Reader</span>
     <span class="relative">
       <select
         :value="store.activeId ?? ''"
