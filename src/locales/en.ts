@@ -170,7 +170,7 @@ export default {
     bloodTestLabel: 'Blood test reminder',
     due: 'Due',
     pleaseNote: 'Please note',
-    clinicClosedSat: 'The clinic is closed on Saturdays.',
+    clinicClosedSat: 'Poliklinik Ng is closed on Saturdays.',
     scheduled: 'scheduled {date}',
   },
   profiles: {

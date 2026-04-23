@@ -21,7 +21,7 @@ const MESSAGES: Record<Locale, {
   en: {
     vaccination: (name, doseN) => doseN != null ? `Vaccination due: ${name} Dose ${doseN}` : `Vaccination due: ${name}`,
     bloodTest: (name) => `Blood test due: ${name}`,
-    body: 'Visit Poliklinik Ng when convenient. Tap to view details.\nWe are closed on Saturdays.',
+    body: 'Visit Poliklinik Ng when convenient. Tap to view details.\nPoliklinik Ng is closed on Saturdays.',
   },
   zh: {
     vaccination: (name, doseN) => doseN != null ? `疫苗提醒: ${name} 第 ${doseN} 剂` : `疫苗提醒: ${name}`,
