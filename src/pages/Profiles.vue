@@ -140,7 +140,7 @@ function formatDob(d: string | null) {
               <div class="flex items-center gap-1 flex-wrap justify-end">
                 <button class="btn-ghost text-xs !py-1.5 !px-3" @click="startEdit(p)">{{ $t('profiles.edit') }}</button>
                 <button v-if="!p.is_default" class="btn-ghost text-xs !py-1.5 !px-3" @click="setDefault(p.id)">{{ $t('profiles.makeDefault') }}</button>
-                <button class="btn-danger text-xs !py-1.5 !px-3" @click="del(p.id)">{{ $t('profiles.delete') }}</button>
+                <button v-if="!p.is_default" class="btn-danger text-xs !py-1.5 !px-3" @click="del(p.id)">{{ $t('profiles.delete') }}</button>
               </div>
             </div>
 

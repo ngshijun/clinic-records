@@ -61,6 +61,8 @@ export const useProfilesStore = defineStore('profiles', () => {
   }
 
   async function remove(id: string) {
+    const target = profiles.value.find((p) => p.id === id)
+    if (target?.is_default) throw new Error('Cannot delete the default profile')
     const { error } = await supabase.from('profiles').delete().eq('id', id)
     if (error) throw new Error(error.message)
     profiles.value = profiles.value.filter((p) => p.id !== id)
