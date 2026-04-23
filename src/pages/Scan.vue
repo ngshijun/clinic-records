@@ -37,8 +37,8 @@ function onDecoded(raw: string) {
           <div class="absolute inset-0 overflow-hidden">
             <QrScanner @decoded="onDecoded" @error="(m) => error = m" />
           </div>
-          <svg class="absolute inset-0 pointer-events-none text-paper" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-            <g fill="none" stroke="currentColor" stroke-width="0.8" vector-effect="non-scaling-stroke">
+          <svg class="absolute inset-0 pointer-events-none text-ink" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+            <g fill="none" stroke="currentColor" stroke-width="1.25" stroke-opacity="0.7" vector-effect="non-scaling-stroke">
               <polyline points="0,18 0,0 18,0" />
               <polyline points="82,0 100,0 100,18" />
               <polyline points="100,82 100,100 82,100" />

@@ -14,7 +14,7 @@ onMounted(async () => {
   try {
     await scanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 240, height: 240 } },
+      { fps: 10 },
       (text) => emit('decoded', text),
       () => {},
     )
