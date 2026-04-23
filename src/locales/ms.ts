@@ -80,7 +80,6 @@ export default {
     emptyTitlePre: 'Muka kosong juga sebuah',
     emptyTitleWonk: 'permulaan',
     emptyHint: 'Tekan butang Imbas di bawah untuk membaca QR pertama anda dari klinik.',
-    viewRecord: 'lihat rekod →',
     reminderKind: 'Peringatan',
     due: 'Perlu pada {date}',
     dueAround: 'perlu pada {date}',

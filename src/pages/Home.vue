@@ -210,11 +210,8 @@ function recordsWord(n: number) {
               </div>
               <span class="font-mono-app text-xs text-accent whitespace-nowrap">{{ relativeDue(r.due_at) }}</span>
             </div>
-            <div class="flex items-center justify-between pt-4 mt-4 hairline-t text-xs">
+            <div class="pt-4 mt-4 hairline-t text-xs">
               <span class="folio">{{ $t('home.dueAround', { date: formatDate(r.due_at) }) }}</span>
-              <router-link v-if="r.record_id" :to="`/records/${r.record_id}`" class="underline underline-offset-4 decoration-[var(--color-accent)]">
-                {{ $t('home.viewRecord') }}
-              </router-link>
             </div>
           </li>
         </ul>

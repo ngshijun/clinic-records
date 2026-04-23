@@ -78,7 +78,6 @@ export default {
     emptyTitlePre: '空白的一页也是一个',
     emptyTitleWonk: '开始',
     emptyHint: '点击下方的「扫描」按钮,读取诊所给您的第一张二维码。',
-    viewRecord: '查看记录 →',
     reminderKind: '提醒',
     due: '{date} 到期',
     dueAround: '约于 {date}',

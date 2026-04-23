@@ -78,7 +78,6 @@ export default {
     emptyTitlePre: 'An empty page is still a',
     emptyTitleWonk: 'beginning',
     emptyHint: 'Tap the Scan button below to read your first QR from the clinic.',
-    viewRecord: 'view record →',
     reminderKind: 'Reminder',
     due: 'Due {date}',
     dueAround: 'due {date}',
