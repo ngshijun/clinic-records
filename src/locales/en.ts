@@ -169,7 +169,8 @@ export default {
     vaccinationLabel: 'Vaccination reminder',
     bloodTestLabel: 'Blood test reminder',
     due: 'Due',
-    sourceRecord: 'From record',
+    pleaseNote: 'Please note',
+    clinicClosedSat: 'The clinic is closed on Saturdays.',
     scheduled: 'scheduled {date}',
   },
   profiles: {

@@ -169,7 +169,8 @@ export default {
     vaccinationLabel: '疫苗提醒',
     bloodTestLabel: '验血提醒',
     due: '到期',
-    sourceRecord: '源记录',
+    pleaseNote: '温馨提示',
+    clinicClosedSat: '黄氏药房每逢周六休诊。',
     scheduled: '安排于 {date}',
   },
   profiles: {

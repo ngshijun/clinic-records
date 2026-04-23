@@ -87,14 +87,9 @@ const filedDate = computed(() => rem.value
             </div>
           </dl>
 
-          <div v-if="sourceRecord">
-            <div class="eyebrow mb-2">{{ $t('reminderDetail.sourceRecord') }}</div>
-            <router-link
-              :to="`/records/${sourceRecord.id}`"
-              class="inline-flex items-center gap-2 font-display-wonk text-xl leading-snug text-ink-2 underline underline-offset-4 decoration-[var(--color-accent)]"
-            >
-              {{ sourceRecord.name }}<span aria-hidden>→</span>
-            </router-link>
+          <div>
+            <div class="eyebrow mb-2" style="color: var(--color-accent)">{{ $t('reminderDetail.pleaseNote') }}</div>
+            <p class="font-display-wonk text-xl leading-snug text-ink-2">{{ $t('reminderDetail.clinicClosedSat') }}</p>
           </div>
         </div>
       </article>

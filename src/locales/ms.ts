@@ -172,7 +172,8 @@ export default {
     vaccinationLabel: 'Peringatan vaksin',
     bloodTestLabel: 'Peringatan ujian darah',
     due: 'Perlu pada',
-    sourceRecord: 'Dari rekod',
+    pleaseNote: 'Sila ambil perhatian',
+    clinicClosedSat: 'Poliklinik Ng tutup pada hari Sabtu.',
     scheduled: 'dijadualkan {date}',
   },
   profiles: {
