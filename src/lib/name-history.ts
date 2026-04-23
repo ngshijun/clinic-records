@@ -45,6 +45,19 @@ export function recordName(kind: 'v' | 'b', name: string): NameHistory {
   return h
 }
 
+/**
+ * Drop `name` from the kind's history (case-insensitive). Returns the
+ * updated full history. Safe to call for names that aren't present.
+ */
+export function forgetName(kind: 'v' | 'b', name: string): NameHistory {
+  const lower = name.trim().toLowerCase()
+  if (!lower) return read()
+  const h = read()
+  h[kind] = h[kind].filter(n => n.toLowerCase() !== lower)
+  write(h)
+  return h
+}
+
 export function readNameHistory(): NameHistory {
   return read()
 }

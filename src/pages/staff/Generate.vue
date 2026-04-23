@@ -6,7 +6,7 @@ import draggable from 'vuedraggable'
 import { encodePayload, type QrPayload, type QrKind } from '@/lib/qr-payload'
 import { todayLocalIso, formatDateLong } from '@/lib/dates'
 import { clearStaffUnlocked } from '@/lib/staff-auth'
-import { recordName, readNameHistory } from '@/lib/name-history'
+import { recordName, readNameHistory, forgetName } from '@/lib/name-history'
 import {
   listTemplates,
   saveTemplate as saveTemplateFn,
@@ -131,6 +131,22 @@ const suggestions = computed(() => {
   }
   return out
 })
+
+// Lowercase set of names that are backed by a saved template — they cannot
+// be removed from the dropdown (the source is the template, not history).
+const templateNameSet = computed(() => {
+  const s = new Set<string>()
+  for (const t of templates.value) if (t.kind === kind.value) s.add(t.name.trim().toLowerCase())
+  return s
+})
+function isHistoryOnly(n: string) {
+  return !templateNameSet.value.has(n.trim().toLowerCase())
+}
+function forgetSuggestion(n: string) {
+  nameHistory.value = forgetName(kind.value, n)
+  // Keep dropdown open so the user can purge a few in a row.
+  nameHover.value = 0
+}
 
 function rememberName() {
   if (!name.value.trim()) return
@@ -560,11 +576,20 @@ function onLocaleChange(e: Event) {
                   :id="'name-opt-' + i"
                   role="option"
                   :aria-selected="i === nameHover"
-                  class="px-4 py-2.5 text-base cursor-pointer transition-colors"
+                  class="flex items-center justify-between gap-3 px-4 py-2.5 text-base cursor-pointer transition-colors"
                   :style="i === nameHover ? 'background: var(--color-staff-accent); color: var(--color-staff-paper);' : ''"
                   @mousedown.prevent="pickSuggestion(s)"
                   @mouseenter="nameHover = i"
-                >{{ s }}</li>
+                >
+                  <span class="truncate">{{ s }}</span>
+                  <button
+                    v-if="isHistoryOnly(s)"
+                    type="button"
+                    class="shrink-0 text-sm leading-none opacity-40 hover:opacity-100 transition-opacity px-2 -mr-2"
+                    :aria-label="'Remove ' + s"
+                    @mousedown.prevent.stop="forgetSuggestion(s)"
+                  >×</button>
+                </li>
               </ul>
             </label>
 
