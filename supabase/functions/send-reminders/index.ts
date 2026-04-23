@@ -49,6 +49,7 @@ interface ReminderRow {
   name: string | null
   due_at: string
   sent_count: number
+  created_at: string
   record: { name: string; dose_number: number | null } | null
 }
 
@@ -71,16 +72,20 @@ function myDateOf(input: Date | string): string {
 }
 
 // How many of today's three slots (08:00 / 12:00 / 16:00 MY) have
-// elapsed for a reminder whose due date is `dueDateMY` (YYYY-MM-DD).
-// Returns 0–3. Only meaningful when dueDateMY === today in MY tz.
-function slotsElapsed(now: Date, dueDateMY: string): number {
+// elapsed in the window (sinceUtc, now] for a reminder whose due date
+// is `dueDateMY` (YYYY-MM-DD). Returns 0–3. Slots strictly before
+// `sinceUtc` are excluded so reminders created late in the day do not
+// back-fill pushes for slots that passed before the user existed.
+function slotsElapsed(now: Date, sinceUtc: Date, dueDateMY: string): number {
   const [y, m, d] = dueDateMY.split('-').map(Number)
   // MY = UTC+8, so 08/12/16 MY = 00/04/08 UTC on the same calendar day.
   const slotHoursUTC = [0, 4, 8]
   const nowMs = now.getTime()
+  const sinceMs = sinceUtc.getTime()
   let n = 0
   for (const h of slotHoursUTC) {
-    if (nowMs >= Date.UTC(y, m - 1, d, h, 0, 0, 0)) n++
+    const slotMs = Date.UTC(y, m - 1, d, h, 0, 0, 0)
+    if (slotMs >= sinceMs && slotMs <= nowMs) n++
   }
   return n
 }
@@ -91,7 +96,7 @@ Deno.serve(async () => {
 
   const { data: due, error } = await sb
     .from('reminders')
-    .select('id, user_id, record_id, kind, title, name, due_at, sent_count, record:records(name, dose_number)')
+    .select('id, user_id, record_id, kind, title, name, due_at, sent_count, created_at, record:records(name, dose_number)')
     .lte('due_at', now.toISOString())
     .lt('sent_count', 3)
   if (error) return new Response(error.message, { status: 500 })
@@ -117,7 +122,15 @@ Deno.serve(async () => {
     // We only fire on the reminder's own due day (MY tz). Reminders that
     // are past-due but never reached sent_count=3 are intentionally skipped.
     if (dueDateMY !== todayMY) continue
-    const desired = slotsElapsed(now, dueDateMY)
+    // Floor the "since" for slot elapsing to the later of the reminder's
+    // creation timestamp and the due day's 08:00 MY (first slot boundary).
+    // This ensures a reminder created at 14:00 MY doesn't back-fire the
+    // 08:00 and 12:00 slots that had already passed.
+    const [dy, dm, dd] = dueDateMY.split('-').map(Number)
+    const dueDateEightAmUtcMs = Date.UTC(dy, dm - 1, dd, 0, 0, 0, 0)
+    const createdAtMs = new Date(row.created_at).getTime()
+    const sinceUtc = new Date(Math.max(createdAtMs, dueDateEightAmUtcMs))
+    const desired = slotsElapsed(now, sinceUtc, dueDateMY)
     if (desired <= row.sent_count) continue
 
     processed++
