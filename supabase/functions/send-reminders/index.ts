@@ -147,7 +147,7 @@ Deno.serve(async () => {
           JSON.stringify({
             title,
             body,
-            url: `/home#r-${row.id}`,
+            url: `/reminders/${row.id}`,
           }),
         )
         sent++
