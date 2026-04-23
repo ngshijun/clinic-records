@@ -39,7 +39,7 @@ onMounted(() => {
   >
     <div
       v-if="showUpdateNotice"
-      class="paper-card brackets fixed bottom-6 right-6 z-[999] w-[min(360px,calc(100vw-3rem))] p-5 !shadow-xl"
+      class="paper-card brackets !fixed bottom-6 right-6 z-[999] w-[min(360px,calc(100vw-3rem))] p-5 !shadow-xl"
     >
       <span class="br-tr"></span><span class="br-bl"></span>
       <div class="flex items-start justify-between gap-3">
