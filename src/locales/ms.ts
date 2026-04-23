@@ -281,7 +281,6 @@ export default {
     of: 'Daripada',
     nextDueDays: 'Seterusnya (hari)',
     nextDoseInDays: 'Dos seterusnya (hari)',
-    seriesCompleteNote: 'Siri selesai — tiada dos seterusnya.',
     doneScanning: 'Selesai diimbas',
     preview: 'Pratonton',
     patientRecordLabel: 'Poliklinik Ng PLT · Rekod pesakit',

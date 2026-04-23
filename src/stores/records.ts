@@ -91,16 +91,17 @@ export const useRecordsStore = defineStore('records', () => {
 
   async function createReminderForRecord(user_id: string, rec: Record, payload: QrPayload) {
     if (payload.nd === undefined) return
-    // Guard against pre-existing QRs generated before the UI caught completed
-    // series: if this is the final dose, don't schedule a 'next dose' reminder.
-    if (
-      rec.kind === 'vaccination'
-      && rec.dose_number != null
-      && rec.total_doses != null
-      && rec.dose_number >= rec.total_doses
-    ) return
-    const title = rec.kind === 'vaccination' && payload.dn && payload.td
+    // If staff set a next-due, schedule — including the final dose of a
+    // series, since recurring shots (annual flu, tetanus booster every 10y)
+    // are modeled as 1-of-1 with a next_due and should still generate
+    // reminders.
+    const isBooster = rec.kind === 'vaccination'
+      && payload.dn != null && payload.td != null
+      && payload.dn >= payload.td
+    const title = rec.kind === 'vaccination' && payload.dn && payload.td && !isBooster
       ? `${payload.n} Dose ${payload.dn + 1} due`
+      : rec.kind === 'vaccination'
+      ? `${payload.n} reminder`
       : `Follow-up ${payload.n} due`
     const { error } = await supabase.from('reminders').insert({
       user_id,

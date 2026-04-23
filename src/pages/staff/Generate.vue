@@ -188,17 +188,6 @@ function onNameKey(e: KeyboardEvent) {
 watch(name, () => { nameHover.value = 0 })
 watch(kind, () => { nameOpen.value = false })
 
-const seriesComplete = computed(() =>
-  kind.value === 'v'
-  && doseNumber.value != null
-  && totalDoses.value != null
-  && doseNumber.value >= totalDoses.value,
-)
-
-watch(seriesComplete, (complete) => {
-  if (complete) nextDueDays.value = null
-})
-
 const payload = computed<QrPayload | null>(() => {
   if (!name.value || !performedOn.value) return null
   const effectiveKind: QrKind = reminderOnly.value ? 'r' : kind.value
@@ -619,15 +608,10 @@ const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code
               </label>
             </div>
 
-            <template v-if="kind === 'v' && !reminderOnly">
-              <p v-if="seriesComplete" class="font-display-wonk italic text-sm" style="color: var(--color-staff-muted)">
-                {{ $t('staff.seriesCompleteNote') }}
-              </p>
-              <label v-else class="block">
-                <span class="field-label">{{ $t('staff.nextDoseInDays') }}</span>
-                <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums" />
-              </label>
-            </template>
+            <label v-if="kind === 'v' && !reminderOnly" class="block">
+              <span class="field-label">{{ $t('staff.nextDoseInDays') }}</span>
+              <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums" />
+            </label>
 
             <div class="pt-4 hairline-t">
               <button type="button" class="btn-primary w-full" @click="backToPicker">

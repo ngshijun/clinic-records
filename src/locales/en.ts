@@ -278,7 +278,6 @@ export default {
     of: 'Of',
     nextDueDays: 'Next due (days)',
     nextDoseInDays: 'Next dose in (days)',
-    seriesCompleteNote: 'Series complete — no next dose.',
     doneScanning: 'Done scanning',
     preview: 'Preview',
     patientRecordLabel: 'Polyclinic Ng PLT · Patient record',

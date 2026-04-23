@@ -99,7 +99,11 @@ function reminderTitle(r: Reminder) {
   const rec = records.records.find(x => x.id === r.record_id)
   if (rec) {
     if (r.kind === 'next_dose' && rec.kind === 'vaccination' && rec.dose_number != null) {
-      return t('home.nextDoseTitle', { name: rec.name, n: rec.dose_number + 1 })
+      // Final-dose reminders (e.g. annual flu shot stored as 1-of-1) shouldn't
+      // claim "Dose 2" — they're recurring boosters. Fall through to plain name.
+      const booster = rec.total_doses != null && rec.dose_number >= rec.total_doses
+      if (!booster) return t('home.nextDoseTitle', { name: rec.name, n: rec.dose_number + 1 })
+      return rec.name
     }
     if (r.kind === 'followup_test') {
       return t('home.followupTitle', { name: rec.name })

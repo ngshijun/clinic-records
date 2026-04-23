@@ -278,7 +278,6 @@ export default {
     of: '共',
     nextDueDays: '下次到期(天)',
     nextDoseInDays: '下一剂间隔(天)',
-    seriesCompleteNote: '系列已完成 — 无需下一剂。',
     doneScanning: '扫描完成',
     preview: '预览',
     patientRecordLabel: '黄氏药房 · 病人记录',

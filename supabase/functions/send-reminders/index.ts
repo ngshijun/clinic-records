@@ -50,14 +50,20 @@ interface ReminderRow {
   due_at: string
   sent_count: number
   created_at: string
-  record: { name: string; dose_number: number | null } | null
+  record: { name: string; dose_number: number | null; total_doses: number | null } | null
 }
 
 function formatNotification(r: ReminderRow, locale: Locale): { title: string; body: string } {
   const m = MESSAGES[locale]
   const name = r.record?.name ?? r.name ?? ''
   if (!name) return { title: r.title, body: m.body }
-  const nextDoseN = r.record?.dose_number != null ? r.record.dose_number + 1 : null
+  // Dose number appended only for a continuing series. Final-dose reminders
+  // of a 1-of-1 recurring shot (annual flu, tetanus booster) skip the dose
+  // suffix so the push doesn't lie about "Dose 2" when there isn't one.
+  const dn = r.record?.dose_number
+  const td = r.record?.total_doses
+  const isBooster = dn != null && td != null && dn >= td
+  const nextDoseN = dn != null && !isBooster ? dn + 1 : null
   const title = r.kind === 'next_dose' ? m.vaccination(name, nextDoseN) : m.bloodTest(name)
   return { title, body: m.body }
 }
@@ -96,7 +102,7 @@ Deno.serve(async () => {
 
   const { data: due, error } = await sb
     .from('reminders')
-    .select('id, user_id, record_id, kind, title, name, due_at, sent_count, created_at, record:records(name, dose_number)')
+    .select('id, user_id, record_id, kind, title, name, due_at, sent_count, created_at, record:records(name, dose_number, total_doses)')
     .lte('due_at', now.toISOString())
     .lt('sent_count', 3)
   if (error) return new Response(error.message, { status: 500 })
