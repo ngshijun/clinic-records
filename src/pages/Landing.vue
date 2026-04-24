@@ -72,6 +72,9 @@ async function guest() {
           <label class="block">
             <span class="field-label">{{ $t('auth.password') }}</span>
             <input v-model="password" type="password" autocomplete="current-password" class="field" required />
+            <router-link to="/forgot-password" class="text-[11px] text-muted-app mt-1 inline-block underline decoration-[var(--color-rule)] underline-offset-4 hover:text-ink">
+              {{ $t('auth.forgotPassword') }}
+            </router-link>
           </label>
 
           <button :disabled="busy" class="btn-primary w-full">

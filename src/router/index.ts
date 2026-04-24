@@ -4,6 +4,8 @@ import { useAuthStore } from '@/stores/auth'
 const routes: RouteRecordRaw[] = [
   { path: '/', name: 'landing', component: () => import('@/pages/Landing.vue') },
   { path: '/signup', name: 'signup', component: () => import('@/pages/Signup.vue') },
+  { path: '/forgot-password', name: 'forgot-password', component: () => import('@/pages/ForgotPassword.vue') },
+  { path: '/reset-password', name: 'reset-password', component: () => import('@/pages/ResetPassword.vue') },
   { path: '/home', name: 'home', component: () => import('@/pages/Home.vue'), meta: { requiresAuth: true } },
   { path: '/scan', name: 'scan', component: () => import('@/pages/Scan.vue'), meta: { requiresAuth: true } },
   { path: '/ingest', name: 'ingest', component: () => import('@/pages/Ingest.vue'), meta: { requiresAuth: true } },
