@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" style="margin:0;padding:0;">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light only" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Confirm your email — Polyclinic Ng PLT</title>
+    <style>
+      /* Progressive enhancement — clients honouring <style> get a warmer
+         button hover + mobile sizing. Everything critical is inlined below
+         so Outlook's Word engine still renders the paper palette. */
+      a.btn-ink:hover {
+        background: #2e3e3c !important;
+      }
+      @media (max-width: 480px) {
+        .container { width: 100% !important; padding: 24px !important; }
+        .h1 { font-size: 32px !important; line-height: 34px !important; }
+      }
+    </style>
+  </head>
+  <body class="bg-paper" style="margin:0;padding:0;background:#f4ecd8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c2b2a;">
+    <!-- Preheader: peeks in the inbox list below the subject line -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+      One tap to verify this address and open your records.
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4ecd8;" class="bg-paper">
+      <tr>
+        <td align="center" style="padding:40px 16px;">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" class="container" style="width:560px;max-width:560px;">
+
+            <!-- Wordmark -->
+            <tr>
+              <td align="center" style="padding-bottom:28px;">
+                <div style="font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#8a2e28;">
+                  Polyclinic Ng PLT · 黄氏药房 · Poliklinik Ng PLT
+                </div>
+                <div style="border-bottom:1px solid #c8bda5;width:48px;margin:14px auto 0;"></div>
+              </td>
+            </tr>
+
+            <!-- Body card -->
+            <tr>
+              <td class="paper-card" style="background:#faf5e6;border:1px solid #c8bda5;padding:40px 44px;">
+
+                <!-- Headline (English primary) -->
+                <h1 class="h1" style="margin:0 0 8px;font-family:Fraunces,Georgia,'Times New Roman',serif;font-weight:500;font-size:40px;line-height:44px;color:#1c2b2a;letter-spacing:-0.01em;">
+                  Confirm your email to finish signing up.
+                </h1>
+                <p style="margin:0 0 28px;font-family:Fraunces,Georgia,'Times New Roman',serif;font-style:italic;font-size:17px;line-height:24px;color:#6b6a5a;">
+                  One tap to verify this address and open your records.
+                </p>
+
+                <!-- CTA -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;">
+                  <tr>
+                    <td>
+                      <a class="btn-ink"
+                         href="{{ .ConfirmationURL }}"
+                         style="display:inline-block;background:#1c2b2a;color:#f4ecd8;border:1px solid #1c2b2a;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:500;letter-spacing:0.02em;text-decoration:none;">
+                        Confirm my email &rarr;
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Hairline divider -->
+                <div style="border-bottom:1px solid #c8bda5;margin:0 0 28px;"></div>
+
+                <!-- 中文 -->
+                <div style="font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:20px;line-height:28px;color:#1c2b2a;margin-bottom:16px;">
+                  确认您的电邮以完成注册。
+                </div>
+
+                <!-- Bahasa Melayu -->
+                <div style="font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:20px;line-height:28px;color:#1c2b2a;">
+                  Sahkan e-mel anda untuk lengkapkan pendaftaran.
+                </div>
+
+              </td>
+            </tr>
+
+            <!-- Fallback link -->
+            <tr>
+              <td style="padding:24px 4px 0;">
+                <p style="margin:0 0 6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#6b6a5a;">
+                  Or click the link below &middot; 或点击下方链接 &middot; Atau klik pautan di bawah
+                </p>
+                <p style="margin:0;font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:12px;line-height:18px;word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#1c2b2a;text-decoration:underline;text-decoration-color:#c8bda5;text-underline-offset:3px;">
+                    {{ .ConfirmationURL }}
+                  </a>
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:32px 4px 16px;">
+                <div style="border-bottom:1px solid #c8bda5;margin-bottom:16px;"></div>
+                <p style="margin:0;font-family:Fraunces,Georgia,'Times New Roman',serif;font-style:italic;font-size:12px;line-height:18px;color:#6b6a5a;">
+                  Sent to {{ .Email }}.
+                </p>
+                <p style="margin:10px 0 0;font-family:Fraunces,Georgia,'Times New Roman',serif;font-style:italic;font-size:12px;line-height:18px;color:#6b6a5a;">
+                  This link expires in 24 hours. If you didn&rsquo;t sign up, ignore this email.
+                </p>
+                <p style="margin:6px 0 0;font-family:Fraunces,Georgia,'Times New Roman',serif;font-style:italic;font-size:12px;line-height:18px;color:#6b6a5a;">
+                  此链接将于 24 小时后失效。若非本人申请，请忽略此邮件。
+                </p>
+                <p style="margin:6px 0 0;font-family:Fraunces,Georgia,'Times New Roman',serif;font-style:italic;font-size:12px;line-height:18px;color:#6b6a5a;">
+                  Pautan ini akan luput dalam 24 jam. Jika bukan anda, abaikan sahaja.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
