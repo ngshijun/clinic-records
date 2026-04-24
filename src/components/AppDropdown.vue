@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends string">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 interface Option { value: T; label: string }
 
@@ -19,6 +19,9 @@ const rootEl = ref<HTMLElement | null>(null)
 const btnEl = ref<HTMLButtonElement | null>(null)
 const menuEl = ref<HTMLUListElement | null>(null)
 const triggerRect = ref<DOMRect | null>(null)
+// Clamped left, set after the menu renders and is measured. Null while we
+// haven't yet figured out if the natural position would overflow.
+const menuLeft = ref<number | null>(null)
 
 const currentLabel = computed(() => {
   const o = props.options.find(x => x.value === props.modelValue)
@@ -33,10 +36,28 @@ function toggle() {
   open.value = !open.value
   if (open.value) {
     refreshRect()
+    menuLeft.value = null
     const i = props.options.findIndex(x => x.value === props.modelValue)
     hover.value = i >= 0 ? i : 0
   }
 }
+
+watch(open, async (v) => {
+  if (!v) return
+  await nextTick()
+  const r = triggerRect.value
+  const m = menuEl.value
+  if (!r || !m) return
+  const margin = 8
+  const menuWidth = m.offsetWidth
+  let left = r.left
+  if (left + menuWidth > window.innerWidth - margin) {
+    // Prefer right-aligning with the trigger; fall back to pinning inside
+    // the viewport if the menu is wider than the trigger's right offset.
+    left = Math.max(margin, r.right - menuWidth)
+  }
+  menuLeft.value = left
+})
 
 function pick(o: Option) {
   emit('update:modelValue', o.value)
@@ -97,9 +118,12 @@ const menuStyle = computed(() => {
   return {
     position: 'fixed' as const,
     top: `${r.bottom + 4}px`,
-    left: `${r.left}px`,
+    left: `${menuLeft.value ?? r.left}px`,
     minWidth: `${r.width}px`,
     zIndex: 50,
+    // Hide on the very first frame so we can measure without flashing at
+    // the unclamped position, then reveal once `menuLeft` is known.
+    visibility: menuLeft.value === null ? ('hidden' as const) : ('visible' as const),
   }
 })
 </script>
