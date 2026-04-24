@@ -348,6 +348,9 @@ async function onTemplateChange(group: Group, evt: any) {
 function logout() { clearStaffUnlocked(); router.replace('/staff') }
 
 const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.native })))
+
+const shareOpen = ref(false)
+const appUrl = computed(() => window.location.origin + '/')
 </script>
 
 <template>
@@ -367,6 +370,7 @@ const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code
           style="color: var(--color-staff-ink); border-bottom: 1px solid var(--color-staff-rule);"
           @update:model-value="(v) => setLocale(v as Locale)"
         />
+        <button class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="shareOpen = true">{{ $t('staff.openOnPhone') }}</button>
         <button class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="logout">{{ $t('staff.lockConsole') }}</button>
       </div>
     </header>
@@ -680,6 +684,41 @@ const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code
         </section>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="shareOpen"
+        class="share-qr-backdrop print:hidden"
+        role="dialog"
+        aria-modal="true"
+        @click.self="shareOpen = false"
+        @keydown.esc="shareOpen = false"
+      >
+        <div class="paper-card share-qr-card anim-rise">
+          <div class="eyebrow mb-3"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('staff.openOnPhone') }}</div>
+          <h2 class="font-display text-3xl md:text-4xl leading-[0.95]">
+            {{ $t('staff.openOnPhoneTitle') }}
+          </h2>
+          <p class="text-sm mt-2" style="color: var(--color-staff-muted)">{{ $t('staff.openOnPhoneHint') }}</p>
+
+          <div class="flex justify-center my-6">
+            <div class="p-4 bg-white border hairline">
+              <QrPreview :text="appUrl" />
+            </div>
+          </div>
+
+          <p class="text-center font-mono text-xs break-all" style="color: var(--color-staff-muted)">
+            {{ appUrl }}
+          </p>
+
+          <div class="flex justify-end mt-6">
+            <button type="button" class="btn-ghost !py-1.5 !px-4 text-xs whitespace-nowrap" @click="shareOpen = false">
+              {{ $t('common.close') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </main>
 </template>
 
@@ -691,6 +730,26 @@ const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code
 .sortable-drag {
   opacity: 0.95;
   transform: rotate(1deg);
+}
+
+.share-qr-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 100;
+  animation: share-qr-fade 140ms ease-out;
+}
+.share-qr-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 1.75rem 1.75rem 1.5rem;
+}
+@keyframes share-qr-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media print {
