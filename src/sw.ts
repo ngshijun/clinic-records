@@ -10,8 +10,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title ?? 'Reminder', {
       body: data.body ?? '',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      icon: '/icon.png',
+      badge: '/icon.png',
       data: { url: data.url ?? '/home' },
     }),
   )

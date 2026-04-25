@@ -20,7 +20,7 @@ export default defineConfig({
       filename: 'sw.ts',
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Clinic Records',
+        name: 'Poliklinik Ng PLT — Patient Records',
         short_name: 'Records',
         description: 'Vaccination and blood test history',
         theme_color: '#000000',
@@ -28,9 +28,7 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/home',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icons/icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/icon.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
       },
       devOptions: { enabled: true, type: 'module' },
