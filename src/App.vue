@@ -6,6 +6,14 @@ import AppDialog from '@/components/AppDialog.vue'
 const route = useRoute()
 const showUpdateNotice = ref(false)
 
+// "Ask me later" snooze. Suppresses the banner for SNOOZE_MS after the user
+// taps ×, so staff aren't re-nagged on every focus while they're mid-task.
+// Persisted across reloads so the snooze survives even if the OS evicts the
+// PWA window. A genuinely newer deploy after the snooze expires will surface
+// the banner again — there's no permanent dismiss.
+const SNOOZE_KEY = 'web_update_snoozed_until'
+const SNOOZE_MS = 60 * 60 * 1000
+
 watchEffect(() => {
   const isStaff = typeof route.name === 'string' && route.name.startsWith('staff')
   document.body.classList.toggle('staff-theme', isStaff)
@@ -13,8 +21,15 @@ watchEffect(() => {
 
 function reloadPage() { window.location.reload() }
 
+function snoozeNotice() {
+  try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS)) } catch {}
+  showUpdateNotice.value = false
+}
+
 onMounted(() => {
   document.addEventListener('plugin_web_update_notice', () => {
+    const until = Number(localStorage.getItem(SNOOZE_KEY) ?? '0')
+    if (until > Date.now()) return
     showUpdateNotice.value = true
   })
   // Safety net: if a lazy-loaded chunk 404s after a deploy,
@@ -50,7 +65,7 @@ onMounted(() => {
         <button
           class="shrink-0 text-muted-app hover:text-ink text-lg leading-none -mt-1"
           :aria-label="$t('common.close')"
-          @click="showUpdateNotice = false"
+          @click="snoozeNotice"
         >×</button>
       </div>
       <button class="btn-primary w-full !py-2 text-sm mt-4" @click="reloadPage">
