@@ -12,9 +12,9 @@ export default {
     close: 'Close',
   },
   brand: {
-    label: 'Polyclinic Ng PLT · Patient records',
-    labelShort: 'Clinic Records · Polyclinic Ng PLT',
-    clinicName: 'Polyclinic Ng PLT',
+    label: 'Poliklinik Ng PLT · Patient records',
+    labelShort: 'Clinic Records · Poliklinik Ng PLT',
+    clinicName: 'Poliklinik Ng PLT',
   },
   auth: {
     email: 'Email',
@@ -198,7 +198,7 @@ export default {
     bloodTestLabel: 'Blood test reminder',
     due: 'Due',
     pleaseNote: 'Please note',
-    clinicClosedSat: 'Polyclinic Ng PLT is closed on Saturdays.',
+    clinicClosedSat: 'Poliklinik Ng PLT is closed on Saturdays.',
     scheduled: 'scheduled {date}',
   },
   profiles: {
@@ -310,7 +310,7 @@ export default {
     nextDoseInDays: 'Next dose in (days)',
     doneScanning: 'Done scanning',
     preview: 'Preview',
-    patientRecordLabel: 'Polyclinic Ng PLT · Patient record',
+    patientRecordLabel: 'Poliklinik Ng PLT · Patient record',
     awaitingEntry: 'awaiting entry',
     kind: 'Kind',
     vaccine: 'Vaccine',
