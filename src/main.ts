@@ -11,6 +11,4 @@ app.use(router)
 app.use(i18n)
 app.mount('#app')
 
-if ('serviceWorker' in navigator) {
-  import('virtual:pwa-register').then(({ registerSW }) => registerSW({ immediate: true }))
-}
+import '@/lib/pwa'

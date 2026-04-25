@@ -2,6 +2,7 @@
 import { onMounted, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import AppDialog from '@/components/AppDialog.vue'
+import { refreshApp } from '@/lib/pwa'
 
 const route = useRoute()
 const showUpdateNotice = ref(false)
@@ -19,7 +20,7 @@ watchEffect(() => {
   document.body.classList.toggle('staff-theme', isStaff)
 })
 
-function reloadPage() { window.location.reload() }
+function reloadPage() { refreshApp() }
 
 function snoozeNotice() {
   try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS)) } catch {}
@@ -35,7 +36,7 @@ onMounted(() => {
   // Safety net: if a lazy-loaded chunk 404s after a deploy,
   // reload so the user picks up the new bundle.
   window.addEventListener('vite:preloadError', () => {
-    window.location.reload()
+    refreshApp()
   })
 })
 </script>
