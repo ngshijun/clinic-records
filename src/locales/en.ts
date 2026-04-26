@@ -338,6 +338,10 @@ export default {
     confirmDeleteTemplate: 'Delete template "{name}"?',
     tagRecord: 'Record',
     tagRecordReminder: 'Record + reminder',
+    editTemplate: 'Edit template',
+    edit: 'edit',
+    saveChanges: 'Save changes',
+    updateTemplateFailed: 'Could not update template: {err}',
   },
   appUpdate: {
     title: 'A new version is available',

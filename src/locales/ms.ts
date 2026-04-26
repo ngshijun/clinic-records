@@ -341,6 +341,10 @@ export default {
     confirmDeleteTemplate: 'Padam templat "{name}"?',
     tagRecord: 'Rekod',
     tagRecordReminder: 'Rekod + peringatan',
+    editTemplate: 'Sunting templat',
+    edit: 'sunting',
+    saveChanges: 'Simpan perubahan',
+    updateTemplateFailed: 'Tidak dapat mengemas kini templat: {err}',
   },
   appUpdate: {
     title: 'Versi baharu tersedia',
