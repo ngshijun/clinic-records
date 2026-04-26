@@ -4,11 +4,15 @@ import { precacheAndRoute } from 'workbox-precaching'
 declare const self: ServiceWorkerGlobalScope
 
 precacheAndRoute(self.__WB_MANIFEST)
+
+// autoUpdate mode: skip waiting immediately so the new SW activates as
+// soon as install completes. registerSW (in 'autoUpdate') listens for
+// 'activated' and reloads the page automatically.
 self.skipWaiting()
-// Use event.waitUntil so activate doesn't complete until claim finishes.
-// workbox-core's clientsClaim() omits waitUntil, which lets the SW reach
-// 'activated' before controllerchange propagates — workbox-window then fires
-// reload while the page is still controlled by the OLD SW, serving stale HTML.
+
+// waitUntil(claim) ensures activate doesn't end until controllerchange
+// has been queued, so the auto-reload navigation goes through the new
+// SW (and its new precache).
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 })

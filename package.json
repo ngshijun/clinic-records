@@ -21,7 +21,6 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
-    "@plugin-web-update-notification/vite": "^2.1.0",
     "@tailwindcss/vite": "^4.2.4",
     "@testing-library/vue": "^8.1.0",
     "@types/node": "^24.12.2",
