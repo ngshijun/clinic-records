@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/auth'
 
 export interface Profile {
   id: string
@@ -16,9 +17,21 @@ export interface Profile {
 export const useProfilesStore = defineStore('profiles', () => {
   const profiles = ref<Profile[]>([])
   const activeId = ref<string | null>(null)
+  const loaded = ref(false)
 
   const active = computed(() => profiles.value.find((p) => p.id === activeId.value) ?? null)
   const defaultProfile = computed(() => profiles.value.find((p) => p.is_default) ?? profiles.value[0] ?? null)
+
+  // Cached profiles belong to whichever user was signed in when they
+  // were fetched. Resetting on user-id change keeps the next consumer
+  // (router guard or page) from acting on the previous user's data.
+  const auth = useAuthStore()
+  watch(() => auth.user?.id ?? null, (next, prev) => {
+    if (next === prev) return
+    profiles.value = []
+    activeId.value = null
+    loaded.value = false
+  })
 
   async function fetchAll() {
     const { data, error } = await supabase
@@ -28,6 +41,7 @@ export const useProfilesStore = defineStore('profiles', () => {
     if (error) throw error
     profiles.value = data ?? []
     if (!activeId.value) activeId.value = defaultProfile.value?.id ?? null
+    loaded.value = true
   }
 
   async function create(input: { name: string; date_of_birth?: string | null }) {
@@ -71,5 +85,5 @@ export const useProfilesStore = defineStore('profiles', () => {
 
   function setActive(id: string) { activeId.value = id }
 
-  return { profiles, activeId, active, defaultProfile, fetchAll, create, update, setDefault, remove, setActive }
+  return { profiles, activeId, loaded, active, defaultProfile, fetchAll, create, update, setDefault, remove, setActive }
 })

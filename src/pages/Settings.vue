@@ -5,13 +5,15 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { requestAndSubscribe, unsubscribeCurrent, isSubscribed } from '@/lib/push'
 import { AVAILABLE_LOCALES, setLocale, type Locale } from '@/lib/i18n'
+import { useDialog } from '@/lib/dialog'
 import AppDropdown from '@/components/AppDropdown.vue'
 
 const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.native })))
 
 const auth = useAuthStore()
 const router = useRouter()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
+const dialog = useDialog()
 
 const subbed = ref(false)
 const busy = ref(false)
@@ -26,7 +28,26 @@ async function toggle() {
   busy.value = false
 }
 
-async function logout() { await auth.signOut(); router.push('/') }
+async function logout() {
+  if (auth.isAnonymous) {
+    const ok = await dialog.confirm({
+      title: t('settings.discardGuestTitle'),
+      body: t('settings.discardGuestBody'),
+      confirmLabel: t('settings.discardGuestConfirm'),
+      variant: 'danger',
+    })
+    if (!ok) return
+    try {
+      await auth.discardGuestSession()
+    } catch (e) {
+      await dialog.alertError(e, t('settings.discardGuestFailed'))
+      return
+    }
+  } else {
+    await auth.signOut()
+  }
+  router.push('/')
+}
 
 const upgradeEmail = ref('')
 const upgradePassword = ref('')
@@ -148,7 +169,7 @@ async function upgrade() {
               {{ auth.user?.email ?? $t('settings.noEmailOnFile') }}
             </div>
           </div>
-          <button class="btn-ghost" @click="logout">{{ $t('auth.signOut') }}</button>
+          <button class="btn-ghost" @click="logout">{{ auth.isAnonymous ? $t('settings.discardGuestSession') : $t('auth.signOut') }}</button>
         </div>
       </section>
 

@@ -36,4 +36,17 @@ router.beforeEach(async (to) => {
     const { isStaffUnlocked } = await import('@/lib/staff-auth')
     if (!isStaffUnlocked()) return { name: 'staff' }
   }
+
+  // First-profile gate: an authenticated user with zero profiles can't
+  // do anything useful (records and reminders both require a profile),
+  // so funnel them through /profiles?first=1 until they have one.
+  if (auth.user && to.meta.requiresAuth) {
+    const { useProfilesStore } = await import('@/stores/profiles')
+    const profiles = useProfilesStore()
+    if (!profiles.loaded) await profiles.fetchAll()
+    if (profiles.profiles.length === 0) {
+      if (to.name === 'profiles' && to.query.first === '1') return
+      return { name: 'profiles', query: { first: '1' } }
+    }
+  }
 })

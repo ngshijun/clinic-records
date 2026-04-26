@@ -50,6 +50,16 @@ export const useAuthStore = defineStore('auth', () => {
     session.value = null
   }
 
+  // Anonymous users have no recovery mechanism, so signing out silently
+  // strands their data on the server. This deletes the auth user (and
+  // cascades all clinic rows) before clearing the local session.
+  async function discardGuestSession() {
+    const { error } = await supabase.functions.invoke('discard-guest-user', { method: 'POST' })
+    if (error) throw error
+    await supabase.auth.signOut().catch(() => {})
+    session.value = null
+  }
+
   const isAnonymous = computed<boolean>(() => user.value?.is_anonymous === true)
 
   async function signInAnonymously() {
@@ -78,5 +88,5 @@ export const useAuthStore = defineStore('auth', () => {
     if (error) throw error
   }
 
-  return { session, user, loaded, isAnonymous, init, signIn, signUp, signInAnonymously, upgradeToEmail, requestPasswordReset, updatePassword, signOut }
+  return { session, user, loaded, isAnonymous, init, signIn, signUp, signInAnonymously, upgradeToEmail, requestPasswordReset, updatePassword, signOut, discardGuestSession }
 })
