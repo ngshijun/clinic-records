@@ -3,7 +3,11 @@ import type { Template } from '@/lib/templates'
 import { useI18n } from 'vue-i18n'
 
 defineProps<{ tpl: Template }>()
-defineEmits<{ (e: 'apply', tpl: Template): void; (e: 'remove', tpl: Template): void }>()
+defineEmits<{
+  (e: 'apply', tpl: Template): void
+  (e: 'edit', tpl: Template): void
+  (e: 'remove', tpl: Template): void
+}>()
 
 const { t } = useI18n()
 </script>
@@ -32,6 +36,13 @@ const { t } = useI18n()
         </span>
       </div>
     </button>
+    <button
+      type="button"
+      class="px-3 border-l hairline opacity-40 hover:opacity-100 transition-opacity text-xs"
+      :aria-label="t('staff.editTemplate') + ': ' + tpl.name"
+      style="color: var(--color-staff-muted)"
+      @click.stop="$emit('edit', tpl)"
+    >{{ t('staff.edit') }}</button>
     <button
       type="button"
       class="px-3 border-l hairline opacity-40 hover:opacity-100 transition-opacity"
