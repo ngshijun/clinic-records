@@ -10,35 +10,46 @@ if ('serviceWorker' in navigator) {
 // keeps using the old SW, which serves cached old HTML on reload, leaving
 // bootVersion stale and the version banner stuck.
 //
-// Worse: vite-plugin-pwa's exposed updateSW(true) is a no-op in autoUpdate
-// mode (it only sends SKIP_WAITING when !auto). Calling it from the Refresh
-// button does nothing at all — the page never reloads.
+// Subtle Chrome behavior: registration.update() resolves once the new worker
+// enters 'installing', NOT after install completes. So checking reg.waiting
+// right after update() is a race — it's usually still null. Reloading at
+// that moment hits the OLD SW, which serves OLD index.html from its precache,
+// re-arming the banner. We must wait for the new SW to actually take over
+// (controllerchange) before reloading.
 //
 // Manual sequence:
-//   1. registration.update() — force a fresh SW fetch from the server.
-//   2. If a new SW is now waiting, post SKIP_WAITING and wait for the
-//      controllerchange event before reloading, so the reload navigation
-//      hits the new SW's precache (with the new HTML).
-//   3. Always reload at the end as a guaranteed fallback. If a new SW
-//      activated mid-sequence, autoUpdate's own 'activated' listener will
-//      have already triggered a reload — ours is a no-op in that case.
+//   1. Arm a controllerchange listener BEFORE reg.update() so we never miss
+//      the takeover even if it fires synchronously after update resolves.
+//   2. registration.update() — force a fresh SW fetch from the server.
+//   3. If anything is updating (installing/waiting), wait for controllerchange
+//      (or a short timeout). The new SW's clients.claim() in activate will
+//      fire it once it has actually taken over — that is the safe moment.
+//   4. Reload. If autoUpdate's own 'activated' listener already triggered a
+//      reload mid-sequence, ours is a harmless no-op.
 export async function refreshApp() {
   if ('serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.getRegistration()
       if (reg) {
+        const oldController = navigator.serviceWorker.controller
+        const ctrlChanged = new Promise<void>((resolve) => {
+          const onChange = () => {
+            navigator.serviceWorker.removeEventListener('controllerchange', onChange)
+            resolve()
+          }
+          navigator.serviceWorker.addEventListener('controllerchange', onChange)
+          setTimeout(() => {
+            navigator.serviceWorker.removeEventListener('controllerchange', onChange)
+            resolve()
+          }, 3000)
+        })
         try { await reg.update() } catch {}
-        if (reg.waiting) {
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' })
-          await new Promise<void>((resolve) => {
-            const onChange = () => {
-              navigator.serviceWorker.removeEventListener('controllerchange', onChange)
-              resolve()
-            }
-            navigator.serviceWorker.addEventListener('controllerchange', onChange)
-            setTimeout(resolve, 2000)
-          })
-        }
+        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+        const updating =
+          reg.installing != null ||
+          reg.waiting != null ||
+          navigator.serviceWorker.controller !== oldController
+        if (updating) await ctrlChanged
       }
     } catch {}
   }
