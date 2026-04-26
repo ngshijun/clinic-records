@@ -1,12 +1,17 @@
 /// <reference lib="webworker" />
 import { precacheAndRoute } from 'workbox-precaching'
-import { clientsClaim } from 'workbox-core'
 
 declare const self: ServiceWorkerGlobalScope
 
 precacheAndRoute(self.__WB_MANIFEST)
 self.skipWaiting()
-clientsClaim()
+// Use event.waitUntil so activate doesn't complete until claim finishes.
+// workbox-core's clientsClaim() omits waitUntil, which lets the SW reach
+// 'activated' before controllerchange propagates — workbox-window then fires
+// reload while the page is still controlled by the OLD SW, serving stale HTML.
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim())
+})
 
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? { title: 'Reminder', body: 'You have a reminder' }
