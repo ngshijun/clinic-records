@@ -333,10 +333,11 @@ export default {
     given: 'Given',
     nextDoseDueIn: 'Next dose due in {n} days.',
     scanInstruction: "Scan with your phone's camera to add this to your records.",
-    labelForTemplate: 'Label for this template:',
     saveTemplateFailed: 'Could not save template: {err}',
     deleteFailed: 'Could not delete: {err}',
-    confirmDeleteTemplate: 'Delete template "{label}"?',
+    confirmDeleteTemplate: 'Delete template "{name}"?',
+    tagRecord: 'Record',
+    tagRecordReminder: 'Record + reminder',
   },
   appUpdate: {
     title: 'A new version is available',

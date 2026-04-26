@@ -336,10 +336,11 @@ export default {
     given: 'Diberikan',
     nextDoseDueIn: 'Dos seterusnya dijangka dalam {n} hari.',
     scanInstruction: 'Imbas dengan kamera telefon anda untuk menambah ini ke rekod.',
-    labelForTemplate: 'Label untuk templat ini:',
     saveTemplateFailed: 'Tidak dapat menyimpan templat: {err}',
     deleteFailed: 'Tidak dapat memadam: {err}',
-    confirmDeleteTemplate: 'Padam templat "{label}"?',
+    confirmDeleteTemplate: 'Padam templat "{name}"?',
+    tagRecord: 'Rekod',
+    tagRecordReminder: 'Rekod + peringatan',
   },
   appUpdate: {
     title: 'Versi baharu tersedia',

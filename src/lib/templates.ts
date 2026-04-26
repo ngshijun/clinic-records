@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase'
 
 export interface Template {
   id: string
-  label: string
   kind: 'v' | 'b'
   name: string
   dose_number: number | null
@@ -36,7 +35,6 @@ export async function saveTemplate(input: TemplateInput): Promise<Template> {
   const { data, error } = await supabase
     .from('qr_templates')
     .insert({
-      label: input.label,
       kind: input.kind,
       name: input.name,
       dose_number: input.dose_number,
@@ -85,7 +83,7 @@ export async function createCategory(kind: 'v' | 'b', label: string): Promise<Te
   const nextOrder = (existing?.[0]?.sort_order ?? -1) + 1
   const { data, error } = await supabase
     .from('template_categories')
-    .insert({ kind, label: label.trim(), sort_order: nextOrder })
+    .insert({ kind, label: label.trim().toUpperCase(), sort_order: nextOrder })
     .select()
     .single()
   if (error) throw error
@@ -95,7 +93,7 @@ export async function createCategory(kind: 'v' | 'b', label: string): Promise<Te
 export async function renameCategory(id: string, label: string): Promise<void> {
   const { error } = await supabase
     .from('template_categories')
-    .update({ label: label.trim() })
+    .update({ label: label.trim().toUpperCase() })
     .eq('id', id)
   if (error) throw error
 }
@@ -114,13 +112,3 @@ export async function reorderCategories(orderedIds: string[]): Promise<void> {
   })
 }
 
-export function autoLabel(t: Omit<TemplateInput, 'label'>): string {
-  const parts: string[] = []
-  if (t.reminder_only) parts.push('Reminder')
-  parts.push(t.name.trim() || 'Untitled')
-  if (!t.reminder_only && t.kind === 'v' && t.dose_number && t.total_doses) {
-    parts.push(`Dose ${t.dose_number} of ${t.total_doses}`)
-  }
-  if (t.next_due_days) parts.push(`+${t.next_due_days}d`)
-  return parts.join(' · ')
-}

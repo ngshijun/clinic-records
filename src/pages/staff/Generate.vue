@@ -17,7 +17,6 @@ import {
   deleteCategory as deleteCategoryFn,
   moveTemplateToCategory,
   reorderCategories,
-  autoLabel,
   type Template,
   type TemplateCategory,
 } from '@/lib/templates'
@@ -250,12 +249,9 @@ async function saveCurrentAsTemplate() {
     next_due_days: nextDueDays.value ?? null,
     reminder_only: reminderOnly.value,
   }
-  const suggested = autoLabel(draft)
-  const label = await dialog.prompt({ title: t('staff.labelForTemplate'), defaultValue: suggested })
-  if (label === null) return
   try {
     savedFlash.value = t('staff.saving')
-    await saveTemplateFn({ ...draft, label: label.trim() || suggested })
+    await saveTemplateFn(draft)
     rememberName()
     await refreshAll()
     savedFlash.value = t('staff.savedFlash')
@@ -268,7 +264,7 @@ async function saveCurrentAsTemplate() {
 
 async function removeTemplate(tpl: Template) {
   const ok = await dialog.confirm({
-    title: t('staff.confirmDeleteTemplate', { label: tpl.label }),
+    title: t('staff.confirmDeleteTemplate', { name: tpl.name }),
     confirmLabel: t('common.delete'),
   })
   if (!ok) return
@@ -438,6 +434,9 @@ const appUrl = computed(() => window.location.origin + '/')
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-3 min-h-[32px]"
           item-key="id"
           :group="'templates-' + kind"
+          :force-fallback="true"
+          :scroll-sensitivity="100"
+          :scroll-speed="20"
           ghost-class="sortable-ghost"
           drag-class="sortable-drag"
           @change="(evt: any) => onTemplateChange(uncatGroup, evt)"
@@ -456,6 +455,9 @@ const appUrl = computed(() => window.location.origin + '/')
         item-key="key"
         handle=".cat-handle"
         :group="'categories-' + kind"
+        :force-fallback="true"
+        :scroll-sensitivity="100"
+        :scroll-speed="20"
         @end="onCategoryReorder"
         ghost-class="sortable-ghost"
         drag-class="sortable-drag"
@@ -481,6 +483,9 @@ const appUrl = computed(() => window.location.origin + '/')
               class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-3 min-h-[32px]"
               item-key="id"
               :group="'templates-' + kind"
+              :force-fallback="true"
+              :scroll-sensitivity="100"
+              :scroll-speed="20"
               ghost-class="sortable-ghost"
               drag-class="sortable-drag"
               @change="(evt: any) => onTemplateChange(group, evt)"

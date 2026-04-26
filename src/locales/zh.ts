@@ -333,10 +333,11 @@ export default {
     given: '接种日期',
     nextDoseDueIn: '下一剂将在 {n} 天后接种。',
     scanInstruction: '用您手机的相机扫描此码，即可添加到您的记录中。',
-    labelForTemplate: '此模板的标签：',
     saveTemplateFailed: '无法保存模板：{err}',
     deleteFailed: '无法删除：{err}',
-    confirmDeleteTemplate: '删除模板「{label}」？',
+    confirmDeleteTemplate: '删除模板「{name}」？',
+    tagRecord: '记录',
+    tagRecordReminder: '记录 + 提醒',
   },
   appUpdate: {
     title: '已有新版本',
