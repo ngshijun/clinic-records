@@ -77,7 +77,7 @@ const filedDate = computed(() => rec.value
         <div v-if="!editing" class="space-y-8">
           <div class="space-y-2">
             <div class="eyebrow">{{ kindLabel }}</div>
-            <h1 class="font-display text-5xl md:text-6xl leading-[0.9]">{{ rec.name }}</h1>
+            <h1 class="font-display text-5xl md:text-6xl leading-[1.05]">{{ rec.name }}</h1>
             <p v-if="profileName" class="font-display-wonk text-muted-app text-lg">{{ $t('recordDetail.forPerson', { name: profileName }) }}</p>
           </div>
 
