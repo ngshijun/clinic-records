@@ -339,7 +339,6 @@ export default {
     tagRecord: '记录',
     tagRecordReminder: '记录 + 提醒',
     editTemplate: '编辑模板',
-    edit: '编辑',
     saveChanges: '保存更改',
     updateTemplateFailed: '无法更新模板：{err}',
   },

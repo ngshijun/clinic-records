@@ -339,7 +339,6 @@ export default {
     tagRecord: 'Record',
     tagRecordReminder: 'Record + reminder',
     editTemplate: 'Edit template',
-    edit: 'edit',
     saveChanges: 'Save changes',
     updateTemplateFailed: 'Could not update template: {err}',
   },

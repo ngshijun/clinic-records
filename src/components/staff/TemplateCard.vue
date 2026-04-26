@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Template } from '@/lib/templates'
 import { useI18n } from 'vue-i18n'
+import { Pencil } from 'lucide-vue-next'
 
 defineProps<{ tpl: Template }>()
 defineEmits<{
@@ -38,11 +39,13 @@ const { t } = useI18n()
     </button>
     <button
       type="button"
-      class="px-3 border-l hairline opacity-40 hover:opacity-100 transition-opacity text-xs"
+      class="px-3 border-l hairline opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center"
       :aria-label="t('staff.editTemplate') + ': ' + tpl.name"
       style="color: var(--color-staff-muted)"
       @click.stop="$emit('edit', tpl)"
-    >{{ t('staff.edit') }}</button>
+    >
+      <Pencil :size="14" :stroke-width="1.75" aria-hidden />
+    </button>
     <button
       type="button"
       class="px-3 border-l hairline opacity-40 hover:opacity-100 transition-opacity"

@@ -342,7 +342,6 @@ export default {
     tagRecord: 'Rekod',
     tagRecordReminder: 'Rekod + peringatan',
     editTemplate: 'Sunting templat',
-    edit: 'sunting',
     saveChanges: 'Simpan perubahan',
     updateTemplateFailed: 'Tidak dapat mengemas kini templat: {err}',
   },
