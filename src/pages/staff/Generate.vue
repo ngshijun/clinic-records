@@ -11,6 +11,7 @@ import {
   listTemplates,
   saveTemplate as saveTemplateFn,
   deleteTemplate as deleteTemplateFn,
+  updateTemplate as updateTemplateFn,
   listCategories,
   createCategory as createCategoryFn,
   renameCategory as renameCategoryFn,
@@ -285,6 +286,55 @@ async function removeTemplate(tpl: Template) {
   }
 }
 
+// Edit-template dialog state. The form holds editable copies; the
+// underlying template (`editingTemplate`) is the snapshot the dialog
+// references for kind and id when saving.
+const editingTemplate = ref<Template | null>(null)
+const editForm = ref({
+  name: '',
+  dose_number: null as number | null,
+  total_doses: null as number | null,
+  next_due_days: null as number | null,
+  reminder_only: false,
+})
+
+function startEditTemplate(tpl: Template) {
+  editingTemplate.value = tpl
+  editForm.value = {
+    name: tpl.name,
+    dose_number: tpl.dose_number,
+    total_doses: tpl.total_doses,
+    next_due_days: tpl.next_due_days,
+    reminder_only: tpl.reminder_only,
+  }
+}
+
+function cancelEditTemplate() {
+  editingTemplate.value = null
+}
+
+async function saveEditTemplate() {
+  const tpl = editingTemplate.value
+  if (!tpl) return
+  const trimmedName = editForm.value.name.trim()
+  if (!trimmedName) return
+  const isVaccine = tpl.kind === 'v'
+  const isReminderOnly = editForm.value.reminder_only
+  try {
+    await updateTemplateFn(tpl.id, {
+      name: trimmedName,
+      dose_number: isVaccine && !isReminderOnly ? (editForm.value.dose_number ?? null) : null,
+      total_doses: isVaccine && !isReminderOnly ? (editForm.value.total_doses ?? null) : null,
+      next_due_days: editForm.value.next_due_days ?? null,
+      reminder_only: isReminderOnly,
+    })
+    await refreshAll()
+    editingTemplate.value = null
+  } catch (e: any) {
+    await dialog.alert({ title: t('staff.updateTemplateFailed', { err: e?.message ?? 'unknown' }) })
+  }
+}
+
 async function addCategory() {
   const label = await dialog.prompt({ title: t('staff.categoryNamePrompt') })
   if (!label || !label.trim()) return
@@ -462,7 +512,7 @@ const appUrl = computed(() => window.location.origin + '/')
           @change="(evt: any) => onTemplateChange(uncatGroup, evt)"
         >
           <template #item="{ element: tpl }">
-            <TemplateCard :tpl="tpl" @apply="applyTemplate" @remove="removeTemplate" />
+            <TemplateCard :tpl="tpl" @apply="applyTemplate" @edit="startEditTemplate" @remove="removeTemplate" />
           </template>
         </draggable>
       </div>
@@ -511,7 +561,7 @@ const appUrl = computed(() => window.location.origin + '/')
               @change="(evt: any) => onTemplateChange(group, evt)"
             >
               <template #item="{ element: tpl }">
-                <TemplateCard :tpl="tpl" @apply="applyTemplate" @remove="removeTemplate" />
+                <TemplateCard :tpl="tpl" @apply="applyTemplate" @edit="startEditTemplate" @remove="removeTemplate" />
               </template>
             </draggable>
           </div>
@@ -712,6 +762,76 @@ const appUrl = computed(() => window.location.origin + '/')
 
     <Teleport to="body">
       <div
+        v-if="editingTemplate"
+        class="edit-tpl-backdrop print:hidden"
+        role="dialog"
+        aria-modal="true"
+        @click.self="cancelEditTemplate"
+        @keydown.esc="cancelEditTemplate"
+      >
+        <div class="paper-card edit-tpl-card anim-rise">
+          <div class="eyebrow mb-3"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('staff.editTemplate') }}</div>
+          <h2 class="font-display text-2xl md:text-3xl leading-[1.05]" style="color: var(--color-staff-ink)">
+            {{ editingTemplate.kind === 'v' ? $t('staff.vaccination') : $t('staff.bloodTest') }}
+          </h2>
+
+          <form class="space-y-6 mt-6" @submit.prevent="saveEditTemplate">
+            <label class="block">
+              <span class="field-label">{{ $t('staff.nameLabel') }}</span>
+              <input
+                v-model="editForm.name"
+                autocomplete="off"
+                class="field font-display text-2xl"
+                :placeholder="$t(editingTemplate.kind === 'v' ? 'staff.vaccinePlaceholder' : 'staff.bloodTestPlaceholder')"
+              />
+            </label>
+
+            <label class="flex items-start gap-3 cursor-pointer select-none">
+              <input type="checkbox" v-model="editForm.reminder_only" class="mt-1" />
+              <div>
+                <div class="field-label">{{ $t('staff.reminderOnly') }}</div>
+                <div class="text-xs mt-1" style="color: var(--color-staff-muted)">{{ $t('staff.reminderOnlyHint') }}</div>
+              </div>
+            </label>
+
+            <div class="grid grid-cols-2 gap-4">
+              <label v-if="editingTemplate.kind === 'v' && !editForm.reminder_only" class="block">
+                <span class="field-label">{{ $t('staff.doseNumber') }}</span>
+                <input v-model.number="editForm.dose_number" type="number" min="1" class="field tabular-nums text-2xl font-display" />
+              </label>
+              <label v-if="editingTemplate.kind === 'v' && !editForm.reminder_only" class="block">
+                <span class="field-label">{{ $t('staff.of') }}</span>
+                <input v-model.number="editForm.total_doses" type="number" min="1" class="field tabular-nums text-2xl font-display" />
+              </label>
+              <label v-if="editForm.reminder_only" class="block col-span-2">
+                <span class="field-label">{{ $t('staff.dueInDays') }}</span>
+                <input v-model.number="editForm.next_due_days" type="number" min="1" class="field tabular-nums text-2xl font-display" />
+              </label>
+              <label v-else-if="editingTemplate.kind === 'b'" class="block col-span-2">
+                <span class="field-label">{{ $t('staff.nextDueDays') }}</span>
+                <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display" />
+              </label>
+              <label v-else class="block col-span-2">
+                <span class="field-label">{{ $t('staff.nextDoseInDays') }}</span>
+                <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display" />
+              </label>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+              <button type="button" class="btn-ghost" @click="cancelEditTemplate">
+                {{ $t('common.cancel') }}
+              </button>
+              <button type="submit" class="btn-primary" :disabled="!editForm.name.trim()">
+                {{ $t('staff.saveChanges') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div
         v-if="shareOpen"
         class="share-qr-backdrop print:hidden"
         role="dialog"
@@ -755,6 +875,22 @@ const appUrl = computed(() => window.location.origin + '/')
 .sortable-drag {
   opacity: 0.95;
   transform: rotate(1deg);
+}
+
+.edit-tpl-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 100;
+  animation: share-qr-fade 140ms ease-out;
+}
+.edit-tpl-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 1.75rem 1.75rem 1.5rem;
 }
 
 .share-qr-backdrop {
