@@ -9,10 +9,11 @@ export interface Template {
   next_due_days: number | null
   reminder_only: boolean
   category_id: string | null
+  sort_order: number
   created_at: string
 }
 
-export type TemplateInput = Omit<Template, 'id' | 'created_at' | 'category_id'> & { category_id?: string | null }
+export type TemplateInput = Omit<Template, 'id' | 'created_at' | 'category_id' | 'sort_order'> & { category_id?: string | null }
 
 export interface TemplateCategory {
   id: string
@@ -26,12 +27,27 @@ export async function listTemplates(): Promise<Template[]> {
   const { data, error } = await supabase
     .from('qr_templates')
     .select('*')
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
   if (error) throw error
   return (data ?? []) as Template[]
 }
 
 export async function saveTemplate(input: TemplateInput): Promise<Template> {
+  const targetCategoryId = input.category_id ?? null
+  // New templates land at the end of their (kind, category) bucket, mirroring
+  // createCategory's "max sort_order + 1" pattern.
+  let q = supabase
+    .from('qr_templates')
+    .select('sort_order')
+    .eq('kind', input.kind)
+  q = targetCategoryId === null ? q.is('category_id', null) : q.eq('category_id', targetCategoryId)
+  const { data: existing, error: e1 } = await q
+    .order('sort_order', { ascending: false })
+    .limit(1)
+  if (e1) throw e1
+  const nextOrder = (existing?.[0]?.sort_order ?? -1) + 1
+
   const { data, error } = await supabase
     .from('qr_templates')
     .insert({
@@ -41,12 +57,19 @@ export async function saveTemplate(input: TemplateInput): Promise<Template> {
       total_doses: input.total_doses,
       next_due_days: input.next_due_days,
       reminder_only: input.reminder_only,
-      category_id: input.category_id ?? null,
+      category_id: targetCategoryId,
+      sort_order: nextOrder,
     })
     .select()
     .single()
   if (error) throw error
   return data as Template
+}
+
+export async function reorderTemplates(orderedIds: string[]): Promise<void> {
+  if (orderedIds.length === 0) return
+  const { error } = await supabase.rpc('reorder_qr_templates', { template_ids: orderedIds })
+  if (error) throw error
 }
 
 export async function deleteTemplate(id: string): Promise<void> {

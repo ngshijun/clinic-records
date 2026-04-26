@@ -17,6 +17,7 @@ import {
   deleteCategory as deleteCategoryFn,
   moveTemplateToCategory,
   reorderCategories,
+  reorderTemplates,
   type Template,
   type TemplateCategory,
 } from '@/lib/templates'
@@ -263,8 +264,16 @@ async function saveCurrentAsTemplate() {
 }
 
 async function removeTemplate(tpl: Template) {
+  const meta: string[] = []
+  if (tpl.kind === 'v' && tpl.dose_number && tpl.total_doses) {
+    meta.push(t('staff.seriesOf', { n: tpl.dose_number, total: tpl.total_doses }))
+  }
+  if (tpl.next_due_days) {
+    meta.push(t('staff.inDays', { n: tpl.next_due_days }))
+  }
+  const descriptor = meta.length ? `${tpl.name} · ${meta.join(' · ')}` : tpl.name
   const ok = await dialog.confirm({
-    title: t('staff.confirmDeleteTemplate', { name: tpl.name }),
+    title: t('staff.confirmDeleteTemplate', { name: descriptor }),
     confirmLabel: t('common.delete'),
   })
   if (!ok) return
@@ -328,15 +337,26 @@ async function onCategoryReorder() {
 }
 
 async function onTemplateChange(group: Group, evt: any) {
-  if (!evt.added) return
-  const tpl = evt.added.element as Template
-  const targetId = group.category?.id ?? null
+  // A cross-category drag fires `removed` on the source group AND `added`
+  // on the destination — both handler invocations renumber their own
+  // group. Within-category drags only fire `moved`. In all three cases
+  // the bucket whose order changed is the one bound to this `group`.
+  if (!evt.added && !evt.moved && !evt.removed) return
   try {
-    await moveTemplateToCategory(tpl.id, targetId)
-    const src = templates.value.find(t => t.id === tpl.id)
-    if (src) src.category_id = targetId
+    if (evt.added) {
+      const tpl = evt.added.element as Template
+      const targetId = group.category?.id ?? null
+      await moveTemplateToCategory(tpl.id, targetId)
+      const src = templates.value.find(t => t.id === tpl.id)
+      if (src) src.category_id = targetId
+    }
+    await reorderTemplates(group.templates.map(t => t.id))
+    group.templates.forEach((t, i) => {
+      const src = templates.value.find(x => x.id === t.id)
+      if (src) src.sort_order = i
+    })
   } catch (e) {
-    await dialog.alertError(e, 'Failed to move template')
+    await dialog.alertError(e, 'Failed to update template')
     await refreshAll()
   }
 }
