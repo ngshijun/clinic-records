@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ulid } from 'ulid'
 import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
@@ -296,6 +296,14 @@ const editForm = ref({
   total_doses: null as number | null,
   next_due_days: null as number | null,
   reminder_only: false,
+})
+
+const editNameInput = ref<HTMLInputElement | null>(null)
+watch(editingTemplate, async (v) => {
+  if (!v) return
+  await nextTick()
+  editNameInput.value?.focus()
+  editNameInput.value?.select()
 })
 
 function startEditTemplate(tpl: Template) {
@@ -779,6 +787,7 @@ const appUrl = computed(() => window.location.origin + '/')
             <label class="block">
               <span class="field-label">{{ $t('staff.nameLabel') }}</span>
               <input
+                ref="editNameInput"
                 v-model="editForm.name"
                 autocomplete="off"
                 class="field font-display text-2xl"
