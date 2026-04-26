@@ -77,6 +77,19 @@ export async function deleteTemplate(id: string): Promise<void> {
   if (error) throw error
 }
 
+export type TemplateUpdate = Pick<
+  Template,
+  'name' | 'dose_number' | 'total_doses' | 'next_due_days' | 'reminder_only'
+>
+
+export async function updateTemplate(id: string, input: TemplateUpdate): Promise<void> {
+  const { error } = await supabase
+    .from('qr_templates')
+    .update(input)
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function moveTemplateToCategory(templateId: string, categoryId: string | null): Promise<void> {
   const { error } = await supabase
     .from('qr_templates')
