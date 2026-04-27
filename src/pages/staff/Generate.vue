@@ -69,6 +69,21 @@ watch(reminderOnly, (on) => {
   if (on) performedOn.value = todayLocalIso()
 })
 
+// dose_number must never exceed total_doses (no 4/3). Clamp on any change to
+// either side — covers manual edits, paste, and applyTemplate.
+watch([doseNumber, totalDoses], ([dn, td]) => {
+  if (dn != null && td != null && dn > td) doseNumber.value = td
+})
+
+// On the final dose of a multi-dose series there's no "next dose". Single-
+// dose recurring shots (1/1 annual flu, 1/1 tetanus) keep the field — that's
+// where the booster cadence lives.
+const isFinalDoseOfSeries = computed(() => {
+  const dn = doseNumber.value
+  const td = totalDoses.value
+  return dn != null && td != null && td > 1 && dn >= td
+})
+
 const templates = ref<Template[]>([])
 const categories = ref<TemplateCategory[]>([])
 const templatesLoading = ref(false)
@@ -213,7 +228,9 @@ const payload = computed<QrPayload | null>(() => {
     if (doseNumber.value) p.dn = doseNumber.value
     if (totalDoses.value) p.td = totalDoses.value
   }
-  if (nextDueDays.value) {
+  // Final dose of a multi-dose series has no "next" — drop nd/nu even if
+  // the underlying refs hold stale values from earlier in the form session.
+  if (nextDueDays.value && !isFinalDoseOfSeries.value) {
     p.nd = nextDueDays.value
     if (nextDueUnit.value !== 'd') p.nu = nextDueUnit.value
   }
@@ -268,7 +285,7 @@ async function saveCurrentAsTemplate() {
     name: name.value.trim(),
     dose_number: kind.value === 'v' && !reminderOnly.value ? (doseNumber.value ?? null) : null,
     total_doses: kind.value === 'v' && !reminderOnly.value ? (totalDoses.value ?? null) : null,
-    next_due_days: nextDueDays.value ?? null,
+    next_due_days: isFinalDoseOfSeries.value ? null : (nextDueDays.value ?? null),
     next_due_unit: nextDueUnit.value,
     reminder_only: reminderOnly.value,
   }
@@ -328,6 +345,20 @@ watch(editingTemplate, async (v) => {
   editNameInput.value?.select()
 })
 
+// Same dose-clamping invariant as the compose form.
+watch(
+  () => [editForm.value.dose_number, editForm.value.total_doses] as const,
+  ([dn, td]) => {
+    if (dn != null && td != null && dn > td) editForm.value.dose_number = td
+  },
+)
+
+const editIsFinalDoseOfSeries = computed(() => {
+  const dn = editForm.value.dose_number
+  const td = editForm.value.total_doses
+  return dn != null && td != null && td > 1 && dn >= td
+})
+
 function startEditTemplate(tpl: Template) {
   editingTemplate.value = tpl
   editForm.value = {
@@ -356,7 +387,7 @@ async function saveEditTemplate() {
       name: trimmedName,
       dose_number: isVaccine && !isReminderOnly ? (editForm.value.dose_number ?? null) : null,
       total_doses: isVaccine && !isReminderOnly ? (editForm.value.total_doses ?? null) : null,
-      next_due_days: editForm.value.next_due_days ?? null,
+      next_due_days: editIsFinalDoseOfSeries.value ? null : (editForm.value.next_due_days ?? null),
       next_due_unit: editForm.value.next_due_unit,
       reminder_only: isReminderOnly,
     })
@@ -703,7 +734,7 @@ const appUrl = computed(() => window.location.origin + '/')
               </label>
               <label v-if="kind === 'v' && !reminderOnly" class="block">
                 <span class="field-label">{{ $t('staff.doseNumber') }}</span>
-                <input v-model.number="doseNumber" type="number" min="1" class="field tabular-nums text-2xl font-display" />
+                <input v-model.number="doseNumber" type="number" min="1" :max="totalDoses ?? undefined" class="field tabular-nums text-2xl font-display" />
               </label>
               <label v-if="kind === 'v' && !reminderOnly" class="block">
                 <span class="field-label">{{ $t('staff.of') }}</span>
@@ -725,7 +756,7 @@ const appUrl = computed(() => window.location.origin + '/')
               </div>
             </div>
 
-            <div v-if="kind === 'v' && !reminderOnly">
+            <div v-if="kind === 'v' && !reminderOnly && !isFinalDoseOfSeries">
               <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
                 <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums flex-1" />
@@ -839,7 +870,7 @@ const appUrl = computed(() => window.location.origin + '/')
             <div class="grid grid-cols-2 gap-4">
               <label v-if="editingTemplate.kind === 'v' && !editForm.reminder_only" class="block">
                 <span class="field-label">{{ $t('staff.doseNumber') }}</span>
-                <input v-model.number="editForm.dose_number" type="number" min="1" class="field tabular-nums text-2xl font-display" />
+                <input v-model.number="editForm.dose_number" type="number" min="1" :max="editForm.total_doses ?? undefined" class="field tabular-nums text-2xl font-display" />
               </label>
               <label v-if="editingTemplate.kind === 'v' && !editForm.reminder_only" class="block">
                 <span class="field-label">{{ $t('staff.of') }}</span>
@@ -859,7 +890,7 @@ const appUrl = computed(() => window.location.origin + '/')
                   <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
                 </div>
               </div>
-              <div v-else class="col-span-2">
+              <div v-else-if="!editIsFinalDoseOfSeries" class="col-span-2">
                 <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
                 <div class="flex gap-2 items-stretch mt-1">
                   <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
