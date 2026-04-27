@@ -86,9 +86,13 @@ function relativeDue(iso: string) {
   if (days === -1) return t('home.rel_yesterday')
   if (days === 0) return t('home.rel_today')
   if (days === 1) return t('home.rel_tomorrow')
-  if (days <= 30) return t('home.rel_inDays', { n: days })
-  if (days <= 60) return t('home.rel_inWeeks', { n: Math.round(days / 7) })
-  return t('home.rel_inMonths', { n: Math.round(days / 30) })
+  // Bucket boundaries are tuned so the displayed number stays monotonic
+  // across transitions: days→weeks at exactly 4 weeks, weeks→months when
+  // 9 weeks ≈ 2 months, months→years at 18 months ≈ 1.5 years.
+  if (days <= 28) return t('home.rel_inDays', { n: days })
+  if (days <= 62) return t('home.rel_inWeeks', { n: Math.round(days / 7) })
+  if (days <= 547) return t('home.rel_inMonths', { n: Math.round(days / 30) })
+  return t('home.rel_inYears', { n: Math.round(days / 365) })
 }
 function reminderKindLabel(k: string) {
   if (k === 'next_dose') return t('home.kindNextDose')

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { QrDueUnit } from '@/lib/qr-payload'
 
 export interface Template {
   id: string
@@ -7,6 +8,7 @@ export interface Template {
   dose_number: number | null
   total_doses: number | null
   next_due_days: number | null
+  next_due_unit: QrDueUnit
   reminder_only: boolean
   category_id: string | null
   sort_order: number
@@ -56,6 +58,7 @@ export async function saveTemplate(input: TemplateInput): Promise<Template> {
       dose_number: input.dose_number,
       total_doses: input.total_doses,
       next_due_days: input.next_due_days,
+      next_due_unit: input.next_due_unit,
       reminder_only: input.reminder_only,
       category_id: targetCategoryId,
       sort_order: nextOrder,
@@ -79,7 +82,7 @@ export async function deleteTemplate(id: string): Promise<void> {
 
 export type TemplateUpdate = Pick<
   Template,
-  'name' | 'dose_number' | 'total_doses' | 'next_due_days' | 'reminder_only'
+  'name' | 'dose_number' | 'total_doses' | 'next_due_days' | 'next_due_unit' | 'reminder_only'
 >
 
 export async function updateTemplate(id: string, input: TemplateUpdate): Promise<void> {

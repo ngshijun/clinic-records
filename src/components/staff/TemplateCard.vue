@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Template } from '@/lib/templates'
+import type { QrDueUnit } from '@/lib/qr-payload'
 import { useI18n } from 'vue-i18n'
 import { Pencil } from 'lucide-vue-next'
 
@@ -11,6 +12,13 @@ defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+function inUnitKey(unit: QrDueUnit): string {
+  return unit === 'w' ? 'staff.inWeeks'
+    : unit === 'mo' ? 'staff.inMonths'
+    : unit === 'y' ? 'staff.inYears'
+    : 'staff.inDays'
+}
 </script>
 
 <template>
@@ -33,7 +41,7 @@ const { t } = useI18n()
           {{ t('staff.seriesOf', { n: tpl.dose_number, total: tpl.total_doses }) }}
         </span>
         <span v-if="tpl.next_due_days" class="tabular-nums">
-          {{ t('staff.inDays', { n: tpl.next_due_days }) }}
+          {{ t(inUnitKey(tpl.next_due_unit), { n: tpl.next_due_days }) }}
         </span>
       </div>
     </button>

@@ -2,7 +2,7 @@
 import type { QrPayload } from '@/lib/qr-payload'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatDateLong } from '@/lib/dates'
+import { formatDateLong, computeDueAt } from '@/lib/dates'
 
 const props = defineProps<{ payload: QrPayload }>()
 const emit = defineEmits<{ (e: 'confirm'): void; (e: 'cancel'): void }>()
@@ -18,11 +18,11 @@ const doseLine = computed(() => {
   if (props.payload.k !== 'v' || !props.payload.dn || !props.payload.td) return null
   return t('home.doseOf', { n: props.payload.dn, total: props.payload.td })
 })
+// computeDueAt mirrors the calendar-aware math the cron uses to schedule the
+// reminder, so the patient sees the same exact date the SW will fire on.
 const dueDate = computed(() => {
   if (!props.payload.nd) return null
-  const due = new Date(props.payload.d)
-  due.setDate(due.getDate() + props.payload.nd)
-  return formatDateLong(due, locale.value)
+  return formatDateLong(computeDueAt(props.payload.d, props.payload.nd, props.payload.nu), locale.value)
 })
 const givenDate = computed(() => formatDateLong(props.payload.d, locale.value))
 const reminderLine = computed(() => {

@@ -1,4 +1,5 @@
 export type QrKind = 'v' | 'b' | 'r'
+export type QrDueUnit = 'd' | 'w' | 'mo' | 'y'
 
 export interface QrPayload {
   id: string
@@ -8,6 +9,9 @@ export interface QrPayload {
   dn?: number
   td?: number
   nd?: number
+  // Unit for `nd`. Absent on legacy QR codes — those are interpreted as days,
+  // matching pre-unit behavior, so already-printed QRs keep working forever.
+  nu?: QrDueUnit
 }
 
 const PREFIX = 'v1.'
@@ -33,6 +37,7 @@ export function encodePayload(appOrigin: string, payload: QrPayload): string {
   if (payload.dn !== undefined) compact.dn = payload.dn
   if (payload.td !== undefined) compact.td = payload.td
   if (payload.nd !== undefined) compact.nd = payload.nd
+  if (payload.nu !== undefined) compact.nu = payload.nu
   const json = JSON.stringify(compact)
   const b64 = base64urlEncode(new TextEncoder().encode(json))
   const origin = appOrigin.replace(/\/$/, '')
@@ -57,7 +62,7 @@ export function decodeUrl(urlOrHash: string): QrPayload {
 }
 
 export async function computeFingerprint(payload: QrPayload): Promise<string> {
-  const key = JSON.stringify({ id: payload.id, k: payload.k, n: payload.n, d: payload.d, dn: payload.dn, td: payload.td, nd: payload.nd })
+  const key = JSON.stringify({ id: payload.id, k: payload.k, n: payload.n, d: payload.d, dn: payload.dn, td: payload.td, nd: payload.nd, nu: payload.nu })
   const bytes = new TextEncoder().encode(key)
   const hash = await crypto.subtle.digest('SHA-256', bytes)
   return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('')

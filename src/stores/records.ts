@@ -27,7 +27,6 @@ export interface Reminder {
   title: string
   name: string | null
   due_at: string
-  window_days: number
   sent_at: string | null
   created_at: string
 }
@@ -109,7 +108,7 @@ export const useRecordsStore = defineStore('records', () => {
       record_id: rec.id,
       kind: rec.kind === 'vaccination' ? 'next_dose' : 'followup_test',
       title,
-      due_at: computeDueAt(payload.d, payload.nd),
+      due_at: computeDueAt(payload.d, payload.nd, payload.nu),
     })
     if (error) throw error
   }
@@ -181,7 +180,7 @@ export const useRecordsStore = defineStore('records', () => {
       kind: payload.k === 'v' ? 'next_dose' : 'followup_test',
       title: `${payload.n} reminder`,
       name: payload.n,
-      due_at: computeDueAt(payload.d, payload.nd),
+      due_at: computeDueAt(payload.d, payload.nd, payload.nu),
     }).select().single()
     if (error) throw error
     return data as Reminder

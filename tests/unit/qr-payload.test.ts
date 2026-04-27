@@ -9,6 +9,7 @@ const sample: QrPayload = {
   dn: 1,
   td: 3,
   nd: 30,
+  nu: 'd',
 }
 
 describe('qr-payload', () => {
@@ -50,6 +51,25 @@ describe('qr-payload', () => {
   it('fingerprint differs when id differs', async () => {
     const a = await computeFingerprint(sample)
     const b = await computeFingerprint({ ...sample, id: 'DIFFERENT' })
+    expect(a).not.toBe(b)
+  })
+
+  it('round-trips a payload with a non-day unit', () => {
+    const yearly: QrPayload = { ...sample, nd: 1, nu: 'y' }
+    const decoded = decodeUrl(encodePayload('https://x.y', yearly))
+    expect(decoded).toEqual(yearly)
+  })
+
+  it('legacy QRs without nu decode (no nu field set)', () => {
+    const legacy: QrPayload = { id: sample.id, k: 'v', n: 'Hep B', d: '2026-04-22', nd: 30 }
+    const decoded = decodeUrl(encodePayload('https://x.y', legacy))
+    expect(decoded).toEqual(legacy)
+    expect('nu' in decoded).toBe(false)
+  })
+
+  it('fingerprint differs when nu differs', async () => {
+    const a = await computeFingerprint({ ...sample, nu: 'd' })
+    const b = await computeFingerprint({ ...sample, nu: 'mo' })
     expect(a).not.toBe(b)
   })
 })
