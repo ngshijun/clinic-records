@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { syncManifest } from '@/lib/pwa'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', name: 'landing', component: () => import('@/pages/Landing.vue') },
@@ -49,4 +50,8 @@ router.beforeEach(async (to) => {
       return { name: 'profiles', query: { first: '1' } }
     }
   }
+})
+
+router.afterEach((to) => {
+  syncManifest(to.path)
 })

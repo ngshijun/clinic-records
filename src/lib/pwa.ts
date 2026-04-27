@@ -33,3 +33,25 @@ if ('serviceWorker' in navigator) {
 export function refreshApp() {
   window.location.reload()
 }
+
+// Swap <link rel="manifest"> between the patient manifest (auto-injected by
+// vite-plugin-pwa) and the staff manifest based on the current route. Lets
+// Chrome's install prompt produce a separate "Staff" PWA when triggered from
+// /staff, with start_url pinned to /staff instead of /home.
+const STAFF_MANIFEST_HREF = '/staff.webmanifest'
+
+export function syncManifest(path: string): void {
+  const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
+  if (!link) return
+  if (!link.dataset.defaultHref) {
+    link.dataset.defaultHref = link.getAttribute('href') ?? ''
+  }
+  const target = path.startsWith('/staff') ? STAFF_MANIFEST_HREF : link.dataset.defaultHref
+  if (target && link.getAttribute('href') !== target) {
+    link.setAttribute('href', target)
+  }
+}
+
+if (typeof window !== 'undefined') {
+  syncManifest(window.location.pathname)
+}

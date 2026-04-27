@@ -1,0 +1,14 @@
+{
+  "id": "/staff",
+  "name": "Poliklinik Ng PLT — Staff",
+  "short_name": "Staff",
+  "description": "Clinic staff QR-code generation",
+  "start_url": "/staff",
+  "scope": "/staff",
+  "display": "standalone",
+  "theme_color": "#14181a",
+  "background_color": "#14181a",
+  "icons": [
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
