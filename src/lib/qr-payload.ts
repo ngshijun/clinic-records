@@ -12,6 +12,11 @@ export interface QrPayload {
   // Unit for `nd`. Absent on legacy QR codes — those are interpreted as days,
   // matching pre-unit behavior, so already-printed QRs keep working forever.
   nu?: QrDueUnit
+  // Original kind when k='r'. Lets reminder-only QRs preserve the staff's
+  // vaccination-vs-blood-test choice so reminders land with the right `kind`
+  // in the DB (next_dose vs followup_test). Absent on legacy QRs — those
+  // fall back to 'b' to reproduce the prior all-followup_test behavior.
+  ok?: 'v' | 'b'
 }
 
 const PREFIX = 'v1.'
@@ -38,6 +43,7 @@ export function encodePayload(appOrigin: string, payload: QrPayload): string {
   if (payload.td !== undefined) compact.td = payload.td
   if (payload.nd !== undefined) compact.nd = payload.nd
   if (payload.nu !== undefined) compact.nu = payload.nu
+  if (payload.ok !== undefined) compact.ok = payload.ok
   const json = JSON.stringify(compact)
   const b64 = base64urlEncode(new TextEncoder().encode(json))
   const origin = appOrigin.replace(/\/$/, '')
@@ -62,7 +68,7 @@ export function decodeUrl(urlOrHash: string): QrPayload {
 }
 
 export async function computeFingerprint(payload: QrPayload): Promise<string> {
-  const key = JSON.stringify({ id: payload.id, k: payload.k, n: payload.n, d: payload.d, dn: payload.dn, td: payload.td, nd: payload.nd, nu: payload.nu })
+  const key = JSON.stringify({ id: payload.id, k: payload.k, n: payload.n, d: payload.d, dn: payload.dn, td: payload.td, nd: payload.nd, nu: payload.nu, ok: payload.ok })
   const bytes = new TextEncoder().encode(key)
   const hash = await crypto.subtle.digest('SHA-256', bytes)
   return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('')

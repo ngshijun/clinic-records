@@ -38,6 +38,8 @@ export default {
     firstProfileHint: 'Your first profile. You can add more later.',
     namePlaceholder: 'e.g. Ahmad',
     forgotPassword: 'Forgot password?',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
   },
   forgotPassword: {
     eyebrow: 'Recover access',
@@ -103,6 +105,7 @@ export default {
     due: 'Due {date}',
     dueAround: 'due {date}',
     nextDoseTitle: '{name} · Dose {n}',
+    nextDoseReminderTitle: '{name} · Next dose',
     followupTitle: '{name} · Follow-up',
     doseOf: 'Dose {n} of {total}',
     bloodTest: 'Blood test',
@@ -201,6 +204,8 @@ export default {
     pleaseNote: 'Please note',
     clinicClosedSat: 'Poliklinik Ng PLT is closed on Saturdays.',
     scheduled: 'scheduled {date}',
+    removeReminder: 'Remove reminder',
+    confirmDelete: 'Delete this reminder?',
   },
   profiles: {
     profilesLabel: 'Profiles · № {count}',

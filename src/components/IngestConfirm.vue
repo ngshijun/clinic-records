@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatDateLong, computeDueAt } from '@/lib/dates'
 
-const props = defineProps<{ payload: QrPayload }>()
+const props = defineProps<{ payload: QrPayload; busy?: boolean }>()
 const emit = defineEmits<{ (e: 'confirm'): void; (e: 'cancel'): void }>()
 const { t, locale } = useI18n()
 
@@ -66,10 +66,10 @@ const reminderLine = computed(() => {
     </div>
 
     <div class="flex gap-3">
-      <button class="btn-primary flex-1" @click="emit('confirm')">
+      <button class="btn-primary flex-1" :disabled="busy" @click="emit('confirm')">
         {{ isReminder ? $t('ingest.scheduleReminder') : $t('ingest.addToLedger') }} <span aria-hidden>→</span>
       </button>
-      <button class="btn-ghost" @click="emit('cancel')">{{ $t('common.cancel') }}</button>
+      <button class="btn-ghost" :disabled="busy" @click="emit('cancel')">{{ $t('common.cancel') }}</button>
     </div>
   </section>
 </template>

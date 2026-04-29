@@ -37,7 +37,7 @@ onMounted(async () => {
 })
 
 async function confirm() {
-  if (!payload.value || !selectedProfile.value) return
+  if (!payload.value || !selectedProfile.value || busy.value) return
   busy.value = true
   errorMsg.value = null
   try {
@@ -71,7 +71,7 @@ async function confirm() {
 }
 
 async function doReplace() {
-  if (!payload.value || !selectedProfile.value || !similar.value) return
+  if (!payload.value || !selectedProfile.value || !similar.value || busy.value) return
   busy.value = true
   try {
     const rec = await records.replaceRecord(similar.value.id, {
@@ -84,7 +84,7 @@ async function doReplace() {
 }
 
 async function doKeepBoth() {
-  if (!payload.value || !selectedProfile.value) return
+  if (!payload.value || !selectedProfile.value || busy.value) return
   busy.value = true
   try {
     const rec = await records.insertWithReminder({
@@ -133,10 +133,10 @@ async function doKeepBoth() {
         </div>
 
         <div class="anim-rise-3">
-          <IngestConfirm :payload="payload" @confirm="confirm" @cancel="router.push('/home')" />
+          <IngestConfirm :payload="payload" :busy="busy" @confirm="confirm" @cancel="router.push('/home')" />
         </div>
 
-        <SimilarityDialog v-if="similar" :existing="similar"
+        <SimilarityDialog v-if="similar" :existing="similar" :busy="busy"
           @replace="doReplace" @keep-both="doKeepBoth" @cancel="similar = null" />
 
         <p v-if="errorMsg" class="text-crimson text-sm paper-card p-4">

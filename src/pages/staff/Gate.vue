@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { verifyPassword, markStaffUnlocked, isStaffUnlocked } from '@/lib/staff-auth'
+import PasswordField from '@/components/PasswordField.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -70,7 +71,7 @@ async function submit() {
         <form @submit.prevent="submit" class="space-y-6 anim-rise-2">
           <label class="block">
             <span class="field-label">{{ $t('staff.passwordPlaceholder') }}</span>
-            <input v-model="pw" type="password" autocomplete="current-password" class="field" required />
+            <PasswordField v-model="pw" autocomplete="current-password" class="field" required />
           </label>
           <button :disabled="busy" class="btn-primary w-full">
             {{ busy ? $t('staff.verifying') : $t('staff.unlockConsole') }}

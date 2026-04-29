@@ -228,6 +228,9 @@ const payload = computed<QrPayload | null>(() => {
     if (doseNumber.value) p.dn = doseNumber.value
     if (totalDoses.value) p.td = totalDoses.value
   }
+  // Preserve the v/b choice through reminder-only QRs so the resulting
+  // reminder lands with the right `kind` (next_dose vs followup_test).
+  if (effectiveKind === 'r') p.ok = kind.value
   // Final dose of a multi-dose series has no "next" — drop nd/nu even if
   // the underlying refs hold stale values from earlier in the form session.
   if (nextDueDays.value && !isFinalDoseOfSeries.value) {

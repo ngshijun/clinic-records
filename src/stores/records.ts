@@ -69,6 +69,7 @@ export const useRecordsStore = defineStore('records', () => {
   }
 
   async function closePriorSeriesReminders(rec: Record) {
+    const reminderKind = rec.kind === 'vaccination' ? 'next_dose' : 'followup_test'
     const { data: priors, error: pe } = await supabase
       .from('records')
       .select('id')
@@ -78,14 +79,24 @@ export const useRecordsStore = defineStore('records', () => {
       .neq('id', rec.id)
     if (pe) throw pe
     const priorIds = (priors ?? []).map(p => p.id)
-    if (priorIds.length === 0) return
-    const reminderKind = rec.kind === 'vaccination' ? 'next_dose' : 'followup_test'
-    const { error: de } = await supabase
+    if (priorIds.length > 0) {
+      const { error: de } = await supabase
+        .from('reminders')
+        .delete()
+        .in('record_id', priorIds)
+        .eq('kind', reminderKind)
+      if (de) throw de
+    }
+    // Reminder-only entries (record_id IS NULL) carry the series identity in
+    // `name`, so the priors-id sweep above can't reach them.
+    const { error: oe } = await supabase
       .from('reminders')
       .delete()
-      .in('record_id', priorIds)
+      .is('record_id', null)
+      .eq('profile_id', rec.profile_id)
       .eq('kind', reminderKind)
-    if (de) throw de
+      .eq('name', rec.name)
+    if (oe) throw oe
   }
 
   async function createReminderForRecord(user_id: string, rec: Record, payload: QrPayload) {
@@ -173,11 +184,14 @@ export const useRecordsStore = defineStore('records', () => {
     if (!user_id) throw new Error('not authenticated')
     const { payload } = input
     if (payload.nd === undefined) throw new Error('reminder requires nd (days)')
+    // payload.k is 'r' here; payload.ok carries the original v/b choice.
+    // Legacy QRs without `ok` fall back to 'b' to match prior behavior.
+    const originalKind = payload.ok ?? 'b'
     const { data, error } = await supabase.from('reminders').insert({
       user_id,
       profile_id: input.profile_id,
       record_id: null,
-      kind: payload.k === 'v' ? 'next_dose' : 'followup_test',
+      kind: originalKind === 'v' ? 'next_dose' : 'followup_test',
       title: `${payload.n} reminder`,
       name: payload.n,
       due_at: computeDueAt(payload.d, payload.nd, payload.nu),
@@ -197,5 +211,10 @@ export const useRecordsStore = defineStore('records', () => {
     if (error) throw error
   }
 
-  return { records, reminders, fetchForProfile, findSimilar, insertWithReminder, insertReminderOnly, replaceRecord, updateRecord, deleteRecord }
+  async function deleteReminder(id: string) {
+    const { error } = await supabase.from('reminders').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  return { records, reminders, fetchForProfile, findSimilar, insertWithReminder, insertReminderOnly, replaceRecord, updateRecord, deleteRecord, deleteReminder }
 })

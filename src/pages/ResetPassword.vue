@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { supabase } from '@/lib/supabase'
+import PasswordField from '@/components/PasswordField.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -74,12 +75,12 @@ async function submit() {
         <form v-else class="space-y-6 anim-rise-2" @submit.prevent="submit">
           <label class="block">
             <span class="field-label">{{ $t('resetPassword.newPassword') }}</span>
-            <input v-model="password" type="password" autocomplete="new-password" minlength="8" class="field" required />
+            <PasswordField v-model="password" autocomplete="new-password" minlength="8" class="field" required />
             <span class="text-[11px] text-muted-app mt-1 block">{{ $t('auth.eightCharMin') }}</span>
           </label>
           <label class="block">
             <span class="field-label">{{ $t('resetPassword.confirmPassword') }}</span>
-            <input v-model="confirm" type="password" autocomplete="new-password" minlength="8" class="field" required />
+            <PasswordField v-model="confirm" autocomplete="new-password" minlength="8" class="field" required />
           </label>
 
           <button :disabled="busy" class="btn-primary w-full">

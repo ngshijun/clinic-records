@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProfilesStore } from '@/stores/profiles'
+import PasswordField from '@/components/PasswordField.vue'
 
 const auth = useAuthStore()
 const profiles = useProfilesStore()
@@ -60,7 +61,7 @@ async function submit() {
           </label>
           <label class="block">
             <span class="field-label">{{ $t('auth.password') }}</span>
-            <input v-model="password" type="password" autocomplete="new-password" minlength="8" class="field" required />
+            <PasswordField v-model="password" autocomplete="new-password" minlength="8" class="field" required />
             <span class="text-[11px] text-muted-app mt-1 block">{{ $t('auth.eightCharMin') }}</span>
           </label>
 

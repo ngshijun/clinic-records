@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useProfilesStore } from '@/stores/profiles'
-import type { Reminder, Record } from '@/stores/records'
+import { useRecordsStore, type Reminder, type Record } from '@/stores/records'
 import { supabase } from '@/lib/supabase'
 import { useDialog } from '@/lib/dialog'
 import { MY_TIMEZONE, dateFmtLocale, formatDateLong } from '@/lib/dates'
@@ -11,11 +11,13 @@ import { MY_TIMEZONE, dateFmtLocale, formatDateLong } from '@/lib/dates'
 const route = useRoute()
 const router = useRouter()
 const profiles = useProfilesStore()
+const records = useRecordsStore()
 const { t, locale } = useI18n()
 const dialog = useDialog()
 
 const rem = ref<Reminder | null>(null)
 const sourceRecord = ref<Record | null>(null)
+const deleting = ref(false)
 
 onMounted(async () => {
   const { data, error } = await supabase
@@ -50,6 +52,8 @@ const kindLabel = computed(() => {
 const seriesText = computed(() => {
   const r = sourceRecord.value
   if (!r || r.kind !== 'vaccination' || r.dose_number == null) return null
+  // Booster (e.g. annual flu stored as 1-of-1) — no "next position" exists.
+  if (r.total_doses != null && r.dose_number >= r.total_doses) return null
   const next = r.dose_number + 1
   return { n: next, total: r.total_doses }
 })
@@ -57,6 +61,24 @@ const filedDate = computed(() => rem.value
   ? new Date(rem.value.created_at).toLocaleDateString(dateFmtLocale(locale.value), { timeZone: MY_TIMEZONE })
   : '',
 )
+
+async function del() {
+  if (!rem.value || deleting.value) return
+  const ok = await dialog.confirm({
+    title: t('reminderDetail.confirmDelete'),
+    confirmLabel: t('common.delete'),
+    variant: 'danger',
+  })
+  if (!ok) return
+  deleting.value = true
+  try {
+    await records.deleteReminder(rem.value.id)
+    router.push('/home')
+  } catch (e) {
+    deleting.value = false
+    await dialog.alertError(e, t('common.error'))
+  }
+}
 </script>
 
 <template>
@@ -90,6 +112,12 @@ const filedDate = computed(() => rem.value
           <div>
             <div class="eyebrow mb-2" style="color: var(--color-accent)">{{ $t('reminderDetail.pleaseNote') }}</div>
             <p class="font-display-wonk text-xl leading-snug text-ink-2">{{ $t('reminderDetail.clinicClosedSat') }}</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-4 hairline-t">
+            <button class="btn-danger ml-auto" :disabled="deleting" @click="del">
+              {{ $t('reminderDetail.removeReminder') }}
+            </button>
           </div>
         </div>
       </article>

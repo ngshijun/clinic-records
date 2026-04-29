@@ -7,6 +7,7 @@ import { requestAndSubscribe, unsubscribeCurrent, isSubscribed } from '@/lib/pus
 import { AVAILABLE_LOCALES, setLocale, type Locale } from '@/lib/i18n'
 import { useDialog } from '@/lib/dialog'
 import AppDropdown from '@/components/AppDropdown.vue'
+import PasswordField from '@/components/PasswordField.vue'
 
 const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.native })))
 
@@ -104,7 +105,7 @@ async function upgrade() {
             </label>
             <label class="block">
               <span class="field-label">{{ $t('auth.password') }}</span>
-              <input v-model="upgradePassword" type="password" minlength="8" required class="field" />
+              <PasswordField v-model="upgradePassword" minlength="8" required class="field" />
             </label>
           </div>
           <div class="flex items-center gap-3">

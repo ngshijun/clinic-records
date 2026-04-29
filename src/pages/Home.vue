@@ -113,8 +113,11 @@ function reminderTitle(r: Reminder) {
       return t('home.followupTitle', { name: rec.name })
     }
   }
-  if (r.kind === 'followup_test' && r.name) {
-    return t('home.followupTitle', { name: r.name })
+  // Orphan reminder-only entries — series identity in r.name; r.kind tells
+  // us whether the staff intended a vaccination or blood-test reminder.
+  if (r.name) {
+    if (r.kind === 'next_dose') return t('home.nextDoseReminderTitle', { name: r.name })
+    if (r.kind === 'followup_test') return t('home.followupTitle', { name: r.name })
   }
   return r.title
 }

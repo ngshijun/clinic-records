@@ -19,6 +19,9 @@ const rec = ref<Record | null>(null)
 const editing = ref(false)
 const form = ref<Partial<Record>>({})
 const showMove = ref(false)
+const saving = ref(false)
+const deleting = ref(false)
+const moving = ref(false)
 
 onMounted(async () => {
   const { data, error } = await supabase.from('records').select('*').eq('id', route.params.id).single()
@@ -29,32 +32,44 @@ onMounted(async () => {
 })
 
 async function save() {
-  if (!rec.value) return
+  if (!rec.value || saving.value) return
   const { name, performed_on, dose_number, total_doses, notes } = form.value
   const patch: Partial<Record> = { name: name!, performed_on: performed_on!, notes: notes ?? null }
   if (rec.value.kind === 'vaccination') {
     patch.dose_number = dose_number ?? null
     patch.total_doses = total_doses ?? null
   }
-  rec.value = await records.updateRecord(rec.value.id, patch)
-  editing.value = false
+  saving.value = true
+  try {
+    rec.value = await records.updateRecord(rec.value.id, patch)
+    editing.value = false
+  } finally { saving.value = false }
 }
 
 async function moveToProfile(profile_id: string) {
-  if (!rec.value) return
-  rec.value = await records.updateRecord(rec.value.id, { profile_id })
-  router.push('/home')
+  if (!rec.value || moving.value) return
+  moving.value = true
+  try {
+    rec.value = await records.updateRecord(rec.value.id, { profile_id })
+    router.push('/home')
+  } finally { moving.value = false }
 }
 
 async function del() {
-  if (!rec.value) return
+  if (!rec.value || deleting.value) return
   const ok = await dialog.confirm({
     title: t('recordDetail.confirmDelete'),
     confirmLabel: t('common.delete'),
   })
   if (!ok) return
-  await records.deleteRecord(rec.value.id)
-  router.push('/home')
+  deleting.value = true
+  try {
+    await records.deleteRecord(rec.value.id)
+    router.push('/home')
+  } catch (e) {
+    deleting.value = false
+    await dialog.alertError(e, t('common.error'))
+  }
 }
 
 const formattedDate = computed(() => rec.value ? formatDateLong(rec.value.performed_on, locale.value) : '')
@@ -101,9 +116,9 @@ const filedDate = computed(() => rec.value
           </div>
 
           <div class="flex flex-wrap items-center gap-3 pt-4 hairline-t">
-            <button class="btn-ghost" @click="editing = true">{{ $t('recordDetail.editEntry') }}</button>
-            <button v-if="profiles.profiles.length > 1" class="btn-ghost" @click="showMove = !showMove">{{ $t('recordDetail.reassignProfile') }}</button>
-            <button class="btn-danger ml-auto" @click="del">{{ $t('recordDetail.removeFromLedger') }}</button>
+            <button class="btn-ghost" :disabled="deleting || moving" @click="editing = true">{{ $t('recordDetail.editEntry') }}</button>
+            <button v-if="profiles.profiles.length > 1" class="btn-ghost" :disabled="deleting || moving" @click="showMove = !showMove">{{ $t('recordDetail.reassignProfile') }}</button>
+            <button class="btn-danger ml-auto" :disabled="deleting || moving" @click="del">{{ $t('recordDetail.removeFromLedger') }}</button>
           </div>
 
           <div v-if="showMove" class="paper-card p-4 bg-paper-2">
@@ -113,9 +128,10 @@ const filedDate = computed(() => rec.value
                 v-for="p in profiles.profiles.filter(p => p.id !== rec!.profile_id)"
                 :key="p.id"
                 @click="moveToProfile(p.id)"
+                :disabled="moving"
                 class="btn-ghost text-sm"
               >{{ p.name }} →</button>
-              <button class="btn-danger text-sm" @click="showMove = false">{{ $t('common.cancel') }}</button>
+              <button class="btn-danger text-sm" :disabled="moving" @click="showMove = false">{{ $t('common.cancel') }}</button>
             </div>
           </div>
         </div>
@@ -145,8 +161,8 @@ const filedDate = computed(() => rec.value
             <textarea v-model="form.notes" rows="3" class="field font-display-wonk text-lg resize-none" :placeholder="$t('recordDetail.notePlaceholder')"></textarea>
           </label>
           <div class="flex gap-3 pt-2">
-            <button class="btn-primary">{{ $t('recordDetail.saveAmendment') }}</button>
-            <button type="button" class="btn-ghost" @click="editing = false">{{ $t('recordDetail.discard') }}</button>
+            <button class="btn-primary" :disabled="saving">{{ $t('recordDetail.saveAmendment') }}</button>
+            <button type="button" class="btn-ghost" :disabled="saving" @click="editing = false">{{ $t('recordDetail.discard') }}</button>
           </div>
         </form>
       </article>

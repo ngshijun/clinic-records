@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { Record } from '@/stores/records'
 import { MY_TIMEZONE, dateFmtLocale } from '@/lib/dates'
 
-const props = defineProps<{ existing: Record }>()
+const props = defineProps<{ existing: Record; busy?: boolean }>()
 const emit = defineEmits<{
   (e: 'replace'): void
   (e: 'keep-both'): void
@@ -43,9 +43,9 @@ const recordedAt = computed(() => new Date(props.existing.created_at).toLocaleSt
       </div>
 
       <div class="flex flex-col gap-2">
-        <button class="btn-primary" @click="emit('replace')">{{ $t('ingest.replaceWithNew') }}</button>
-        <button class="btn-ghost" @click="emit('keep-both')">{{ $t('ingest.keepBoth') }}</button>
-        <button class="btn-danger text-sm" @click="emit('cancel')">{{ $t('common.cancel') }}</button>
+        <button class="btn-primary" :disabled="busy" @click="emit('replace')">{{ $t('ingest.replaceWithNew') }}</button>
+        <button class="btn-ghost" :disabled="busy" @click="emit('keep-both')">{{ $t('ingest.keepBoth') }}</button>
+        <button class="btn-danger text-sm" :disabled="busy" @click="emit('cancel')">{{ $t('common.cancel') }}</button>
       </div>
     </div>
   </div>

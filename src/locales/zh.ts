@@ -38,6 +38,8 @@ export default {
     firstProfileHint: '这是您的第一个档案。稍后可添加更多。',
     namePlaceholder: '例如：陈大文',
     forgotPassword: '忘记密码？',
+    showPassword: '显示密码',
+    hidePassword: '隐藏密码',
   },
   forgotPassword: {
     eyebrow: '找回账户',
@@ -103,6 +105,7 @@ export default {
     due: '{date} 到期',
     dueAround: '{date} 到期',
     nextDoseTitle: '{name} · 第 {n} 剂',
+    nextDoseReminderTitle: '{name} · 下一剂',
     followupTitle: '{name} · 再验血',
     doseOf: '第 {n} 剂，共 {total} 剂',
     bloodTest: '血液检查',
@@ -201,6 +204,8 @@ export default {
     pleaseNote: '温馨提示',
     clinicClosedSat: '黄氏药房每逢周六休诊。',
     scheduled: '安排于 {date}',
+    removeReminder: '删除提醒',
+    confirmDelete: '确定删除此提醒？',
   },
   profiles: {
     profilesLabel: '档案 · № {count}',

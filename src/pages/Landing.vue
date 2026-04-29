@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import PasswordField from '@/components/PasswordField.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -71,7 +72,7 @@ async function guest() {
           </label>
           <label class="block">
             <span class="field-label">{{ $t('auth.password') }}</span>
-            <input v-model="password" type="password" autocomplete="current-password" class="field" required />
+            <PasswordField v-model="password" autocomplete="current-password" class="field" required />
             <router-link to="/forgot-password" class="text-[11px] text-muted-app mt-1 inline-block underline decoration-[var(--color-rule)] underline-offset-4 hover:text-ink">
               {{ $t('auth.forgotPassword') }}
             </router-link>

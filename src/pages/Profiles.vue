@@ -15,10 +15,13 @@ const name = ref('')
 const dob = ref('')
 const error = ref<string | null>(null)
 
+const busy = ref(false)
 const editingId = ref<string | null>(null)
 const editName = ref('')
 const editDob = ref('')
 const editError = ref<string | null>(null)
+const editBusy = ref(false)
+const deletingId = ref<string | null>(null)
 
 const isFirst = computed(() => route.query.first === '1' && store.profiles.length === 0)
 
@@ -30,22 +33,28 @@ onMounted(async () => {
 })
 
 async function add() {
+  if (busy.value) return
   error.value = null
+  busy.value = true
   try {
     await store.create({ name: name.value.trim(), date_of_birth: dob.value || null })
     name.value = ''
     dob.value = ''
     if (route.query.first === '1') router.push('/home')
   } catch (e: any) { error.value = e.message }
+  finally { busy.value = false }
 }
 
 async function del(id: string) {
+  if (deletingId.value) return
   const ok = await dialog.confirm({
     title: t('profiles.confirmDelete'),
     confirmLabel: t('common.delete'),
   })
   if (!ok) return
+  deletingId.value = id
   try { await store.remove(id) } catch (e: any) { await dialog.alert({ title: e.message }) }
+  finally { deletingId.value = null }
 }
 
 async function setDefault(id: string) { await store.setDefault(id) }
@@ -63,8 +72,9 @@ function cancelEdit() {
 }
 
 async function saveEdit() {
-  if (!editingId.value) return
+  if (!editingId.value || editBusy.value) return
   editError.value = null
+  editBusy.value = true
   try {
     await store.update(editingId.value, {
       name: editName.value.trim(),
@@ -72,6 +82,7 @@ async function saveEdit() {
     })
     editingId.value = null
   } catch (e: any) { editError.value = e.message ?? 'Could not save' }
+  finally { editBusy.value = false }
 }
 
 function formatDob(d: string | null) {
@@ -111,7 +122,7 @@ function formatDob(d: string | null) {
           </label>
         </div>
         <div class="flex items-center gap-3 pt-2">
-          <button class="btn-primary">{{ isFirst ? $t('common.continue') : $t('profiles.addProfile') }} <span aria-hidden>→</span></button>
+          <button class="btn-primary" :disabled="busy">{{ isFirst ? $t('common.continue') : $t('profiles.addProfile') }} <span aria-hidden>→</span></button>
           <p v-if="error" class="text-crimson text-sm">
             <span class="eyebrow" style="color:var(--color-crimson)">{{ $t('common.error') }} ·</span> {{ error }}
           </p>
@@ -140,7 +151,7 @@ function formatDob(d: string | null) {
               <div class="flex items-center gap-1 flex-wrap justify-end">
                 <button class="btn-ghost text-xs !py-1.5 !px-3" @click="startEdit(p)">{{ $t('profiles.edit') }}</button>
                 <button v-if="!p.is_default" class="btn-ghost text-xs !py-1.5 !px-3" @click="setDefault(p.id)">{{ $t('profiles.makeDefault') }}</button>
-                <button v-if="!p.is_default" class="btn-danger text-xs !py-1.5 !px-3" @click="del(p.id)">{{ $t('profiles.delete') }}</button>
+                <button v-if="!p.is_default" class="btn-danger text-xs !py-1.5 !px-3" :disabled="deletingId === p.id" @click="del(p.id)">{{ $t('profiles.delete') }}</button>
               </div>
             </div>
 
@@ -162,8 +173,8 @@ function formatDob(d: string | null) {
                   <span class="eyebrow" style="color:var(--color-crimson)">{{ $t('common.error') }} ·</span> {{ editError }}
                 </p>
                 <div class="flex items-center gap-2 pt-1">
-                  <button class="btn-primary !py-2 !px-4 text-sm">{{ $t('profiles.save') }}</button>
-                  <button type="button" class="btn-ghost !py-2 !px-4 text-sm" @click="cancelEdit">{{ $t('profiles.cancel') }}</button>
+                  <button class="btn-primary !py-2 !px-4 text-sm" :disabled="editBusy">{{ $t('profiles.save') }}</button>
+                  <button type="button" class="btn-ghost !py-2 !px-4 text-sm" :disabled="editBusy" @click="cancelEdit">{{ $t('profiles.cancel') }}</button>
                 </div>
               </div>
             </form>

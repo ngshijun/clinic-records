@@ -39,6 +39,8 @@ export default {
     firstProfileHint: 'Profil pertama anda. Anda boleh menambah lagi kemudian.',
     namePlaceholder: 'cth. Ahmad',
     forgotPassword: 'Lupa kata laluan?',
+    showPassword: 'Tunjukkan kata laluan',
+    hidePassword: 'Sembunyikan kata laluan',
   },
   forgotPassword: {
     eyebrow: 'Pulihkan akses',
@@ -105,6 +107,7 @@ export default {
     due: 'Perlu pada {date}',
     dueAround: 'perlu pada {date}',
     nextDoseTitle: '{name} · Dos ke-{n}',
+    nextDoseReminderTitle: '{name} · Dos seterusnya',
     followupTitle: '{name} · Susulan',
     doseOf: 'Dos {n} daripada {total}',
     bloodTest: 'Ujian darah',
@@ -204,6 +207,8 @@ export default {
     pleaseNote: 'Sila ambil perhatian',
     clinicClosedSat: 'Poliklinik Ng PLT tutup pada hari Sabtu.',
     scheduled: 'dijadualkan {date}',
+    removeReminder: 'Padam peringatan',
+    confirmDelete: 'Padam peringatan ini?',
   },
   profiles: {
     profilesLabel: 'Profil · № {count}',
