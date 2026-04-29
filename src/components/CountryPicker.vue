@@ -99,7 +99,14 @@ function onDocClick(e: MouseEvent) {
   open.value = false
 }
 
-function onWindowScroll() { if (open.value) open.value = false }
+function onWindowScroll(e: Event) {
+  if (!open.value) return
+  // Don't close on scrolls inside the menu itself — that's the user
+  // scrolling the country list, not the page scrolling under the menu.
+  const target = e.target as Node | null
+  if (target && menuEl.value?.contains(target)) return
+  open.value = false
+}
 function onWindowResize() { if (open.value) open.value = false }
 
 onMounted(() => {
