@@ -41,6 +41,7 @@ const { t, locale } = useI18n()
 const dialog = useDialog()
 
 const stage = ref<'picker' | 'compose'>('picker')
+const version = __APP_VERSION__
 
 const kind = ref<'v' | 'b'>('v')
 const name = ref('')
@@ -492,6 +493,7 @@ const appUrl = computed(() => window.location.origin + '/')
       <div class="flex items-center gap-4">
         <div class="dot-pulse"></div>
         <div class="eyebrow whitespace-nowrap">{{ $t('staff.consoleLabel') }}</div>
+        <span class="folio text-xs opacity-40 select-all">{{ version }}</span>
       </div>
       <div class="flex items-center gap-5">
         <AppDropdown

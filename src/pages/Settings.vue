@@ -56,6 +56,8 @@ const upgradeError = ref<string | null>(null)
 const upgradeBusy = ref(false)
 const upgraded = ref(false)
 
+const version = __APP_VERSION__
+
 async function upgrade() {
   upgradeError.value = null
   upgradeBusy.value = true
@@ -173,6 +175,8 @@ async function upgrade() {
           <button class="btn-ghost" @click="logout">{{ auth.isAnonymous ? $t('settings.discardGuestSession') : $t('auth.signOut') }}</button>
         </div>
       </section>
+
+      <p class="folio text-xs opacity-50 text-right select-all">{{ version }}</p>
 
     </section>
   </main>

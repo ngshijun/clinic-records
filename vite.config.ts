@@ -1,10 +1,19 @@
 import { defineConfig } from 'vitest/config'
+import { execFileSync } from 'node:child_process'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 
+const commitSha = (() => {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+  try { return execFileSync('git', ['rev-parse', '--short', 'HEAD']).toString().trim() } catch { return 'dev' }
+})()
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(commitSha),
+  },
   plugins: [
     vue(),
     tailwindcss(),
