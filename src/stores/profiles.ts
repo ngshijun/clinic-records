@@ -10,7 +10,7 @@ export interface Profile {
   name: string
   date_of_birth: string | null
   nric: string | null
-  is_malaysian: boolean
+  nationality: string  // ISO 3166-1 alpha-2 (e.g. 'MY')
   notes: string | null
   is_default: boolean
   created_at: string
@@ -50,7 +50,7 @@ export const useProfilesStore = defineStore('profiles', () => {
   async function create(input: {
     name: string
     nric: string
-    is_malaysian: boolean
+    nationality: string
     date_of_birth: string
   }) {
     const { data: userData } = await supabase.auth.getUser()
@@ -63,7 +63,7 @@ export const useProfilesStore = defineStore('profiles', () => {
         user_id,
         name: input.name,
         nric: normalizeNric(input.nric),
-        is_malaysian: input.is_malaysian,
+        nationality: input.nationality,
         date_of_birth: input.date_of_birth,
         is_default,
       })

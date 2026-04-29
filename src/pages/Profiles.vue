@@ -6,6 +6,8 @@ import { useProfilesStore, type Profile } from '@/stores/profiles'
 import { useDialog } from '@/lib/dialog'
 import { formatDateLong } from '@/lib/dates'
 import { isValidNric, deriveDobFromNric } from '@/lib/nric'
+import { flagFor, nameFor } from '@/lib/countries'
+import CountryPicker from '@/components/CountryPicker.vue'
 
 const store = useProfilesStore()
 const route = useRoute()
@@ -16,15 +18,17 @@ const dialog = useDialog()
 // --- add form ---
 const name = ref('')
 const nric = ref('')
-const isMalaysian = ref(true)
+const nationality = ref('MY')
 const dob = ref('')
 const error = ref<string | null>(null)
 const busy = ref(false)
 
+const isMalaysian = computed(() => nationality.value === 'MY')
+
 // Auto-fill DOB from NRIC for Malaysians. Only fills when DOB is blank, so
 // a manual override after auto-fill isn't clobbered by subsequent NRIC edits.
-watch([nric, isMalaysian], ([n, my]) => {
-  if (!my || dob.value) return
+watch([nric, nationality], ([n]) => {
+  if (!isMalaysian.value || dob.value) return
   const derived = deriveDobFromNric(n)
   if (derived) dob.value = derived
 })
@@ -33,14 +37,16 @@ watch([nric, isMalaysian], ([n, my]) => {
 const editingId = ref<string | null>(null)
 const editName = ref('')
 const editNric = ref('')
-const editIsMalaysian = ref(true)
+const editNationality = ref('MY')
 const editDob = ref('')
 const editError = ref<string | null>(null)
 const editBusy = ref(false)
 const deletingId = ref<string | null>(null)
 
-watch([editNric, editIsMalaysian], ([n, my]) => {
-  if (!my || editDob.value) return
+const editIsMalaysian = computed(() => editNationality.value === 'MY')
+
+watch([editNric, editNationality], ([n]) => {
+  if (!editIsMalaysian.value || editDob.value) return
   const derived = deriveDobFromNric(n)
   if (derived) editDob.value = derived
 })
@@ -64,12 +70,12 @@ async function add() {
     await store.create({
       name: nm,
       nric: id,
-      is_malaysian: isMalaysian.value,
+      nationality: nationality.value,
       date_of_birth: dob.value,
     })
     name.value = ''
     nric.value = ''
-    isMalaysian.value = true
+    nationality.value = 'MY'
     dob.value = ''
     if (route.query.first === '1') router.push('/home')
   } catch (e: any) { error.value = e.message }
@@ -94,7 +100,7 @@ function startEdit(p: Profile) {
   editingId.value = p.id
   editName.value = p.name
   editNric.value = p.nric ?? ''
-  editIsMalaysian.value = p.is_malaysian
+  editNationality.value = p.nationality || 'MY'
   editDob.value = p.date_of_birth ?? ''
   editError.value = null
 }
@@ -119,7 +125,7 @@ async function saveEdit() {
     await store.update(editingId.value, {
       name: nm,
       nric: id || null,
-      is_malaysian: editIsMalaysian.value,
+      nationality: editNationality.value,
       date_of_birth: editDob.value || null,
     })
     editingId.value = null
@@ -154,12 +160,9 @@ function formatDob(d: string | null) {
       <form class="paper-card brackets p-6 md:p-8 space-y-5 anim-rise-2" @submit.prevent="add">
         <div class="eyebrow">{{ $t('profiles.admitNew') }}</div>
 
-        <label class="flex items-start gap-3 cursor-pointer select-none">
-          <input type="checkbox" :checked="!isMalaysian" @change="(e) => isMalaysian = !(e.target as HTMLInputElement).checked" class="mt-1" />
-          <div>
-            <div class="field-label">{{ $t('profiles.nonMalaysian') }}</div>
-            <div class="text-xs mt-1" style="color: var(--color-muted)">{{ $t('profiles.nonMalaysianHint') }}</div>
-          </div>
+        <label class="block">
+          <span class="field-label">{{ $t('profiles.nationalityLabel') }}</span>
+          <CountryPicker v-model="nationality" />
         </label>
 
         <div class="grid sm:grid-cols-[1.2fr_1fr] gap-5">
@@ -202,6 +205,7 @@ function formatDob(d: string | null) {
                 <div class="text-xs text-muted-app mt-0.5 flex flex-wrap gap-x-2">
                   <span v-if="p.date_of_birth">{{ $t('profiles.born', { date: formatDob(p.date_of_birth) }) }}</span>
                   <span v-if="p.nric" class="tabular-nums">· {{ p.nric }}</span>
+                  <span v-if="p.nationality && p.nationality !== 'MY'">· {{ flagFor(p.nationality) }} {{ nameFor(p.nationality) }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-1 flex-wrap justify-end">
@@ -215,9 +219,9 @@ function formatDob(d: string | null) {
               <span class="folio tabular-nums w-8 pt-6">№{{ String(i+1).padStart(2,'0') }}</span>
               <div class="space-y-4">
                 <div class="eyebrow" style="color: var(--color-accent)">{{ $t('profiles.amendingProfile') }}</div>
-                <label class="flex items-start gap-3 cursor-pointer select-none">
-                  <input type="checkbox" :checked="!editIsMalaysian" @change="(e) => editIsMalaysian = !(e.target as HTMLInputElement).checked" class="mt-1" />
-                  <div class="field-label">{{ $t('profiles.nonMalaysian') }}</div>
+                <label class="block">
+                  <span class="field-label">{{ $t('profiles.nationalityLabel') }}</span>
+                  <CountryPicker v-model="editNationality" />
                 </label>
                 <div class="grid sm:grid-cols-[1.2fr_1fr] gap-4">
                   <label class="block">
