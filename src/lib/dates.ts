@@ -43,7 +43,7 @@ function addMonthsClamped(utc: Date, months: number): void {
 // Cached en-CA formatter for YYYY-MM-DD in MY — hot path (every reminder render).
 const MY_ISO_FMT = new Intl.DateTimeFormat('en-CA', {
   timeZone: MY_TIMEZONE,
-  year: 'numeric', month: '2-digit', day: '2-digit',
+  year: 'numeric', month: '2-digit', day: 'numeric',
 })
 
 /** Today's date as a YYYY-MM-DD string in Malaysia time. */
@@ -68,20 +68,20 @@ function toDate(input: string | Date): Date {
 /** "23 April 2026" — always in Malaysia time. */
 export function formatDateLong(input: string | Date, i18nLocale: string): string {
   return toDate(input).toLocaleDateString(dateFmtLocale(i18nLocale), {
-    day: '2-digit', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
+    day: 'numeric', month: 'long', year: 'numeric', timeZone: MY_TIMEZONE,
   })
 }
 
 /** "23 Apr 2026" — always in Malaysia time. */
 export function formatDateShort(input: string | Date, i18nLocale: string): string {
   return toDate(input).toLocaleDateString(dateFmtLocale(i18nLocale), {
-    day: '2-digit', month: 'short', year: 'numeric', timeZone: MY_TIMEZONE,
+    day: 'numeric', month: 'short', year: 'numeric', timeZone: MY_TIMEZONE,
   })
 }
 
 /** "23 Apr" — always in Malaysia time. */
 export function formatMonthDay(input: string | Date, i18nLocale: string): string {
   return toDate(input).toLocaleDateString(dateFmtLocale(i18nLocale), {
-    day: '2-digit', month: 'short', timeZone: MY_TIMEZONE,
+    day: 'numeric', month: 'short', timeZone: MY_TIMEZONE,
   })
 }
