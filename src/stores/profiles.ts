@@ -2,12 +2,15 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { normalizeNric } from '@/lib/nric'
 
 export interface Profile {
   id: string
   user_id: string
   name: string
   date_of_birth: string | null
+  nric: string | null
+  is_malaysian: boolean
   notes: string | null
   is_default: boolean
   created_at: string
@@ -44,14 +47,26 @@ export const useProfilesStore = defineStore('profiles', () => {
     loaded.value = true
   }
 
-  async function create(input: { name: string; date_of_birth?: string | null }) {
+  async function create(input: {
+    name: string
+    nric: string
+    is_malaysian: boolean
+    date_of_birth: string
+  }) {
     const { data: userData } = await supabase.auth.getUser()
     const user_id = userData.user?.id
     if (!user_id) throw new Error('not authenticated')
     const is_default = profiles.value.length === 0
     const { data, error } = await supabase
       .from('profiles')
-      .insert({ user_id, name: input.name, date_of_birth: input.date_of_birth ?? null, is_default })
+      .insert({
+        user_id,
+        name: input.name,
+        nric: normalizeNric(input.nric),
+        is_malaysian: input.is_malaysian,
+        date_of_birth: input.date_of_birth,
+        is_default,
+      })
       .select()
       .single()
     if (error) throw error
@@ -61,7 +76,8 @@ export const useProfilesStore = defineStore('profiles', () => {
   }
 
   async function update(id: string, patch: Partial<Profile>) {
-    const { data, error } = await supabase.from('profiles').update(patch).eq('id', id).select().single()
+    const clean = patch.nric != null ? { ...patch, nric: normalizeNric(patch.nric) } : patch
+    const { data, error } = await supabase.from('profiles').update(clean).eq('id', id).select().single()
     if (error) throw error
     const i = profiles.value.findIndex((p) => p.id === id)
     if (i >= 0) profiles.value[i] = data

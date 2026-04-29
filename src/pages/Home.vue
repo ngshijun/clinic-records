@@ -112,14 +112,17 @@ function reminderTitle(r: Reminder) {
     if (r.kind === 'followup_test') {
       return t('home.followupTitle', { name: rec.name })
     }
+    // Bound reminder with no dose info or unmatched kind — show the record name plain.
+    return rec.name
   }
   // Orphan reminder-only entries — series identity in r.name; r.kind tells
   // us whether the staff intended a vaccination or blood-test reminder.
   if (r.name) {
     if (r.kind === 'next_dose') return t('home.nextDoseReminderTitle', { name: r.name })
     if (r.kind === 'followup_test') return t('home.followupTitle', { name: r.name })
+    return r.name
   }
-  return r.title
+  return t('home.reminderGeneric')
 }
 function recordKindLabel(k: string) {
   return k === 'vaccination' ? t('home.kindVaccination') : t('home.kindBloodTest')
@@ -173,7 +176,7 @@ function recordsWord(n: number) {
         <div class="space-y-2">
           <div class="eyebrow">{{ $t('home.yourLedger') }}</div>
           <h1 class="font-display leading-[0.92] text-[clamp(2.5rem,6vw,4.25rem)]">
-            <span class="block">{{ ledgerName }}<span class="text-accent">’s</span></span>
+            <span class="block">{{ ledgerName }}<span class="text-accent">{{ $t('home.possessive') }}</span></span>
             <span class="block font-display-wonk">{{ $t('home.healthRecord') }}</span>
           </h1>
           <p class="text-ink-2 text-sm max-w-[42ch] pt-1">

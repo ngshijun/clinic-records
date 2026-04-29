@@ -16,21 +16,25 @@ type Locale = 'en' | 'zh' | 'ms'
 const MESSAGES: Record<Locale, {
   vaccination: (name: string, doseN: number | null) => string
   bloodTest: (name: string) => string
+  generic: string
   body: string
 }> = {
   en: {
     vaccination: (name, doseN) => doseN != null ? `Vaccination: ${name} Dose ${doseN}` : `Vaccination: ${name}`,
     bloodTest: (name) => `Blood test: ${name}`,
+    generic: 'Reminder',
     body: 'Visit Poliklinik Ng PLT when convenient. Tap to view details.\nPoliklinik Ng PLT is closed on Saturdays.',
   },
   zh: {
     vaccination: (name, doseN) => doseN != null ? `疫苗提醒: ${name} 第 ${doseN} 剂` : `疫苗提醒: ${name}`,
     bloodTest: (name) => `验血提醒: ${name}`,
+    generic: '提醒',
     body: '请到黄氏药房就诊。点击查看详情。\n黄氏药房每逢周六休诊。',
   },
   ms: {
     vaccination: (name, doseN) => doseN != null ? `Vaksin: ${name} Dos ke-${doseN}` : `Vaksin: ${name}`,
     bloodTest: (name) => `Ujian darah: ${name}`,
+    generic: 'Peringatan',
     body: 'Sila ke Poliklinik Ng PLT bila senang. Ketik untuk butiran.\nPoliklinik Ng PLT tutup pada hari Sabtu.',
   },
 }
@@ -45,7 +49,6 @@ interface ReminderRow {
   user_id: string
   record_id: string | null
   kind: string
-  title: string
   name: string | null
   due_at: string
   sent_count: number
@@ -56,7 +59,7 @@ interface ReminderRow {
 function formatNotification(r: ReminderRow, locale: Locale): { title: string; body: string } {
   const m = MESSAGES[locale]
   const name = r.record?.name ?? r.name ?? ''
-  if (!name) return { title: r.title, body: m.body }
+  if (!name) return { title: m.generic, body: m.body }
   // Dose number appended only for a continuing series. Final-dose reminders
   // of a 1-of-1 recurring shot (annual flu, tetanus booster) skip the dose
   // suffix so the push doesn't lie about "Dose 2" when there isn't one.
@@ -102,7 +105,7 @@ Deno.serve(async () => {
 
   const { data: due, error } = await sb
     .from('reminders')
-    .select('id, user_id, record_id, kind, title, name, due_at, sent_count, created_at, record:records(name, dose_number, total_doses)')
+    .select('id, user_id, record_id, kind, name, due_at, sent_count, created_at, record:records(name, dose_number, total_doses)')
     .lte('due_at', now.toISOString())
     .lt('sent_count', 3)
   if (error) return new Response(error.message, { status: 500 })

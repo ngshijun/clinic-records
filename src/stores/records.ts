@@ -24,7 +24,6 @@ export interface Reminder {
   profile_id: string
   record_id: string | null
   kind: 'next_dose' | 'followup_test' | 'other'
-  title: string
   name: string | null
   due_at: string
   sent_at: string | null
@@ -105,20 +104,11 @@ export const useRecordsStore = defineStore('records', () => {
     // series, since recurring shots (annual flu, tetanus booster every 10y)
     // are modeled as 1-of-1 with a next_due and should still generate
     // reminders.
-    const isBooster = rec.kind === 'vaccination'
-      && payload.dn != null && payload.td != null
-      && payload.dn >= payload.td
-    const title = rec.kind === 'vaccination' && payload.dn && payload.td && !isBooster
-      ? `${payload.n} Dose ${payload.dn + 1} due`
-      : rec.kind === 'vaccination'
-      ? `${payload.n} reminder`
-      : `Follow-up ${payload.n} due`
     const { error } = await supabase.from('reminders').insert({
       user_id,
       profile_id: rec.profile_id,
       record_id: rec.id,
       kind: rec.kind === 'vaccination' ? 'next_dose' : 'followup_test',
-      title,
       due_at: computeDueAt(payload.d, payload.nd, payload.nu),
     })
     if (error) throw error
@@ -192,7 +182,6 @@ export const useRecordsStore = defineStore('records', () => {
       profile_id: input.profile_id,
       record_id: null,
       kind: originalKind === 'v' ? 'next_dose' : 'followup_test',
-      title: `${payload.n} reminder`,
       name: payload.n,
       due_at: computeDueAt(payload.d, payload.nd, payload.nu),
     }).select().single()

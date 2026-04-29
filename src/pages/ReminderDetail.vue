@@ -42,7 +42,7 @@ const dueDate = computed(() => rem.value ? formatDateLong(rem.value.due_at, loca
 const profileName = computed(() =>
   profiles.profiles.find(p => p.id === rem.value?.profile_id)?.name ?? '',
 )
-const reminderName = computed(() => sourceRecord.value?.name ?? rem.value?.name ?? rem.value?.title ?? '')
+const reminderName = computed(() => sourceRecord.value?.name ?? rem.value?.name ?? '')
 const kindLabel = computed(() => {
   if (!rem.value) return ''
   return rem.value.kind === 'next_dose'

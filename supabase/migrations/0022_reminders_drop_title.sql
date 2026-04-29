@@ -1,0 +1,11 @@
+-- Drop the vestigial `title` column on reminders.
+--
+-- Bound reminders derive their display from the linked record's `name` (and
+-- dose info), and orphan reminders have their own `name` set on insert. The
+-- `title` column was a frozen English string baked at insert time, which
+-- (a) only ever surfaced as a fallback in pathological cases and (b) showed
+-- the wrong language for non-English locales when it did. The reminders
+-- → records FK already has ON DELETE CASCADE (0001_schema.sql), so the
+-- "deleted record" case that previously needed a title fallback is
+-- automatically handled by the database.
+alter table reminders drop column title;

@@ -1,44 +1,75 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useProfilesStore, type Profile } from '@/stores/profiles'
 import { useDialog } from '@/lib/dialog'
 import { formatDateLong } from '@/lib/dates'
+import { isValidNric, deriveDobFromNric } from '@/lib/nric'
 
 const store = useProfilesStore()
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
 const dialog = useDialog()
+
+// --- add form ---
 const name = ref('')
+const nric = ref('')
+const isMalaysian = ref(true)
 const dob = ref('')
 const error = ref<string | null>(null)
-
 const busy = ref(false)
+
+// Auto-fill DOB from NRIC for Malaysians. Only fills when DOB is blank, so
+// a manual override after auto-fill isn't clobbered by subsequent NRIC edits.
+watch([nric, isMalaysian], ([n, my]) => {
+  if (!my || dob.value) return
+  const derived = deriveDobFromNric(n)
+  if (derived) dob.value = derived
+})
+
+// --- edit form ---
 const editingId = ref<string | null>(null)
 const editName = ref('')
+const editNric = ref('')
+const editIsMalaysian = ref(true)
 const editDob = ref('')
 const editError = ref<string | null>(null)
 const editBusy = ref(false)
 const deletingId = ref<string | null>(null)
 
+watch([editNric, editIsMalaysian], ([n, my]) => {
+  if (!my || editDob.value) return
+  const derived = deriveDobFromNric(n)
+  if (derived) editDob.value = derived
+})
+
 const isFirst = computed(() => route.query.first === '1' && store.profiles.length === 0)
 
-onMounted(async () => {
-  await store.fetchAll()
-  if (route.query.first === '1' && store.profiles.length === 0) {
-    name.value = 'Me'
-  }
-})
+onMounted(async () => { await store.fetchAll() })
 
 async function add() {
   if (busy.value) return
   error.value = null
+  const nm = name.value.trim()
+  const id = nric.value.trim()
+  if (!nm) { error.value = t('common.error'); return }
+  if (!id) { error.value = t(isMalaysian.value ? 'profiles.nricRequired' : 'profiles.idRequired'); return }
+  if (isMalaysian.value && !isValidNric(id)) { error.value = t('profiles.nricInvalid'); return }
+  if (!dob.value) { error.value = t('profiles.dobRequired'); return }
+
   busy.value = true
   try {
-    await store.create({ name: name.value.trim(), date_of_birth: dob.value || null })
+    await store.create({
+      name: nm,
+      nric: id,
+      is_malaysian: isMalaysian.value,
+      date_of_birth: dob.value,
+    })
     name.value = ''
+    nric.value = ''
+    isMalaysian.value = true
     dob.value = ''
     if (route.query.first === '1') router.push('/home')
   } catch (e: any) { error.value = e.message }
@@ -62,6 +93,8 @@ async function setDefault(id: string) { await store.setDefault(id) }
 function startEdit(p: Profile) {
   editingId.value = p.id
   editName.value = p.name
+  editNric.value = p.nric ?? ''
+  editIsMalaysian.value = p.is_malaysian
   editDob.value = p.date_of_birth ?? ''
   editError.value = null
 }
@@ -74,10 +107,19 @@ function cancelEdit() {
 async function saveEdit() {
   if (!editingId.value || editBusy.value) return
   editError.value = null
+  const nm = editName.value.trim()
+  const id = editNric.value.trim()
+  if (!nm) { editError.value = t('common.error'); return }
+  // Lenient on edit: accept null nric/dob (existing legacy rows can stay
+  // empty), but if either is provided we still validate it.
+  if (id && editIsMalaysian.value && !isValidNric(id)) { editError.value = t('profiles.nricInvalid'); return }
+
   editBusy.value = true
   try {
     await store.update(editingId.value, {
-      name: editName.value.trim(),
+      name: nm,
+      nric: id || null,
+      is_malaysian: editIsMalaysian.value,
       date_of_birth: editDob.value || null,
     })
     editingId.value = null
@@ -111,16 +153,29 @@ function formatDob(d: string | null) {
 
       <form class="paper-card brackets p-6 md:p-8 space-y-5 anim-rise-2" @submit.prevent="add">
         <div class="eyebrow">{{ $t('profiles.admitNew') }}</div>
+
+        <label class="flex items-start gap-3 cursor-pointer select-none">
+          <input type="checkbox" :checked="!isMalaysian" @change="(e) => isMalaysian = !(e.target as HTMLInputElement).checked" class="mt-1" />
+          <div>
+            <div class="field-label">{{ $t('profiles.nonMalaysian') }}</div>
+            <div class="text-xs mt-1" style="color: var(--color-muted)">{{ $t('profiles.nonMalaysianHint') }}</div>
+          </div>
+        </label>
+
         <div class="grid sm:grid-cols-[1.2fr_1fr] gap-5">
           <label class="block">
             <span class="field-label">{{ $t('profiles.nameLabel') }}</span>
             <input v-model="name" :placeholder="$t('profiles.namePlaceholder')" required class="field font-display text-2xl" />
           </label>
           <label class="block">
-            <span class="field-label">{{ $t('profiles.bornLabel') }} <span class="lowercase text-muted-app normal-case tracking-normal font-normal">{{ $t('profiles.optional') }}</span></span>
-            <input v-model="dob" type="date" class="field tabular-nums" />
+            <span class="field-label">{{ isMalaysian ? $t('profiles.nricLabel') : $t('profiles.idLabel') }}</span>
+            <input v-model="nric" :placeholder="isMalaysian ? $t('profiles.nricPlaceholder') : $t('profiles.idPlaceholder')" required class="field tabular-nums" autocomplete="off" />
           </label>
         </div>
+        <label class="block">
+          <span class="field-label">{{ $t('profiles.bornLabel') }}</span>
+          <input v-model="dob" type="date" required class="field tabular-nums" />
+        </label>
         <div class="flex items-center gap-3 pt-2">
           <button class="btn-primary" :disabled="busy">{{ isFirst ? $t('common.continue') : $t('profiles.addProfile') }} <span aria-hidden>→</span></button>
           <p v-if="error" class="text-crimson text-sm">
@@ -144,8 +199,9 @@ function formatDob(d: string | null) {
                   <span class="font-display text-2xl">{{ p.name }}</span>
                   <span v-if="p.is_default" class="eyebrow" style="color: var(--color-moss)">{{ $t('profiles.defaultBadge') }}</span>
                 </div>
-                <div class="text-xs text-muted-app mt-0.5" v-if="p.date_of_birth">
-                  {{ $t('profiles.born', { date: formatDob(p.date_of_birth) }) }}
+                <div class="text-xs text-muted-app mt-0.5 flex flex-wrap gap-x-2">
+                  <span v-if="p.date_of_birth">{{ $t('profiles.born', { date: formatDob(p.date_of_birth) }) }}</span>
+                  <span v-if="p.nric" class="tabular-nums">· {{ p.nric }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-1 flex-wrap justify-end">
@@ -159,16 +215,24 @@ function formatDob(d: string | null) {
               <span class="folio tabular-nums w-8 pt-6">№{{ String(i+1).padStart(2,'0') }}</span>
               <div class="space-y-4">
                 <div class="eyebrow" style="color: var(--color-accent)">{{ $t('profiles.amendingProfile') }}</div>
+                <label class="flex items-start gap-3 cursor-pointer select-none">
+                  <input type="checkbox" :checked="!editIsMalaysian" @change="(e) => editIsMalaysian = !(e.target as HTMLInputElement).checked" class="mt-1" />
+                  <div class="field-label">{{ $t('profiles.nonMalaysian') }}</div>
+                </label>
                 <div class="grid sm:grid-cols-[1.2fr_1fr] gap-4">
                   <label class="block">
                     <span class="field-label">{{ $t('profiles.nameLabel') }}</span>
                     <input v-model="editName" required class="field font-display text-xl" />
                   </label>
                   <label class="block">
-                    <span class="field-label">{{ $t('profiles.bornLabel') }}</span>
-                    <input v-model="editDob" type="date" class="field tabular-nums" />
+                    <span class="field-label">{{ editIsMalaysian ? $t('profiles.nricLabel') : $t('profiles.idLabel') }}</span>
+                    <input v-model="editNric" :placeholder="editIsMalaysian ? $t('profiles.nricPlaceholder') : $t('profiles.idPlaceholder')" class="field tabular-nums" autocomplete="off" />
                   </label>
                 </div>
+                <label class="block">
+                  <span class="field-label">{{ $t('profiles.bornLabel') }}</span>
+                  <input v-model="editDob" type="date" class="field tabular-nums" />
+                </label>
                 <p v-if="editError" class="text-crimson text-xs">
                   <span class="eyebrow" style="color:var(--color-crimson)">{{ $t('common.error') }} ·</span> {{ editError }}
                 </p>
