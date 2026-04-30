@@ -4,7 +4,7 @@ import { ulid } from 'ulid'
 import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { encodePayload, type QrPayload, type QrKind, type QrDueUnit } from '@/lib/qr-payload'
-import { todayLocalIso, formatDateLong, computeDueAt } from '@/lib/dates'
+import { todayLocalIso, formatDateLong } from '@/lib/dates'
 import { clearStaffUnlocked } from '@/lib/staff-auth'
 import { recordName, readNameHistory, forgetName } from '@/lib/name-history'
 import {
@@ -74,6 +74,12 @@ function nextTestDueInKey(unit: QrDueUnit): string {
     : unit === 'y' ? 'staff.nextTestDueInYears'
     : 'staff.nextTestDueIn'
 }
+function reminderDueInKey(unit: QrDueUnit): string {
+  return unit === 'w' ? 'staff.reminderDueInWeeks'
+    : unit === 'mo' ? 'staff.reminderDueInMonths'
+    : unit === 'y' ? 'staff.reminderDueInYears'
+    : 'staff.reminderDueIn'
+}
 const id = ref(ulid())
 
 watch(reminderOnly, (on) => {
@@ -84,6 +90,28 @@ watch(reminderOnly, (on) => {
 // either side — covers manual edits, paste, and applyTemplate.
 watch([doseNumber, totalDoses], ([dn, td]) => {
   if (dn != null && td != null && dn > td) doseNumber.value = td
+})
+
+// Numbered inputs snap to a sensible default if the user clears them or
+// types an invalid value. v-model.number stores '' when the input is
+// empty, which would otherwise leave a falsy value in the ref and let
+// the QR generation silently skip the field.
+function clamp(value: unknown, min: number, fallback: number): number {
+  return (typeof value === 'number' && !isNaN(value) && value >= min) ? value : fallback
+}
+function onDoseChange() { doseNumber.value = clamp(doseNumber.value, 1, 1) }
+function onTotalChange() { totalDoses.value = clamp(totalDoses.value, 1, 3) }
+function onNextDueChange() { nextDueDays.value = clamp(nextDueDays.value, 1, 30) }
+
+// When the staff toggles a section on, prefill the relevant fields if
+// they're currently empty (e.g. user cleared them in a previous session).
+watch(isMultiDose, (on) => {
+  if (!on) return
+  doseNumber.value = clamp(doseNumber.value, 1, 1)
+  totalDoses.value = clamp(totalDoses.value, 1, 3)
+})
+watch(reminderOnly, (on) => {
+  if (on) nextDueDays.value = clamp(nextDueDays.value, 1, 30)
 })
 
 // On the final dose of a multi-dose series there's no "next dose". Single-
@@ -390,6 +418,17 @@ watch(
     if (dn != null && td != null && dn > td) editForm.value.dose_number = td
   },
 )
+function onEditDoseChange() { editForm.value.dose_number = clamp(editForm.value.dose_number, 1, 1) }
+function onEditTotalChange() { editForm.value.total_doses = clamp(editForm.value.total_doses, 1, 3) }
+function onEditNextDueChange() { editForm.value.next_due_days = clamp(editForm.value.next_due_days, 1, 30) }
+watch(() => editForm.value.isMultiDose, (on) => {
+  if (!on) return
+  editForm.value.dose_number = clamp(editForm.value.dose_number, 1, 1)
+  editForm.value.total_doses = clamp(editForm.value.total_doses, 1, 3)
+})
+watch(() => editForm.value.reminder_only, (on) => {
+  if (on) editForm.value.next_due_days = clamp(editForm.value.next_due_days, 1, 30)
+})
 
 const editIsFinalDoseOfSeries = computed(() => {
   if (!editForm.value.isMultiDose) return false
@@ -785,18 +824,18 @@ const appUrl = computed(() => window.location.origin + '/')
             <div v-if="kind === 'v' && !reminderOnly && isMultiDose" class="grid grid-cols-2 gap-4">
               <label class="block">
                 <span class="field-label">{{ $t('staff.doseNumber') }}</span>
-                <input v-model.number="doseNumber" type="number" min="1" :max="totalDoses ?? undefined" class="field tabular-nums text-2xl font-display" />
+                <input v-model.number="doseNumber" @change="onDoseChange" type="number" min="1" :max="totalDoses ?? undefined" class="field tabular-nums text-2xl font-display" />
               </label>
               <label class="block">
                 <span class="field-label">{{ $t('staff.of') }}</span>
-                <input v-model.number="totalDoses" type="number" min="1" class="field tabular-nums text-2xl font-display" />
+                <input v-model.number="totalDoses" @change="onTotalChange" type="number" min="1" class="field tabular-nums text-2xl font-display" />
               </label>
             </div>
 
             <div v-if="reminderOnly">
               <span class="field-label">{{ $t('staff.dueIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="nextDueDays" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="nextDueDays" @change="onNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
               </div>
             </div>
@@ -804,7 +843,7 @@ const appUrl = computed(() => window.location.origin + '/')
             <div v-if="!reminderOnly && kind === 'v' && !isFinalDoseOfSeries">
               <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="nextDueDays" @change="onNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
               </div>
             </div>
@@ -812,7 +851,7 @@ const appUrl = computed(() => window.location.origin + '/')
             <div v-if="!reminderOnly && kind === 'b'">
               <span class="field-label">{{ $t('staff.nextDueIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="nextDueDays" @change="onNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
               </div>
             </div>
@@ -865,14 +904,12 @@ const appUrl = computed(() => window.location.origin + '/')
                   </dd>
                 </div>
                 <div>
-                  <dt class="eyebrow">{{ reminderOnly ? $t('staff.due') : $t('staff.given') }}</dt>
-                  <dd class="font-display text-lg mt-1 tabular-nums">
-                    {{ formatDate(reminderOnly && payload.nd ? computeDueAt(payload.d, payload.nd, payload.nu) : payload.d) }}
-                  </dd>
+                  <dt class="eyebrow">{{ $t('staff.given') }}</dt>
+                  <dd class="font-display text-lg mt-1 tabular-nums">{{ formatDate(payload.d) }}</dd>
                 </div>
               </dl>
-              <p v-if="!reminderOnly && payload.nd" class="text-center text-sm font-display-wonk italic" style="color: var(--color-staff-muted)">
-                {{ $t(kind === 'b' ? nextTestDueInKey(nextDueUnit) : nextDoseDueInKey(nextDueUnit), { n: payload.nd }) }}
+              <p v-if="payload.nd" class="text-center text-sm font-display-wonk italic" style="color: var(--color-staff-muted)">
+                {{ $t(reminderOnly ? reminderDueInKey(nextDueUnit) : kind === 'b' ? nextTestDueInKey(nextDueUnit) : nextDoseDueInKey(nextDueUnit), { n: payload.nd }) }}
               </p>
             </div>
 
@@ -927,18 +964,18 @@ const appUrl = computed(() => window.location.origin + '/')
             <div v-if="editingTemplate.kind === 'v' && !editForm.reminder_only && editForm.isMultiDose" class="grid grid-cols-2 gap-4">
               <label class="block">
                 <span class="field-label">{{ $t('staff.doseNumber') }}</span>
-                <input v-model.number="editForm.dose_number" type="number" min="1" :max="editForm.total_doses ?? undefined" class="field tabular-nums text-2xl font-display" />
+                <input v-model.number="editForm.dose_number" @change="onEditDoseChange" type="number" min="1" :max="editForm.total_doses ?? undefined" class="field tabular-nums text-2xl font-display" />
               </label>
               <label class="block">
                 <span class="field-label">{{ $t('staff.of') }}</span>
-                <input v-model.number="editForm.total_doses" type="number" min="1" class="field tabular-nums text-2xl font-display" />
+                <input v-model.number="editForm.total_doses" @change="onEditTotalChange" type="number" min="1" class="field tabular-nums text-2xl font-display" />
               </label>
             </div>
 
             <div v-if="editForm.reminder_only">
               <span class="field-label">{{ $t('staff.dueIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="editForm.next_due_days" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="editForm.next_due_days" @change="onEditNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
               </div>
             </div>
@@ -946,7 +983,7 @@ const appUrl = computed(() => window.location.origin + '/')
             <div v-if="!editForm.reminder_only && editingTemplate.kind === 'v' && !editIsFinalDoseOfSeries">
               <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="editForm.next_due_days" @change="onEditNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
               </div>
             </div>
@@ -954,7 +991,7 @@ const appUrl = computed(() => window.location.origin + '/')
             <div v-if="!editForm.reminder_only && editingTemplate.kind === 'b'">
               <span class="field-label">{{ $t('staff.nextDueIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="editForm.next_due_days" @change="onEditNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
               </div>
             </div>
