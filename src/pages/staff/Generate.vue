@@ -876,11 +876,6 @@ const appUrl = computed(() => window.location.origin + '/')
               </p>
             </div>
 
-            <div class="mt-6 pt-4 hairline-t text-center">
-              <p class="font-display-wonk text-lg leading-snug" style="color: var(--color-staff-muted)">
-                {{ $t('staff.scanInstruction') }}
-              </p>
-            </div>
           </div>
         </section>
       </div>
