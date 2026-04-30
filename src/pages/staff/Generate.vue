@@ -4,7 +4,7 @@ import { ulid } from 'ulid'
 import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { encodePayload, type QrPayload, type QrKind, type QrDueUnit } from '@/lib/qr-payload'
-import { todayLocalIso, formatDateLong } from '@/lib/dates'
+import { todayLocalIso, formatDateLong, computeDueAt } from '@/lib/dates'
 import { clearStaffUnlocked } from '@/lib/staff-auth'
 import { recordName, readNameHistory, forgetName } from '@/lib/name-history'
 import {
@@ -51,6 +51,10 @@ const totalDoses = ref<number | null>(3)
 const nextDueDays = ref<number | null>(30)
 const nextDueUnit = ref<QrDueUnit>('d')
 const reminderOnly = ref(false)
+// Whether this vaccination is a numbered dose in a primary series (e.g.
+// Hep B 1/3). Off by default: most clinic visits are single-shot or annual
+// boosters where dose-of-N noise just clutters the QR.
+const isMultiDose = ref(false)
 
 function inUnitKey(unit: QrDueUnit): string {
   return unit === 'w' ? 'staff.inWeeks'
@@ -63,6 +67,12 @@ function nextDoseDueInKey(unit: QrDueUnit): string {
     : unit === 'mo' ? 'staff.nextDoseDueInMonths'
     : unit === 'y' ? 'staff.nextDoseDueInYears'
     : 'staff.nextDoseDueIn'
+}
+function nextTestDueInKey(unit: QrDueUnit): string {
+  return unit === 'w' ? 'staff.nextTestDueInWeeks'
+    : unit === 'mo' ? 'staff.nextTestDueInMonths'
+    : unit === 'y' ? 'staff.nextTestDueInYears'
+    : 'staff.nextTestDueIn'
 }
 const id = ref(ulid())
 
@@ -77,13 +87,29 @@ watch([doseNumber, totalDoses], ([dn, td]) => {
 })
 
 // On the final dose of a multi-dose series there's no "next dose". Single-
-// dose recurring shots (1/1 annual flu, 1/1 tetanus) keep the field — that's
-// where the booster cadence lives.
+// dose recurring shots (annual flu, tetanus) don't have multi-dose checked,
+// so this never fires for them — they keep the next-due field.
 const isFinalDoseOfSeries = computed(() => {
+  if (!isMultiDose.value) return false
   const dn = doseNumber.value
   const td = totalDoses.value
   return dn != null && td != null && td > 1 && dn >= td
 })
+
+// QR mode derived from form state — drives the preview's "Kind" label.
+//   'reminder'        → reminder-only QR (k='r')
+//   'record_reminder' → record + a scheduled reminder (nd is set, not final dose)
+//   'record'          → record only
+const qrMode = computed<'record' | 'record_reminder' | 'reminder'>(() => {
+  if (reminderOnly.value) return 'reminder'
+  if (nextDueDays.value && !isFinalDoseOfSeries.value) return 'record_reminder'
+  return 'record'
+})
+function qrModeKey(m: 'record' | 'record_reminder' | 'reminder'): string {
+  return m === 'reminder' ? 'staff.reminder'
+    : m === 'record_reminder' ? 'staff.tagRecordReminder'
+    : 'staff.tagRecord'
+}
 
 const templates = ref<Template[]>([])
 const categories = ref<TemplateCategory[]>([])
@@ -225,7 +251,8 @@ const payload = computed<QrPayload | null>(() => {
   const effectiveKind: QrKind = reminderOnly.value ? 'r' : kind.value
   if (effectiveKind === 'r' && !nextDueDays.value) return null
   const p: QrPayload = { id: id.value, k: effectiveKind, n: name.value.trim(), d: performedOn.value }
-  if (effectiveKind === 'v') {
+  // Dose-of-N only when staff explicitly marked this as a multi-dose series.
+  if (effectiveKind === 'v' && isMultiDose.value) {
     if (doseNumber.value) p.dn = doseNumber.value
     if (totalDoses.value) p.td = totalDoses.value
   }
@@ -256,6 +283,7 @@ function resetForm() {
   nextDueDays.value = 30
   nextDueUnit.value = 'd'
   reminderOnly.value = false
+  isMultiDose.value = false
 }
 
 function newFromScratch(k: 'v' | 'b') {
@@ -273,6 +301,10 @@ function applyTemplate(tpl: Template) {
   nextDueUnit.value = tpl.next_due_unit
   performedOn.value = todayLocalIso()
   reminderOnly.value = tpl.reminder_only
+  // A template that stored both numbers is a multi-dose template; legacy
+  // single-shot templates that wrote 1/1 will land with the toggle on but
+  // staff can flip it off and the dose fields disappear.
+  isMultiDose.value = tpl.dose_number != null && tpl.total_doses != null
   id.value = ulid()
   stage.value = 'compose'
 }
@@ -284,11 +316,12 @@ function backToPicker() {
 
 async function saveCurrentAsTemplate() {
   if (!name.value.trim()) return
+  const includeDose = kind.value === 'v' && !reminderOnly.value && isMultiDose.value
   const draft = {
     kind: kind.value,
     name: name.value.trim(),
-    dose_number: kind.value === 'v' && !reminderOnly.value ? (doseNumber.value ?? null) : null,
-    total_doses: kind.value === 'v' && !reminderOnly.value ? (totalDoses.value ?? null) : null,
+    dose_number: includeDose ? (doseNumber.value ?? null) : null,
+    total_doses: includeDose ? (totalDoses.value ?? null) : null,
     next_due_days: isFinalDoseOfSeries.value ? null : (nextDueDays.value ?? null),
     next_due_unit: nextDueUnit.value,
     reminder_only: reminderOnly.value,
@@ -339,6 +372,7 @@ const editForm = ref({
   next_due_days: null as number | null,
   next_due_unit: 'd' as QrDueUnit,
   reminder_only: false,
+  isMultiDose: false,
 })
 
 const editNameInput = ref<HTMLInputElement | null>(null)
@@ -358,6 +392,7 @@ watch(
 )
 
 const editIsFinalDoseOfSeries = computed(() => {
+  if (!editForm.value.isMultiDose) return false
   const dn = editForm.value.dose_number
   const td = editForm.value.total_doses
   return dn != null && td != null && td > 1 && dn >= td
@@ -372,6 +407,7 @@ function startEditTemplate(tpl: Template) {
     next_due_days: tpl.next_due_days,
     next_due_unit: tpl.next_due_unit,
     reminder_only: tpl.reminder_only,
+    isMultiDose: tpl.dose_number != null && tpl.total_doses != null,
   }
 }
 
@@ -386,11 +422,12 @@ async function saveEditTemplate() {
   if (!trimmedName) return
   const isVaccine = tpl.kind === 'v'
   const isReminderOnly = editForm.value.reminder_only
+  const includeDose = isVaccine && !isReminderOnly && editForm.value.isMultiDose
   try {
     await updateTemplateFn(tpl.id, {
       name: trimmedName,
-      dose_number: isVaccine && !isReminderOnly ? (editForm.value.dose_number ?? null) : null,
-      total_doses: isVaccine && !isReminderOnly ? (editForm.value.total_doses ?? null) : null,
+      dose_number: includeDose ? (editForm.value.dose_number ?? null) : null,
+      total_doses: includeDose ? (editForm.value.total_doses ?? null) : null,
       next_due_days: editIsFinalDoseOfSeries.value ? null : (editForm.value.next_due_days ?? null),
       next_due_unit: editForm.value.next_due_unit,
       reminder_only: isReminderOnly,
@@ -732,39 +769,50 @@ const appUrl = computed(() => window.location.origin + '/')
               </div>
             </label>
 
-            <div class="grid grid-cols-[1fr_1fr_1fr] gap-4">
-              <label v-if="!reminderOnly" class="block">
-                <span class="field-label">{{ $t('staff.givenOn') }}</span>
-                <input v-model="performedOn" type="date" class="field tabular-nums" />
-              </label>
-              <label v-if="kind === 'v' && !reminderOnly" class="block">
+            <label v-if="kind === 'v' && !reminderOnly" class="flex items-start gap-3 cursor-pointer select-none">
+              <input type="checkbox" v-model="isMultiDose" class="mt-1" />
+              <div>
+                <div class="field-label">{{ $t('staff.multiDoseSeries') }}</div>
+                <div class="text-xs mt-1" style="color: var(--color-staff-muted)">{{ $t('staff.multiDoseSeriesHint') }}</div>
+              </div>
+            </label>
+
+            <label v-if="!reminderOnly" class="block">
+              <span class="field-label">{{ $t('staff.givenOn') }}</span>
+              <input v-model="performedOn" type="date" class="field tabular-nums" />
+            </label>
+
+            <div v-if="kind === 'v' && !reminderOnly && isMultiDose" class="grid grid-cols-2 gap-4">
+              <label class="block">
                 <span class="field-label">{{ $t('staff.doseNumber') }}</span>
                 <input v-model.number="doseNumber" type="number" min="1" :max="totalDoses ?? undefined" class="field tabular-nums text-2xl font-display" />
               </label>
-              <label v-if="kind === 'v' && !reminderOnly" class="block">
+              <label class="block">
                 <span class="field-label">{{ $t('staff.of') }}</span>
                 <input v-model.number="totalDoses" type="number" min="1" class="field tabular-nums text-2xl font-display" />
               </label>
-              <div v-if="reminderOnly" class="col-span-3">
-                <span class="field-label">{{ $t('staff.dueIn') }}</span>
-                <div class="flex gap-2 items-stretch mt-1">
-                  <input v-model.number="nextDueDays" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
-                  <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
-                </div>
-              </div>
-              <div v-else-if="kind === 'b'" class="col-span-2">
-                <span class="field-label">{{ $t('staff.nextDueIn') }}</span>
-                <div class="flex gap-2 items-stretch mt-1">
-                  <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
-                  <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
-                </div>
+            </div>
+
+            <div v-if="reminderOnly">
+              <span class="field-label">{{ $t('staff.dueIn') }}</span>
+              <div class="flex gap-2 items-stretch mt-1">
+                <input v-model.number="nextDueDays" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
+                <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
               </div>
             </div>
 
-            <div v-if="kind === 'v' && !reminderOnly && !isFinalDoseOfSeries">
+            <div v-if="!reminderOnly && kind === 'v' && !isFinalDoseOfSeries">
               <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums flex-1" />
+                <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
+                <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
+              </div>
+            </div>
+
+            <div v-if="!reminderOnly && kind === 'b'">
+              <span class="field-label">{{ $t('staff.nextDueIn') }}</span>
+              <div class="flex gap-2 items-stretch mt-1">
+                <input v-model.number="nextDueDays" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
               </div>
             </div>
@@ -807,23 +855,24 @@ const appUrl = computed(() => window.location.origin + '/')
               <dl class="grid grid-cols-3 gap-3 hairline-t hairline-b py-4 text-center">
                 <div>
                   <dt class="eyebrow">{{ $t('staff.kind') }}</dt>
-                  <dd class="font-display text-lg mt-1">{{ reminderOnly ? $t('staff.reminder') : (kind === 'v' ? $t('staff.vaccine') : $t('staff.bloodTestShort')) }}</dd>
+                  <dd class="font-display text-lg mt-1">{{ $t(qrModeKey(qrMode)) }}</dd>
                 </div>
-                <div v-if="kind === 'v' && payload.dn && payload.td" class="border-x hairline">
+                <div class="border-x hairline">
                   <dt class="eyebrow">{{ $t('staff.series') }}</dt>
-                  <dd class="font-display text-lg mt-1 tabular-nums">{{ $t('staff.seriesOf', { n: payload.dn, total: payload.td }) }}</dd>
-                </div>
-                <div v-else-if="payload.nd" class="border-x hairline">
-                  <dt class="eyebrow">{{ reminderOnly ? $t('staff.due') : $t('staff.nextTest') }}</dt>
-                  <dd class="font-display text-lg mt-1 tabular-nums">{{ $t(inUnitKey(nextDueUnit), { n: payload.nd }) }}</dd>
+                  <dd class="font-display text-lg mt-1 tabular-nums">
+                    <template v-if="kind === 'v' && payload.dn && payload.td">{{ $t('staff.seriesOf', { n: payload.dn, total: payload.td }) }}</template>
+                    <template v-else>—</template>
+                  </dd>
                 </div>
                 <div>
-                  <dt class="eyebrow">{{ reminderOnly ? $t('staff.issued') : $t('staff.given') }}</dt>
-                  <dd class="font-display text-lg mt-1 tabular-nums">{{ formatDate(payload.d) }}</dd>
+                  <dt class="eyebrow">{{ reminderOnly ? $t('staff.due') : $t('staff.given') }}</dt>
+                  <dd class="font-display text-lg mt-1 tabular-nums">
+                    {{ formatDate(reminderOnly && payload.nd ? computeDueAt(payload.d, payload.nd, payload.nu) : payload.d) }}
+                  </dd>
                 </div>
               </dl>
-              <p v-if="kind === 'v' && !reminderOnly && payload.nd" class="text-center text-sm font-display-wonk italic" style="color: var(--color-staff-muted)">
-                {{ $t(nextDoseDueInKey(nextDueUnit), { n: payload.nd }) }}
+              <p v-if="!reminderOnly && payload.nd" class="text-center text-sm font-display-wonk italic" style="color: var(--color-staff-muted)">
+                {{ $t(kind === 'b' ? nextTestDueInKey(nextDueUnit) : nextDoseDueInKey(nextDueUnit), { n: payload.nd }) }}
               </p>
             </div>
 
@@ -872,35 +921,46 @@ const appUrl = computed(() => window.location.origin + '/')
               </div>
             </label>
 
-            <div class="grid grid-cols-2 gap-4">
-              <label v-if="editingTemplate.kind === 'v' && !editForm.reminder_only" class="block">
+            <label v-if="editingTemplate.kind === 'v' && !editForm.reminder_only" class="flex items-start gap-3 cursor-pointer select-none">
+              <input type="checkbox" v-model="editForm.isMultiDose" class="mt-1" />
+              <div>
+                <div class="field-label">{{ $t('staff.multiDoseSeries') }}</div>
+                <div class="text-xs mt-1" style="color: var(--color-staff-muted)">{{ $t('staff.multiDoseSeriesHint') }}</div>
+              </div>
+            </label>
+
+            <div v-if="editingTemplate.kind === 'v' && !editForm.reminder_only && editForm.isMultiDose" class="grid grid-cols-2 gap-4">
+              <label class="block">
                 <span class="field-label">{{ $t('staff.doseNumber') }}</span>
                 <input v-model.number="editForm.dose_number" type="number" min="1" :max="editForm.total_doses ?? undefined" class="field tabular-nums text-2xl font-display" />
               </label>
-              <label v-if="editingTemplate.kind === 'v' && !editForm.reminder_only" class="block">
+              <label class="block">
                 <span class="field-label">{{ $t('staff.of') }}</span>
                 <input v-model.number="editForm.total_doses" type="number" min="1" class="field tabular-nums text-2xl font-display" />
               </label>
-              <div v-if="editForm.reminder_only" class="col-span-2">
-                <span class="field-label">{{ $t('staff.dueIn') }}</span>
-                <div class="flex gap-2 items-stretch mt-1">
-                  <input v-model.number="editForm.next_due_days" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
-                  <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
-                </div>
+            </div>
+
+            <div v-if="editForm.reminder_only">
+              <span class="field-label">{{ $t('staff.dueIn') }}</span>
+              <div class="flex gap-2 items-stretch mt-1">
+                <input v-model.number="editForm.next_due_days" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
+                <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
               </div>
-              <div v-else-if="editingTemplate.kind === 'b'" class="col-span-2">
-                <span class="field-label">{{ $t('staff.nextDueIn') }}</span>
-                <div class="flex gap-2 items-stretch mt-1">
-                  <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
-                  <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
-                </div>
+            </div>
+
+            <div v-if="!editForm.reminder_only && editingTemplate.kind === 'v' && !editIsFinalDoseOfSeries">
+              <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
+              <div class="flex gap-2 items-stretch mt-1">
+                <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
+                <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
               </div>
-              <div v-else-if="!editIsFinalDoseOfSeries" class="col-span-2">
-                <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
-                <div class="flex gap-2 items-stretch mt-1">
-                  <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
-                  <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
-                </div>
+            </div>
+
+            <div v-if="!editForm.reminder_only && editingTemplate.kind === 'b'">
+              <span class="field-label">{{ $t('staff.nextDueIn') }}</span>
+              <div class="flex gap-2 items-stretch mt-1">
+                <input v-model.number="editForm.next_due_days" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
+                <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
               </div>
             </div>
 
