@@ -368,7 +368,7 @@ export default {
     nextTestDueInMonths: 'Ujian seterusnya dijangka dalam {n} bulan.',
     nextTestDueInYears: 'Ujian seterusnya dijangka dalam {n} tahun.',
     multiDoseSeries: 'Siri berbilang dos',
-    multiDoseSeriesHint: 'Dos bernombor dalam siri utama (cth. Hep B 1/3). Matikan untuk dos tunggal atau penggalak tahunan.',
+    multiDoseSeriesHint: 'Diberi dalam beberapa dos, cth. Hep B 1/3.',
     scanInstruction: 'Imbas dengan kamera telefon anda untuk menambah ini ke rekod.',
     saveTemplateFailed: 'Tidak dapat menyimpan templat: {err}',
     deleteFailed: 'Tidak dapat memadam: {err}',

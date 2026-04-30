@@ -365,7 +365,7 @@ export default {
     nextTestDueInMonths: '下一次检查将在 {n} 个月后进行。',
     nextTestDueInYears: '下一次检查将在 {n} 年后进行。',
     multiDoseSeries: '多剂次系列',
-    multiDoseSeriesHint: '主系列中的编号剂次（如乙肝 1/3）。单剂或年度加强针请关闭。',
+    multiDoseSeriesHint: '需要分多剂接种，例如乙型肝炎 1/3。',
     scanInstruction: '用您手机的相机扫描此码，即可添加到您的记录中。',
     saveTemplateFailed: '无法保存模板：{err}',
     deleteFailed: '无法删除：{err}',

@@ -365,7 +365,7 @@ export default {
     nextTestDueInMonths: 'Next test due in {n} months.',
     nextTestDueInYears: 'Next test due in {n} years.',
     multiDoseSeries: 'Multi-dose series',
-    multiDoseSeriesHint: 'Numbered dose in a primary series (e.g. Hep B 1/3). Leave off for single-shot or annual boosters.',
+    multiDoseSeriesHint: 'Given in multiple doses, e.g. Hep B 1/3.',
     scanInstruction: "Scan with your phone's camera to add this to your records.",
     saveTemplateFailed: 'Could not save template: {err}',
     deleteFailed: 'Could not delete: {err}',
