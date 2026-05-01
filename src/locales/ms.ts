@@ -373,6 +373,7 @@ export default {
     reminderDueInYears: 'Peringatan akan dihantar dalam {n} tahun.',
     multiDoseSeries: 'Siri berbilang dos',
     multiDoseSeriesHint: 'Diberi dalam beberapa dos, cth. Hep B 1/3.',
+    skipReminderHint: 'Tetapkan 0 untuk tidak menjadualkan peringatan.',
     saveTemplateFailed: 'Tidak dapat menyimpan templat: {err}',
     deleteFailed: 'Tidak dapat memadam: {err}',
     confirmDeleteTemplate: 'Padam templat "{name}"?',

@@ -102,6 +102,10 @@ function clamp(value: unknown, min: number, fallback: number): number {
 function onDoseChange() { doseNumber.value = clamp(doseNumber.value, 1, 1) }
 function onTotalChange() { totalDoses.value = clamp(totalDoses.value, 1, 3) }
 function onNextDueChange() { nextDueDays.value = clamp(nextDueDays.value, 1, 30) }
+// In record + reminder modes, 0 means "skip the reminder, just record" —
+// staff's escape hatch when they don't want to schedule a follow-up. The
+// clamp still snaps null / negatives / NaN back to the 30-day default.
+function onNextDueOptionalChange() { nextDueDays.value = clamp(nextDueDays.value, 0, 30) }
 
 // When the staff toggles a section on, prefill the relevant fields if
 // they're currently empty (e.g. user cleared them in a previous session).
@@ -421,6 +425,7 @@ watch(
 function onEditDoseChange() { editForm.value.dose_number = clamp(editForm.value.dose_number, 1, 1) }
 function onEditTotalChange() { editForm.value.total_doses = clamp(editForm.value.total_doses, 1, 3) }
 function onEditNextDueChange() { editForm.value.next_due_days = clamp(editForm.value.next_due_days, 1, 30) }
+function onEditNextDueOptionalChange() { editForm.value.next_due_days = clamp(editForm.value.next_due_days, 0, 30) }
 watch(() => editForm.value.isMultiDose, (on) => {
   if (!on) return
   editForm.value.dose_number = clamp(editForm.value.dose_number, 1, 1)
@@ -843,17 +848,19 @@ const appUrl = computed(() => window.location.origin + '/')
             <div v-if="!reminderOnly && kind === 'v' && !isFinalDoseOfSeries">
               <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="nextDueDays" @change="onNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="nextDueDays" @change="onNextDueOptionalChange" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
               </div>
+              <p class="text-xs mt-1" style="color: var(--color-staff-muted)">{{ $t('staff.skipReminderHint') }}</p>
             </div>
 
             <div v-if="!reminderOnly && kind === 'b'">
               <span class="field-label">{{ $t('staff.nextDueIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="nextDueDays" @change="onNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="nextDueDays" @change="onNextDueOptionalChange" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="nextDueUnit" class="shrink-0" />
               </div>
+              <p class="text-xs mt-1" style="color: var(--color-staff-muted)">{{ $t('staff.skipReminderHint') }}</p>
             </div>
 
             <div class="pt-4 hairline-t">
@@ -986,17 +993,19 @@ const appUrl = computed(() => window.location.origin + '/')
             <div v-if="!editForm.reminder_only && editingTemplate.kind === 'v' && !editIsFinalDoseOfSeries">
               <span class="field-label">{{ $t('staff.nextDoseIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="editForm.next_due_days" @change="onEditNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="editForm.next_due_days" @change="onEditNextDueOptionalChange" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
               </div>
+              <p class="text-xs mt-1" style="color: var(--color-staff-muted)">{{ $t('staff.skipReminderHint') }}</p>
             </div>
 
             <div v-if="!editForm.reminder_only && editingTemplate.kind === 'b'">
               <span class="field-label">{{ $t('staff.nextDueIn') }}</span>
               <div class="flex gap-2 items-stretch mt-1">
-                <input v-model.number="editForm.next_due_days" @change="onEditNextDueChange" type="number" min="1" class="field tabular-nums text-2xl font-display flex-1" />
+                <input v-model.number="editForm.next_due_days" @change="onEditNextDueOptionalChange" type="number" min="0" class="field tabular-nums text-2xl font-display flex-1" />
                 <DueUnitPicker v-model="editForm.next_due_unit" class="shrink-0" />
               </div>
+              <p class="text-xs mt-1" style="color: var(--color-staff-muted)">{{ $t('staff.skipReminderHint') }}</p>
             </div>
 
             <div class="flex justify-end gap-3 pt-2">

@@ -370,6 +370,7 @@ export default {
     reminderDueInYears: 'Reminder due in {n} years.',
     multiDoseSeries: 'Multi-dose series',
     multiDoseSeriesHint: 'Given in multiple doses, e.g. Hep B 1/3.',
+    skipReminderHint: 'Set to 0 to skip the reminder.',
     saveTemplateFailed: 'Could not save template: {err}',
     deleteFailed: 'Could not delete: {err}',
     confirmDeleteTemplate: 'Delete template "{name}"?',

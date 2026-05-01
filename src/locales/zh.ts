@@ -370,6 +370,7 @@ export default {
     reminderDueInYears: '提醒将在 {n} 年后发出。',
     multiDoseSeries: '多剂次系列',
     multiDoseSeriesHint: '需要分多剂接种，例如乙型肝炎 1/3。',
+    skipReminderHint: '输入 0 即不安排提醒。',
     saveTemplateFailed: '无法保存模板：{err}',
     deleteFailed: '无法删除：{err}',
     confirmDeleteTemplate: '删除模板「{name}」？',
