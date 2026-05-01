@@ -905,7 +905,10 @@ const appUrl = computed(() => window.location.origin + '/')
                 </div>
                 <div>
                   <dt class="eyebrow">{{ $t('staff.given') }}</dt>
-                  <dd class="font-display text-lg mt-1 tabular-nums">{{ formatDate(payload.d) }}</dd>
+                  <dd class="font-display text-lg mt-1 tabular-nums">
+                    <template v-if="reminderOnly">—</template>
+                    <template v-else>{{ formatDate(payload.d) }}</template>
+                  </dd>
                 </div>
               </dl>
               <p v-if="payload.nd" class="text-center text-sm font-display-wonk italic" style="color: var(--color-staff-muted)">
