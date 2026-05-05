@@ -667,14 +667,14 @@ const appUrl = computed(() => window.location.origin + '/')
       </div>
 
       <!-- Uncategorized (pinned at top) -->
-      <div class="category-block">
+      <div v-if="kind !== 'a'" class="category-block">
         <div class="flex items-center justify-between py-2 hairline-b">
           <button type="button" class="flex items-center gap-3 text-left" @click="toggleCollapsed(uncatGroup.key)">
             <span class="eyebrow" style="color: var(--color-staff-muted)">{{ $t('staff.uncategorized') }}</span>
             <span class="opacity-40 text-xs" aria-hidden>{{ isCollapsed(uncatGroup.key) ? '▸' : '▾' }}</span>
             <span class="text-xs tabular-nums" style="color: var(--color-staff-muted)">{{ uncatGroup.templates.length }}</span>
           </button>
-          <button v-if="kind !== 'a'" type="button" class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="addCategory">
+          <button type="button" class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="addCategory">
             {{ $t('staff.newCategory') }}
           </button>
         </div>
@@ -700,6 +700,7 @@ const appUrl = computed(() => window.location.origin + '/')
 
       <!-- Categories (draggable) -->
       <draggable
+        v-if="kind !== 'a'"
         v-model="groups"
         tag="div"
         class="space-y-8"
@@ -749,7 +750,7 @@ const appUrl = computed(() => window.location.origin + '/')
         </template>
       </draggable>
 
-      <p v-if="!templatesLoading && groups.length === 0 && uncatGroup.templates.length === 0" class="folio text-xs italic pt-2" style="color: var(--color-staff-muted)">
+      <p v-if="kind !== 'a' && !templatesLoading && groups.length === 0 && uncatGroup.templates.length === 0" class="folio text-xs italic pt-2" style="color: var(--color-staff-muted)">
         {{ $t('staff.emptyNoTemplates') }}
       </p>
     </section>
