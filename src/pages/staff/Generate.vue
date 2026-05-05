@@ -43,7 +43,7 @@ const dialog = useDialog()
 const stage = ref<'picker' | 'compose'>('picker')
 const version = __APP_VERSION__
 
-const kind = ref<'v' | 'b'>('v')
+const kind = ref<'v' | 'b' | 'a'>('v')
 const name = ref('')
 const performedOn = ref(todayLocalIso())
 const doseNumber = ref<number | null>(1)
@@ -129,16 +129,20 @@ const isFinalDoseOfSeries = computed(() => {
 })
 
 // QR mode derived from form state — drives the preview's "Kind" label.
+//   'allergy'         → allergy snapshot QR (k='a')
 //   'reminder'        → reminder-only QR (k='r')
 //   'record_reminder' → record + a scheduled reminder (nd is set, not final dose)
 //   'record'          → record only
-const qrMode = computed<'record' | 'record_reminder' | 'reminder'>(() => {
+type QrMode = 'allergy' | 'record' | 'record_reminder' | 'reminder'
+const qrMode = computed<QrMode>(() => {
+  if (kind.value === 'a') return 'allergy'
   if (reminderOnly.value) return 'reminder'
   if (nextDueDays.value && !isFinalDoseOfSeries.value) return 'record_reminder'
   return 'record'
 })
-function qrModeKey(m: 'record' | 'record_reminder' | 'reminder'): string {
-  return m === 'reminder' ? 'staff.reminder'
+function qrModeKey(m: QrMode): string {
+  return m === 'allergy' ? 'staff.allergyKindLabel'
+    : m === 'reminder' ? 'staff.reminder'
     : m === 'record_reminder' ? 'staff.tagRecordReminder'
     : 'staff.tagRecord'
 }
@@ -210,8 +214,12 @@ const nameHistory = ref(readNameHistory())
 // the clinic's saved templates that aren't already in history. No predefined
 // catalogue — empty until the clinic actually starts using the app.
 const suggestions = computed(() => {
-  const history = nameHistory.value[kind.value]
-  const fromTemplates = templates.value.filter(t => t.kind === kind.value).map(t => t.name)
+  const k = kind.value
+  // Allergy text is free-form per-patient, not a typed-once-reused-many
+  // pattern — no suggestions to surface.
+  if (k === 'a') return []
+  const history = nameHistory.value[k]
+  const fromTemplates = templates.value.filter(t => t.kind === k).map(t => t.name)
   const seen = new Set<string>()
   const out: string[] = []
   for (const n of [...history, ...fromTemplates]) {
@@ -227,21 +235,27 @@ const suggestions = computed(() => {
 // be removed from the dropdown (the source is the template, not history).
 const templateNameSet = computed(() => {
   const s = new Set<string>()
-  for (const t of templates.value) if (t.kind === kind.value) s.add(t.name.trim().toLowerCase())
+  const k = kind.value
+  if (k === 'a') return s
+  for (const t of templates.value) if (t.kind === k) s.add(t.name.trim().toLowerCase())
   return s
 })
 function isHistoryOnly(n: string) {
   return !templateNameSet.value.has(n.trim().toLowerCase())
 }
 function forgetSuggestion(n: string) {
-  nameHistory.value = forgetName(kind.value, n)
+  const k = kind.value
+  if (k === 'a') return
+  nameHistory.value = forgetName(k, n)
   // Keep dropdown open so the user can purge a few in a row.
   nameHover.value = 0
 }
 
 function rememberName() {
   if (!name.value.trim()) return
-  nameHistory.value = recordName(kind.value, name.value)
+  const k = kind.value
+  if (k === 'a') return
+  nameHistory.value = recordName(k, name.value)
 }
 
 // Custom autocomplete dropdown state for the name input.
@@ -280,7 +294,14 @@ watch(kind, () => { nameOpen.value = false })
 
 const payload = computed<QrPayload | null>(() => {
   if (!name.value || !performedOn.value) return null
-  const effectiveKind: QrKind = reminderOnly.value ? 'r' : kind.value
+  const k = kind.value
+  // Allergy QR is a different shape entirely — just the snapshot text + a
+  // date stamp. No reminder, no dose, no series. The patient app uses the
+  // text wholesale to overwrite the profile's allergies field.
+  if (k === 'a') {
+    return { id: id.value, k: 'a', n: name.value.trim(), d: performedOn.value }
+  }
+  const effectiveKind: QrKind = reminderOnly.value ? 'r' : k
   if (effectiveKind === 'r' && !nextDueDays.value) return null
   const p: QrPayload = { id: id.value, k: effectiveKind, n: name.value.trim(), d: performedOn.value }
   // Dose-of-N only when staff explicitly marked this as a multi-dose series.
@@ -290,7 +311,7 @@ const payload = computed<QrPayload | null>(() => {
   }
   // Preserve the v/b choice through reminder-only QRs so the resulting
   // reminder lands with the right `kind` (next_dose vs followup_test).
-  if (effectiveKind === 'r') p.ok = kind.value
+  if (effectiveKind === 'r') p.ok = k
   // Final dose of a multi-dose series has no "next" — drop nd/nu even if
   // the underlying refs hold stale values from earlier in the form session.
   if (nextDueDays.value && !isFinalDoseOfSeries.value) {
@@ -318,7 +339,7 @@ function resetForm() {
   isMultiDose.value = false
 }
 
-function newFromScratch(k: 'v' | 'b') {
+function newFromScratch(k: 'v' | 'b' | 'a') {
   kind.value = k
   resetForm()
   stage.value = 'compose'
@@ -343,14 +364,20 @@ function applyTemplate(tpl: Template) {
 
 function backToPicker() {
   rememberName()
+  // Picker's kind toggle is v|b only. If we entered allergy compose, reset
+  // back to a defaulted vaccine view so the picker doesn't show a blank toggle.
+  if (kind.value === 'a') kind.value = 'v'
   stage.value = 'picker'
 }
 
 async function saveCurrentAsTemplate() {
   if (!name.value.trim()) return
-  const includeDose = kind.value === 'v' && !reminderOnly.value && isMultiDose.value
+  // Allergies are per-patient free text, not template-able.
+  if (kind.value === 'a') return
+  const k: 'v' | 'b' = kind.value
+  const includeDose = k === 'v' && !reminderOnly.value && isMultiDose.value
   const draft = {
-    kind: kind.value,
+    kind: k,
     name: name.value.trim(),
     dose_number: includeDose ? (doseNumber.value ?? null) : null,
     total_doses: includeDose ? (totalDoses.value ?? null) : null,
@@ -484,6 +511,9 @@ async function saveEditTemplate() {
 }
 
 async function addCategory() {
+  // Categories belong to the v|b template world; allergies don't have them.
+  // Picker resets kind to 'v' on entry, so this guard is just defensive.
+  if (kind.value === 'a') return
   const label = await dialog.prompt({ title: t('staff.categoryNamePrompt') })
   if (!label || !label.trim()) return
   try {
@@ -619,16 +649,28 @@ const appUrl = computed(() => window.location.origin + '/')
       </div>
 
       <!-- Action row -->
-      <div class="anim-rise-3">
+      <div class="anim-rise-3 space-y-3">
         <button
           type="button"
           class="w-full text-left px-6 py-5 hairline transition-colors flex items-center justify-between"
           style="border-style: dashed;"
-          @click="newFromScratch(kind)"
+          @click="newFromScratch(kind === 'a' ? 'v' : kind)"
         >
           <div>
             <div class="eyebrow mb-1" style="color: var(--color-staff-accent)">+ {{ $t('staff.newFromScratch') }}</div>
             <div class="text-xs" style="color: var(--color-staff-muted)">{{ $t('staff.newFromScratchHint') }}</div>
+          </div>
+          <span style="color: var(--color-staff-accent)">→</span>
+        </button>
+        <button
+          type="button"
+          class="w-full text-left px-6 py-5 hairline transition-colors flex items-center justify-between"
+          style="border-style: dashed;"
+          @click="newFromScratch('a')"
+        >
+          <div>
+            <div class="eyebrow mb-1" style="color: var(--color-staff-accent)">+ {{ $t('staff.newAllergy') }}</div>
+            <div class="text-xs" style="color: var(--color-staff-muted)">{{ $t('staff.newAllergyHint') }}</div>
           </div>
           <span style="color: var(--color-staff-accent)">→</span>
         </button>
@@ -729,6 +771,7 @@ const appUrl = computed(() => window.location.origin + '/')
           {{ $t('staff.backToTemplates') }}
         </button>
         <button
+          v-if="kind !== 'a'"
           type="button"
           :disabled="!name.trim()"
           class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap"
@@ -751,7 +794,7 @@ const appUrl = computed(() => window.location.origin + '/')
           <form class="space-y-7 anim-rise-2">
             <div>
               <span class="field-label">{{ $t('staff.kindOfRecord') }}</span>
-              <div class="grid grid-cols-2 gap-0 hairline mt-1">
+              <div class="grid grid-cols-3 gap-0 hairline mt-1">
                 <label class="px-4 py-3 flex items-center justify-center gap-2 cursor-pointer transition-colors"
                   :style="kind === 'v' ? 'background: var(--color-staff-accent); color: var(--color-staff-paper);' : ''">
                   <input type="radio" value="v" v-model="kind" class="sr-only" />
@@ -762,10 +805,15 @@ const appUrl = computed(() => window.location.origin + '/')
                   <input type="radio" value="b" v-model="kind" class="sr-only" />
                   <span class="font-display text-lg whitespace-nowrap">{{ $t('staff.bloodTest') }}</span>
                 </label>
+                <label class="px-4 py-3 flex items-center justify-center gap-2 cursor-pointer transition-colors border-l hairline"
+                  :style="kind === 'a' ? 'background: var(--color-staff-accent); color: var(--color-staff-paper);' : ''">
+                  <input type="radio" value="a" v-model="kind" class="sr-only" />
+                  <span class="font-display text-lg whitespace-nowrap">{{ $t('staff.allergyKindLabel') }}</span>
+                </label>
               </div>
             </div>
 
-            <label class="block relative">
+            <label v-if="kind !== 'a'" class="block relative">
               <span class="field-label">{{ $t('staff.nameLabel') }}</span>
               <input
                 v-model="name"
@@ -805,7 +853,18 @@ const appUrl = computed(() => window.location.origin + '/')
               </ul>
             </label>
 
-            <label class="flex items-start gap-3 cursor-pointer select-none">
+            <label v-else class="block">
+              <span class="field-label">{{ $t('staff.allergiesLabel') }}</span>
+              <textarea
+                v-model="name"
+                rows="5"
+                class="field font-display-wonk text-lg leading-snug resize-none"
+                :placeholder="$t('staff.allergyPlaceholder')"
+              ></textarea>
+              <p class="text-xs mt-1" style="color: var(--color-staff-muted)">{{ $t('staff.allergyHint') }}</p>
+            </label>
+
+            <label v-if="kind !== 'a'" class="flex items-start gap-3 cursor-pointer select-none">
               <input type="checkbox" v-model="reminderOnly" class="mt-1" />
               <div>
                 <div class="field-label">{{ $t('staff.reminderOnly') }}</div>
@@ -821,7 +880,7 @@ const appUrl = computed(() => window.location.origin + '/')
               </div>
             </label>
 
-            <label v-if="!reminderOnly" class="block">
+            <label v-if="!reminderOnly && kind !== 'a'" class="block">
               <span class="field-label">{{ $t('staff.givenOn') }}</span>
               <input v-model="performedOn" type="date" class="field tabular-nums" />
             </label>
@@ -880,7 +939,7 @@ const appUrl = computed(() => window.location.origin + '/')
                 <div class="eyebrow print:text-black" style="color: var(--color-staff-muted)">{{ $t('staff.patientRecordLabel') }}</div>
               </div>
               <div class="folio text-right">
-                {{ reminderOnly ? 'R' : kind === 'v' ? 'Rx' : 'Lab' }} / v1<br/>
+                {{ kind === 'a' ? 'A' : reminderOnly ? 'R' : kind === 'v' ? 'Rx' : 'Lab' }} / v1<br/>
                 {{ formatDate(todayLocalIso()) }}
               </div>
             </div>
@@ -894,7 +953,15 @@ const appUrl = computed(() => window.location.origin + '/')
               </div>
             </div>
 
-            <div v-if="payload" class="space-y-4">
+            <div v-if="payload && kind === 'a'" class="space-y-4">
+              <div class="text-center eyebrow" style="color: var(--color-staff-muted)">{{ $t('staff.allergyKindLabel') }}</div>
+              <p class="font-display-wonk text-lg leading-snug whitespace-pre-line text-center print:text-black" style="color: var(--color-staff-ink)">{{ payload.n }}</p>
+              <p class="text-center text-xs hairline-t pt-3" style="color: var(--color-staff-muted)">
+                {{ $t('staff.allergyOverwriteNote') }}
+              </p>
+            </div>
+
+            <div v-else-if="payload" class="space-y-4">
               <h2 class="font-display text-3xl md:text-4xl leading-[0.95] text-center print:text-black" style="color: var(--color-staff-ink)">
                 {{ payload.n }}
               </h2>

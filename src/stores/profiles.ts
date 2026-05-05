@@ -11,6 +11,7 @@ export interface Profile {
   date_of_birth: string | null
   nric: string | null
   nationality: string  // ISO 3166-1 alpha-2 (e.g. 'MY')
+  allergies: string | null
   notes: string | null
   is_default: boolean
   created_at: string
@@ -84,6 +85,14 @@ export const useProfilesStore = defineStore('profiles', () => {
     return data
   }
 
+  // Wholesale replacement of the allergies text — staff issues a fresh
+  // snapshot QR on each visit, and scanning it stomps the previous value.
+  // Empty string is preserved (= "checked, no known allergies"), null is
+  // not exposed here (use `update` directly to clear).
+  async function updateAllergies(id: string, allergies: string) {
+    return update(id, { allergies })
+  }
+
   async function setDefault(id: string) {
     await supabase.from('profiles').update({ is_default: false }).neq('id', id)
     await update(id, { is_default: true })
@@ -101,5 +110,5 @@ export const useProfilesStore = defineStore('profiles', () => {
 
   function setActive(id: string) { activeId.value = id }
 
-  return { profiles, activeId, loaded, active, defaultProfile, fetchAll, create, update, setDefault, remove, setActive }
+  return { profiles, activeId, loaded, active, defaultProfile, fetchAll, create, update, updateAllergies, setDefault, remove, setActive }
 })

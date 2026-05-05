@@ -1,4 +1,4 @@
-export type QrKind = 'v' | 'b' | 'r'
+export type QrKind = 'v' | 'b' | 'r' | 'a'
 export type QrDueUnit = 'd' | 'w' | 'mo' | 'y'
 
 export interface QrPayload {

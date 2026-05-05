@@ -22,6 +22,7 @@ const fingerprint = ref<string>('')
 const parseError = ref<string | null>(null)
 const selectedProfile = ref<string | null>(null)
 const profileOptions = computed(() => profiles.profiles.map(p => ({ value: p.id, label: p.name })))
+const selectedProfileObject = computed(() => profiles.profiles.find(p => p.id === selectedProfile.value) ?? null)
 const similar = ref<Record | null>(null)
 const busy = ref(false)
 const errorMsg = ref<string | null>(null)
@@ -47,6 +48,13 @@ async function confirm() {
         payload: payload.value,
       })
       if (Notification.permission === 'default') await requestAndSubscribe()
+      router.replace('/home')
+      return
+    }
+    if (payload.value.k === 'a') {
+      // Allergy QR — overwrite the patient's stored allergies wholesale.
+      // Empty/whitespace text is preserved (= "checked, none known").
+      await profiles.updateAllergies(selectedProfile.value, payload.value.n)
       router.replace('/home')
       return
     }
@@ -133,7 +141,13 @@ async function doKeepBoth() {
         </div>
 
         <div class="anim-rise-3">
-          <IngestConfirm :payload="payload" :busy="busy" @confirm="confirm" @cancel="router.push('/home')" />
+          <IngestConfirm
+            :payload="payload"
+            :busy="busy"
+            :existing-allergies="selectedProfileObject?.allergies ?? null"
+            @confirm="confirm"
+            @cancel="router.push('/home')"
+          />
         </div>
 
         <SimilarityDialog v-if="similar" :existing="similar" :busy="busy"

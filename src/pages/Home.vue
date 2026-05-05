@@ -55,6 +55,9 @@ onBeforeUnmount(() => {
 watch(() => profiles.activeId, refresh)
 
 const ledgerName = computed(() => profiles.active?.name ?? '')
+const allergiesText = computed(() => profiles.active?.allergies ?? null)
+const hasAllergyRecord = computed(() => allergiesText.value !== null)
+const allergiesEmpty = computed(() => (allergiesText.value ?? '').trim().length === 0)
 const totalCount = computed(() => records.records.length)
 const vaccinationCount = computed(() => records.records.filter(r => r.kind === 'vaccination').length)
 const testCount = computed(() => records.records.filter(r => r.kind === 'blood_test').length)
@@ -170,6 +173,18 @@ function recordsWord(n: number) {
           </div>
         </div>
       </div>
+
+      <!-- Allergies — surfaced prominently when the active profile has any
+           allergy record on file. Empty (= checked, none known) shows a quiet
+           confirmation; non-empty shows the snapshot text with a visible
+           accent so it can't be missed in a clinical glance. -->
+      <section v-if="hasAllergyRecord" class="paper-card brackets p-5 anim-rise-2"
+        :style="allergiesEmpty ? '' : 'background: #faf0dc; border-left: 3px solid var(--color-accent);'">
+        <span class="br-tr"></span><span class="br-bl"></span>
+        <div class="eyebrow mb-2" :style="allergiesEmpty ? '' : 'color: var(--color-accent)'">{{ $t('home.allergies') }}</div>
+        <p v-if="allergiesEmpty" class="font-display-wonk text-base text-muted-app">{{ $t('home.noKnownAllergies') }}</p>
+        <p v-else class="font-display-wonk text-lg leading-snug whitespace-pre-line">{{ allergiesText }}</p>
+      </section>
 
       <!-- Hero / stats -->
       <section class="grid md:grid-cols-[1.3fr_1fr] gap-6 items-end anim-rise-2">
