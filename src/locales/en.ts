@@ -262,6 +262,8 @@ export default {
     completeHint:
       'This profile was created before NRIC and date of birth were required. Fill them in to continue using the ledger.',
     dobFromNric: 'from NRIC',
+    editingTitle: 'Editing',
+    backToRoster: '← roster',
   },
   settings: {
     eyebrow: 'Preferences',

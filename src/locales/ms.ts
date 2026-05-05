@@ -265,6 +265,8 @@ export default {
     completeHint:
       'Profil ini dibuat sebelum No. KP dan tarikh lahir diwajibkan. Isikannya untuk teruskan menggunakan lejar.',
     dobFromNric: 'daripada No. KP',
+    editingTitle: 'Menyunting',
+    backToRoster: '← daftar',
   },
   settings: {
     eyebrow: 'Keutamaan',

@@ -13,6 +13,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/records/:id', name: 'record', component: () => import('@/pages/RecordDetail.vue'), meta: { requiresAuth: true } },
   { path: '/reminders/:id', name: 'reminder', component: () => import('@/pages/ReminderDetail.vue'), meta: { requiresAuth: true } },
   { path: '/profiles', name: 'profiles', component: () => import('@/pages/Profiles.vue'), meta: { requiresAuth: true } },
+  { path: '/profiles/:id', name: 'profile-detail', component: () => import('@/pages/ProfileDetail.vue'), meta: { requiresAuth: true } },
   { path: '/settings', name: 'settings', component: () => import('@/pages/Settings.vue'), meta: { requiresAuth: true } },
   { path: '/staff', name: 'staff', component: () => import('@/pages/staff/Gate.vue') },
   { path: '/staff/generate', name: 'staff-generate', component: () => import('@/pages/staff/Generate.vue'), meta: { requiresStaff: true } },
@@ -51,14 +52,14 @@ router.beforeEach(async (to) => {
     }
 
     // Completion gate: legacy profiles created before NRIC was required
-    // will have nric=null. Funnel the user through /profiles?complete=<id>
-    // for the first incomplete profile until every profile is filled in.
+    // will have nric=null. Funnel the user through the detail page in
+    // completion mode (?complete=1) for the first incomplete profile.
     // The gate re-fires on every navigation, so users with multiple
     // incomplete profiles get prompted one at a time.
     const incomplete = profiles.profiles.find((p) => !p.nric)
     if (incomplete) {
-      if (to.name === 'profiles' && to.query.complete === incomplete.id) return
-      return { name: 'profiles', query: { complete: incomplete.id } }
+      if (to.name === 'profile-detail' && to.params.id === incomplete.id && to.query.complete === '1') return
+      return { name: 'profile-detail', params: { id: incomplete.id }, query: { complete: '1' } }
     }
   }
 })

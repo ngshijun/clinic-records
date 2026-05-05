@@ -262,6 +262,8 @@ export default {
     completeHint:
       '此档案在身份证号和出生日期成为必填项之前创建。请填写后继续使用台账。',
     dobFromNric: '由身份证号自动填入',
+    editingTitle: '编辑',
+    backToRoster: '← 名册',
   },
   settings: {
     eyebrow: '偏好设置',
