@@ -49,6 +49,17 @@ router.beforeEach(async (to) => {
       if (to.name === 'profiles' && to.query.first === '1') return
       return { name: 'profiles', query: { first: '1' } }
     }
+
+    // Completion gate: legacy profiles created before NRIC was required
+    // will have nric=null. Funnel the user through /profiles?complete=<id>
+    // for the first incomplete profile until every profile is filled in.
+    // The gate re-fires on every navigation, so users with multiple
+    // incomplete profiles get prompted one at a time.
+    const incomplete = profiles.profiles.find((p) => !p.nric)
+    if (incomplete) {
+      if (to.name === 'profiles' && to.query.complete === incomplete.id) return
+      return { name: 'profiles', query: { complete: incomplete.id } }
+    }
   }
 })
 

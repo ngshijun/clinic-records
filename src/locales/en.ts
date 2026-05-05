@@ -255,6 +255,13 @@ export default {
     nricRequired: 'NRIC is required.',
     idRequired: 'ID number is required.',
     dobRequired: 'Date of birth is required.',
+    completingProfile: 'Completing profile',
+    completeEyebrow: 'Just a moment',
+    completeTitlePre: 'A few details',
+    completeTitleWonk: 'before you continue.',
+    completeHint:
+      'This profile was created before NRIC and date of birth were required. Fill them in to continue using the ledger.',
+    completeFormHint: 'These fields are now required. You can edit them later if anything changes.',
   },
   settings: {
     eyebrow: 'Preferences',

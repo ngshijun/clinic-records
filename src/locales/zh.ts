@@ -255,6 +255,13 @@ export default {
     nricRequired: '身份证号必填。',
     idRequired: '证件号必填。',
     dobRequired: '出生日期必填。',
+    completingProfile: '完善档案',
+    completeEyebrow: '请稍候',
+    completeTitlePre: '继续之前',
+    completeTitleWonk: '请补充几项资料。',
+    completeHint:
+      '此档案在身份证号和出生日期成为必填项之前创建。请填写后继续使用台账。',
+    completeFormHint: '这些字段现在为必填。日后如有变动可再修改。',
   },
   settings: {
     eyebrow: '偏好设置',

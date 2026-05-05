@@ -53,7 +53,35 @@ watch([editNric, editNationality], ([n]) => {
 
 const isFirst = computed(() => route.query.first === '1' && store.profiles.length === 0)
 
+// Completion mode: router redirects here with ?complete=<id> when a profile
+// is missing required fields (currently: nric). We auto-open the edit form
+// for that profile, hide every other surface, and require strict validation
+// on save so the user can't escape with the field still empty.
+const completeId = computed(() => {
+  const q = route.query.complete
+  return typeof q === 'string' ? q : null
+})
+const completingProfile = computed(() =>
+  completeId.value ? store.profiles.find((p) => p.id === completeId.value) ?? null : null,
+)
+const isCompleting = computed(() => completingProfile.value !== null)
+
 onMounted(async () => { await store.fetchAll() })
+
+// Auto-open the edit form for the profile being completed. Watcher with
+// immediate:true handles both first mount and subsequent ?complete=<id>
+// changes (e.g. after saving one incomplete profile, the guard redirects
+// to the next incomplete one and we need to re-open).
+watch(
+  [completingProfile, () => store.loaded],
+  () => {
+    const p = completingProfile.value
+    if (!p) return
+    if (editingId.value === p.id) return
+    startEdit(p)
+  },
+  { immediate: true },
+)
 
 async function add() {
   if (busy.value) return
@@ -116,9 +144,18 @@ async function saveEdit() {
   const nm = editName.value.trim()
   const id = editNric.value.trim()
   if (!nm) { editError.value = t('common.error'); return }
-  // Lenient on edit: accept null nric/dob (existing legacy rows can stay
-  // empty), but if either is provided we still validate it.
-  if (id && editIsMalaysian.value && !isValidNric(id)) { editError.value = t('profiles.nricInvalid'); return }
+  if (isCompleting.value) {
+    // Strict in completion mode: same rules as the create form. The whole
+    // point of this flow is to fill in the missing required fields, so we
+    // can't allow the user to save with them still empty.
+    if (!id) { editError.value = t(editIsMalaysian.value ? 'profiles.nricRequired' : 'profiles.idRequired'); return }
+    if (editIsMalaysian.value && !isValidNric(id)) { editError.value = t('profiles.nricInvalid'); return }
+    if (!editDob.value) { editError.value = t('profiles.dobRequired'); return }
+  } else {
+    // Lenient on regular edit: accept null nric/dob (existing legacy rows
+    // can stay empty), but if either is provided we still validate it.
+    if (id && editIsMalaysian.value && !isValidNric(id)) { editError.value = t('profiles.nricInvalid'); return }
+  }
 
   editBusy.value = true
   try {
@@ -129,6 +166,13 @@ async function saveEdit() {
       date_of_birth: editDob.value || null,
     })
     editingId.value = null
+    if (isCompleting.value) {
+      // Bounce back to home (or wherever they were trying to go). The
+      // router guard re-fires and either finds the next incomplete
+      // profile and redirects again, or lets the navigation through.
+      const next = typeof route.query.next === 'string' ? route.query.next : '/home'
+      router.replace(next)
+    }
   } catch (e: any) { editError.value = e.message ?? 'Could not save' }
   finally { editBusy.value = false }
 }
@@ -141,23 +185,26 @@ function formatDob(d: string | null) {
 <template>
   <main class="min-h-dvh pb-20">
     <header class="max-w-[760px] w-full mx-auto px-6 pt-8 flex items-center justify-between">
-      <router-link v-if="!isFirst" to="/home" class="folio underline underline-offset-4 decoration-[var(--color-rule)]">{{ $t('common.backToLedger') }}</router-link>
-      <div v-else class="eyebrow"><span class="tick"></span>{{ $t('profiles.firstReader') }}</div>
+      <router-link v-if="!isFirst && !isCompleting" to="/home" class="folio underline underline-offset-4 decoration-[var(--color-rule)]">{{ $t('common.backToLedger') }}</router-link>
+      <div v-else-if="isFirst" class="eyebrow"><span class="tick"></span>{{ $t('profiles.firstReader') }}</div>
+      <div v-else class="eyebrow" style="color: var(--color-accent)"><span class="tick"></span>{{ $t('profiles.completingProfile') }}</div>
       <div class="eyebrow">{{ $t('profiles.profilesLabel', { count: String(store.profiles.length).padStart(2, '0') }) }}</div>
     </header>
 
     <section class="max-w-[760px] w-full mx-auto px-6 py-10 space-y-12">
       <div class="space-y-2 anim-rise">
-        <div class="eyebrow"><span class="tick"></span>{{ isFirst ? $t('profiles.welcome') : $t('profiles.rosterOfReaders') }}</div>
+        <div class="eyebrow"><span class="tick"></span>{{ isFirst ? $t('profiles.welcome') : isCompleting ? $t('profiles.completeEyebrow') : $t('profiles.rosterOfReaders') }}</div>
         <h1 class="font-display text-5xl md:text-6xl leading-[0.95]">
           <span v-if="isFirst">{{ $t('profiles.whoFor') }}<br/><span class="font-display-wonk">{{ $t('profiles.thisLedgerFor') }}</span></span>
+          <span v-else-if="isCompleting">{{ $t('profiles.completeTitlePre') }} <span class="font-display-wonk">{{ $t('profiles.completeTitleWonk') }}</span></span>
           <span v-else>{{ $t('profiles.titleProfiles') }}</span>
         </h1>
         <p v-if="isFirst" class="text-ink-2 text-sm max-w-[40ch]">{{ $t('profiles.firstHint') }}</p>
+        <p v-else-if="isCompleting" class="text-ink-2 text-sm max-w-[44ch]">{{ $t('profiles.completeHint') }}</p>
         <p v-else class="text-ink-2 text-sm max-w-[40ch]">{{ $t('profiles.oneLedgerPerPerson') }}</p>
       </div>
 
-      <form class="paper-card brackets p-6 md:p-8 space-y-5 anim-rise-2" @submit.prevent="add">
+      <form v-if="!isCompleting" class="paper-card brackets p-6 md:p-8 space-y-5 anim-rise-2" @submit.prevent="add">
         <div class="eyebrow">{{ $t('profiles.admitNew') }}</div>
 
         <label class="block">
@@ -188,13 +235,13 @@ function formatDob(d: string | null) {
       </form>
 
       <div v-if="store.profiles.length" class="space-y-4 anim-rise-3">
-        <div class="flex items-baseline justify-between">
+        <div v-if="!isCompleting" class="flex items-baseline justify-between">
           <h2 class="font-display text-2xl">{{ $t('profiles.roster') }}</h2>
           <span class="eyebrow">{{ $t('profiles.onFile', { count: store.profiles.length }) }}</span>
         </div>
 
         <ul class="divide-y divide-[var(--color-rule-soft)] hairline-t hairline-b">
-          <li v-for="(p, i) in store.profiles" :key="p.id" class="py-5 px-1">
+          <li v-for="(p, i) in store.profiles" :key="p.id" v-show="!isCompleting || p.id === completeId" class="py-5 px-1">
             <div v-if="editingId !== p.id" class="grid grid-cols-[auto_1fr_auto] items-center gap-5">
               <span class="folio tabular-nums w-8">№{{ String(i+1).padStart(2,'0') }}</span>
               <div>
@@ -218,7 +265,8 @@ function formatDob(d: string | null) {
             <form v-else class="grid grid-cols-[auto_1fr] gap-5 items-start" @submit.prevent="saveEdit">
               <span class="folio tabular-nums w-8 pt-6">№{{ String(i+1).padStart(2,'0') }}</span>
               <div class="space-y-4">
-                <div class="eyebrow" style="color: var(--color-accent)">{{ $t('profiles.amendingProfile') }}</div>
+                <div class="eyebrow" style="color: var(--color-accent)">{{ isCompleting ? $t('profiles.completingProfile') : $t('profiles.amendingProfile') }}</div>
+                <p v-if="isCompleting" class="text-ink-2 text-xs max-w-[44ch]">{{ $t('profiles.completeFormHint') }}</p>
                 <label class="block">
                   <span class="field-label">{{ $t('profiles.nationalityLabel') }}</span>
                   <CountryPicker v-model="editNationality" />
@@ -241,8 +289,8 @@ function formatDob(d: string | null) {
                   <span class="eyebrow" style="color:var(--color-crimson)">{{ $t('common.error') }} ·</span> {{ editError }}
                 </p>
                 <div class="flex items-center gap-2 pt-1">
-                  <button class="btn-primary !py-2 !px-4 text-sm" :disabled="editBusy">{{ $t('profiles.save') }}</button>
-                  <button type="button" class="btn-ghost !py-2 !px-4 text-sm" :disabled="editBusy" @click="cancelEdit">{{ $t('profiles.cancel') }}</button>
+                  <button class="btn-primary !py-2 !px-4 text-sm" :disabled="editBusy">{{ isCompleting ? $t('common.continue') : $t('profiles.save') }} <span v-if="isCompleting" aria-hidden>→</span></button>
+                  <button v-if="!isCompleting" type="button" class="btn-ghost !py-2 !px-4 text-sm" :disabled="editBusy" @click="cancelEdit">{{ $t('profiles.cancel') }}</button>
                 </div>
               </div>
             </form>

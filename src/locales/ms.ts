@@ -258,6 +258,13 @@ export default {
     nricRequired: 'No. KP diperlukan.',
     idRequired: 'No. pengenalan diperlukan.',
     dobRequired: 'Tarikh lahir diperlukan.',
+    completingProfile: 'Lengkapkan profil',
+    completeEyebrow: 'Sebentar',
+    completeTitlePre: 'Beberapa butiran',
+    completeTitleWonk: 'sebelum anda teruskan.',
+    completeHint:
+      'Profil ini dibuat sebelum No. KP dan tarikh lahir diwajibkan. Isikannya untuk teruskan menggunakan lejar.',
+    completeFormHint: 'Medan-medan ini kini diperlukan. Anda boleh menyuntingnya kemudian.',
   },
   settings: {
     eyebrow: 'Keutamaan',
