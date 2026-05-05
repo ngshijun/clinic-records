@@ -25,12 +25,13 @@ const busy = ref(false)
 
 const isMalaysian = computed(() => nationality.value === 'MY')
 
-// Auto-fill DOB from NRIC for Malaysians. Only fills when DOB is blank, so
-// a manual override after auto-fill isn't clobbered by subsequent NRIC edits.
+// DOB is fully derived from NRIC for Malaysians — the input is disabled and
+// always reflects the current NRIC. Clearing happens too: if NRIC becomes
+// invalid (mid-edit, partial digits) we wipe DOB rather than leaving stale.
+// For non-MY (passport users) the DOB is a free input.
 watch([nric, nationality], ([n]) => {
-  if (!isMalaysian.value || dob.value) return
-  const derived = deriveDobFromNric(n)
-  if (derived) dob.value = derived
+  if (!isMalaysian.value) return
+  dob.value = deriveDobFromNric(n) ?? ''
 })
 
 // --- edit form ---
@@ -46,9 +47,8 @@ const deletingId = ref<string | null>(null)
 const editIsMalaysian = computed(() => editNationality.value === 'MY')
 
 watch([editNric, editNationality], ([n]) => {
-  if (!editIsMalaysian.value || editDob.value) return
-  const derived = deriveDobFromNric(n)
-  if (derived) editDob.value = derived
+  if (!editIsMalaysian.value) return
+  editDob.value = deriveDobFromNric(n) ?? ''
 })
 
 const isFirst = computed(() => route.query.first === '1' && store.profiles.length === 0)
@@ -223,8 +223,11 @@ function formatDob(d: string | null) {
           </label>
         </div>
         <label class="block">
-          <span class="field-label">{{ $t('profiles.bornLabel') }}</span>
-          <input v-model="dob" type="date" required class="field tabular-nums" />
+          <span class="field-label">
+            {{ $t('profiles.bornLabel') }}
+            <span v-if="isMalaysian" class="ml-1 normal-case" style="color: var(--color-ink-2)">— {{ $t('profiles.dobFromNric') }}</span>
+          </span>
+          <input v-model="dob" type="date" required class="field tabular-nums" :disabled="isMalaysian" />
         </label>
         <div class="flex items-center gap-3 pt-2">
           <button class="btn-primary" :disabled="busy">{{ isFirst ? $t('common.continue') : $t('profiles.addProfile') }} <span aria-hidden>→</span></button>
@@ -234,14 +237,51 @@ function formatDob(d: string | null) {
         </div>
       </form>
 
-      <div v-if="store.profiles.length" class="space-y-4 anim-rise-3">
-        <div v-if="!isCompleting" class="flex items-baseline justify-between">
+      <!-- Completion form: prominent paper-card surface mirroring the first-login
+           create form. Pre-filled with the targeted profile's existing values
+           via startEdit() (called from the watcher above). Submits through
+           saveEdit() in strict mode. -->
+      <form v-if="isCompleting" class="paper-card brackets p-6 md:p-8 space-y-5 anim-rise-2" @submit.prevent="saveEdit">
+        <div class="eyebrow" style="color: var(--color-accent)">{{ $t('profiles.completingProfile') }}</div>
+
+        <label class="block">
+          <span class="field-label">{{ $t('profiles.nationalityLabel') }}</span>
+          <CountryPicker v-model="editNationality" />
+        </label>
+
+        <div class="grid sm:grid-cols-[1.2fr_1fr] gap-5">
+          <label class="block">
+            <span class="field-label">{{ $t('profiles.nameLabel') }}</span>
+            <input v-model="editName" :placeholder="$t('profiles.namePlaceholder')" required class="field font-display text-2xl" />
+          </label>
+          <label class="block">
+            <span class="field-label">{{ editIsMalaysian ? $t('profiles.nricLabel') : $t('profiles.idLabel') }}</span>
+            <input v-model="editNric" :placeholder="editIsMalaysian ? $t('profiles.nricPlaceholder') : $t('profiles.idPlaceholder')" required class="field tabular-nums" autocomplete="off" />
+          </label>
+        </div>
+        <label class="block">
+          <span class="field-label">
+            {{ $t('profiles.bornLabel') }}
+            <span v-if="editIsMalaysian" class="ml-1 normal-case" style="color: var(--color-ink-2)">— {{ $t('profiles.dobFromNric') }}</span>
+          </span>
+          <input v-model="editDob" type="date" required class="field tabular-nums" :disabled="editIsMalaysian" />
+        </label>
+        <div class="flex items-center gap-3 pt-2">
+          <button class="btn-primary" :disabled="editBusy">{{ $t('common.continue') }} <span aria-hidden>→</span></button>
+          <p v-if="editError" class="text-crimson text-sm">
+            <span class="eyebrow" style="color:var(--color-crimson)">{{ $t('common.error') }} ·</span> {{ editError }}
+          </p>
+        </div>
+      </form>
+
+      <div v-if="store.profiles.length && !isCompleting" class="space-y-4 anim-rise-3">
+        <div class="flex items-baseline justify-between">
           <h2 class="font-display text-2xl">{{ $t('profiles.roster') }}</h2>
           <span class="eyebrow">{{ $t('profiles.onFile', { count: store.profiles.length }) }}</span>
         </div>
 
         <ul class="divide-y divide-[var(--color-rule-soft)] hairline-t hairline-b">
-          <li v-for="(p, i) in store.profiles" :key="p.id" v-show="!isCompleting || p.id === completeId" class="py-5 px-1">
+          <li v-for="(p, i) in store.profiles" :key="p.id" class="py-5 px-1">
             <div v-if="editingId !== p.id" class="grid grid-cols-[auto_1fr_auto] items-center gap-5">
               <span class="folio tabular-nums w-8">№{{ String(i+1).padStart(2,'0') }}</span>
               <div>
@@ -265,8 +305,7 @@ function formatDob(d: string | null) {
             <form v-else class="grid grid-cols-[auto_1fr] gap-5 items-start" @submit.prevent="saveEdit">
               <span class="folio tabular-nums w-8 pt-6">№{{ String(i+1).padStart(2,'0') }}</span>
               <div class="space-y-4">
-                <div class="eyebrow" style="color: var(--color-accent)">{{ isCompleting ? $t('profiles.completingProfile') : $t('profiles.amendingProfile') }}</div>
-                <p v-if="isCompleting" class="text-ink-2 text-xs max-w-[44ch]">{{ $t('profiles.completeFormHint') }}</p>
+                <div class="eyebrow" style="color: var(--color-accent)">{{ $t('profiles.amendingProfile') }}</div>
                 <label class="block">
                   <span class="field-label">{{ $t('profiles.nationalityLabel') }}</span>
                   <CountryPicker v-model="editNationality" />
@@ -282,15 +321,18 @@ function formatDob(d: string | null) {
                   </label>
                 </div>
                 <label class="block">
-                  <span class="field-label">{{ $t('profiles.bornLabel') }}</span>
-                  <input v-model="editDob" type="date" class="field tabular-nums" />
+                  <span class="field-label">
+                    {{ $t('profiles.bornLabel') }}
+                    <span v-if="editIsMalaysian" class="ml-1 normal-case" style="color: var(--color-ink-2)">— {{ $t('profiles.dobFromNric') }}</span>
+                  </span>
+                  <input v-model="editDob" type="date" class="field tabular-nums" :disabled="editIsMalaysian" />
                 </label>
                 <p v-if="editError" class="text-crimson text-xs">
                   <span class="eyebrow" style="color:var(--color-crimson)">{{ $t('common.error') }} ·</span> {{ editError }}
                 </p>
                 <div class="flex items-center gap-2 pt-1">
-                  <button class="btn-primary !py-2 !px-4 text-sm" :disabled="editBusy">{{ isCompleting ? $t('common.continue') : $t('profiles.save') }} <span v-if="isCompleting" aria-hidden>→</span></button>
-                  <button v-if="!isCompleting" type="button" class="btn-ghost !py-2 !px-4 text-sm" :disabled="editBusy" @click="cancelEdit">{{ $t('profiles.cancel') }}</button>
+                  <button class="btn-primary !py-2 !px-4 text-sm" :disabled="editBusy">{{ $t('profiles.save') }}</button>
+                  <button type="button" class="btn-ghost !py-2 !px-4 text-sm" :disabled="editBusy" @click="cancelEdit">{{ $t('profiles.cancel') }}</button>
                 </div>
               </div>
             </form>

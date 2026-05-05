@@ -261,7 +261,7 @@ export default {
     completeTitleWonk: 'before you continue.',
     completeHint:
       'This profile was created before NRIC and date of birth were required. Fill them in to continue using the ledger.',
-    completeFormHint: 'These fields are now required. You can edit them later if anything changes.',
+    dobFromNric: 'from NRIC',
   },
   settings: {
     eyebrow: 'Preferences',
