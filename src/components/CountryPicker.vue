@@ -123,11 +123,22 @@ onBeforeUnmount(() => {
 const menuStyle = computed(() => {
   const r = triggerRect.value
   if (!r) return {}
+  // Cap to viewport width minus margins on each side so the menu can never
+  // overflow horizontally on narrow phones. The list items already have
+  // `truncate` applied to the country name, so long names ellipsize
+  // gracefully instead of stretching the menu past the screen.
+  const margin = 8
+  const viewportW = typeof window !== 'undefined' ? window.innerWidth : 9999
+  const maxW = Math.max(240, viewportW - 2 * margin)
+  // Floor minWidth at maxW so a wide trigger on a narrow phone doesn't
+  // produce min > max (which browsers then render as min, overflowing).
+  const minW = Math.min(Math.max(r.width, 280), maxW)
   return {
     position: 'fixed' as const,
     top: `${r.bottom + 4}px`,
     left: `${menuLeft.value ?? r.left}px`,
-    minWidth: `${Math.max(r.width, 280)}px`,
+    minWidth: `${minW}px`,
+    maxWidth: `${maxW}px`,
     zIndex: 50,
     visibility: menuLeft.value === null ? ('hidden' as const) : ('visible' as const),
   }
