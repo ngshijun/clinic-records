@@ -314,8 +314,6 @@ export default {
     pickerSubtitle: 'Templat menyimpan medan biasa. Atau mula dari awal.',
     newFromScratch: 'Mula dari awal',
     newFromScratchHint: 'Isi semua medan secara manual.',
-    newAllergy: 'Info alahan',
-    newAllergyHint: 'Gantikan rekod alahan pesakit dengan senarai baharu.',
     allergyKindLabel: 'Alahan',
     allergiesLabel: 'Info alahan',
     allergyPlaceholder: 'cth. Penisilin (ruam teruk)\nKacang (anafilaksis)',

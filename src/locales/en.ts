@@ -311,8 +311,6 @@ export default {
     pickerSubtitle: 'Templates save the common fields. Or start fresh.',
     newFromScratch: 'New from scratch',
     newFromScratchHint: 'Fill every field yourself.',
-    newAllergy: 'Allergy snapshot',
-    newAllergyHint: 'Replace the patient’s allergy record with a fresh list.',
     allergyKindLabel: 'Allergies',
     allergiesLabel: 'Allergy info',
     allergyPlaceholder: 'e.g. Penicillin (severe rash)\nPeanuts (anaphylaxis)',

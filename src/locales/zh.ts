@@ -311,8 +311,6 @@ export default {
     pickerSubtitle: '套用模板可预填常用资料，或从头开始填写。',
     newFromScratch: '从头开始',
     newFromScratchHint: '手动填写所有资料。',
-    newAllergy: '过敏信息',
-    newAllergyHint: '将病人的过敏记录替换为最新列表。',
     allergyKindLabel: '过敏',
     allergiesLabel: '过敏信息',
     allergyPlaceholder: '例如：青霉素（严重皮疹）\n花生（过敏性休克）',

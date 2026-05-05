@@ -364,9 +364,6 @@ function applyTemplate(tpl: Template) {
 
 function backToPicker() {
   rememberName()
-  // Picker's kind toggle is v|b only. If we entered allergy compose, reset
-  // back to a defaulted vaccine view so the picker doesn't show a blank toggle.
-  if (kind.value === 'a') kind.value = 'v'
   stage.value = 'picker'
 }
 
@@ -634,7 +631,7 @@ const appUrl = computed(() => window.location.origin + '/')
 
       <!-- Kind toggle -->
       <div class="anim-rise-2">
-        <div class="grid grid-cols-2 gap-0 hairline w-full max-w-[400px]">
+        <div class="grid grid-cols-3 gap-0 hairline w-full max-w-[560px]">
           <label class="px-4 py-3 flex items-center justify-center gap-2 cursor-pointer transition-colors"
             :style="kind === 'v' ? 'background: var(--color-staff-accent); color: var(--color-staff-paper);' : ''">
             <input type="radio" value="v" v-model="kind" class="sr-only" />
@@ -645,32 +642,25 @@ const appUrl = computed(() => window.location.origin + '/')
             <input type="radio" value="b" v-model="kind" class="sr-only" />
             <span class="font-display text-lg whitespace-nowrap">{{ $t('staff.bloodTest') }}</span>
           </label>
+          <label class="px-4 py-3 flex items-center justify-center gap-2 cursor-pointer transition-colors border-l hairline"
+            :style="kind === 'a' ? 'background: var(--color-staff-accent); color: var(--color-staff-paper);' : ''">
+            <input type="radio" value="a" v-model="kind" class="sr-only" />
+            <span class="font-display text-lg whitespace-nowrap">{{ $t('staff.allergyKindLabel') }}</span>
+          </label>
         </div>
       </div>
 
       <!-- Action row -->
-      <div class="anim-rise-3 space-y-3">
+      <div class="anim-rise-3">
         <button
           type="button"
           class="w-full text-left px-6 py-5 hairline transition-colors flex items-center justify-between"
           style="border-style: dashed;"
-          @click="newFromScratch(kind === 'a' ? 'v' : kind)"
+          @click="newFromScratch(kind)"
         >
           <div>
             <div class="eyebrow mb-1" style="color: var(--color-staff-accent)">+ {{ $t('staff.newFromScratch') }}</div>
             <div class="text-xs" style="color: var(--color-staff-muted)">{{ $t('staff.newFromScratchHint') }}</div>
-          </div>
-          <span style="color: var(--color-staff-accent)">→</span>
-        </button>
-        <button
-          type="button"
-          class="w-full text-left px-6 py-5 hairline transition-colors flex items-center justify-between"
-          style="border-style: dashed;"
-          @click="newFromScratch('a')"
-        >
-          <div>
-            <div class="eyebrow mb-1" style="color: var(--color-staff-accent)">+ {{ $t('staff.newAllergy') }}</div>
-            <div class="text-xs" style="color: var(--color-staff-muted)">{{ $t('staff.newAllergyHint') }}</div>
           </div>
           <span style="color: var(--color-staff-accent)">→</span>
         </button>
@@ -684,7 +674,7 @@ const appUrl = computed(() => window.location.origin + '/')
             <span class="opacity-40 text-xs" aria-hidden>{{ isCollapsed(uncatGroup.key) ? '▸' : '▾' }}</span>
             <span class="text-xs tabular-nums" style="color: var(--color-staff-muted)">{{ uncatGroup.templates.length }}</span>
           </button>
-          <button type="button" class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="addCategory">
+          <button v-if="kind !== 'a'" type="button" class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="addCategory">
             {{ $t('staff.newCategory') }}
           </button>
         </div>
