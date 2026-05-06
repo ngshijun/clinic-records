@@ -293,14 +293,18 @@ watch(name, () => { nameHover.value = 0 })
 watch(kind, () => { nameOpen.value = false })
 
 const payload = computed<QrPayload | null>(() => {
-  if (!name.value || !performedOn.value) return null
+  if (!performedOn.value) return null
   const k = kind.value
   // Allergy QR is a different shape entirely — just the snapshot text + a
   // date stamp. No reminder, no dose, no series. The patient app uses the
-  // text wholesale to overwrite the profile's allergies field.
+  // text wholesale to overwrite the profile's allergies field. Empty text
+  // is *intentional* and means "checked, no known allergies" — the
+  // textarea hint tells staff this explicitly. Don't gate on !name here.
   if (k === 'a') {
     return { id: id.value, k: 'a', n: name.value.trim(), d: performedOn.value }
   }
+  // Records and reminder-only QRs require a name (vaccine / blood test name).
+  if (!name.value) return null
   const effectiveKind: QrKind = reminderOnly.value ? 'r' : k
   if (effectiveKind === 'r' && !nextDueDays.value) return null
   const p: QrPayload = { id: id.value, k: effectiveKind, n: name.value.trim(), d: performedOn.value }
@@ -946,7 +950,8 @@ const appUrl = computed(() => window.location.origin + '/')
 
             <div v-if="payload && kind === 'a'" class="space-y-4">
               <div class="text-center eyebrow" style="color: var(--color-staff-muted)">{{ $t('staff.allergyKindLabel') }}</div>
-              <p class="font-display-wonk text-lg leading-snug whitespace-pre-line text-center print:text-black" style="color: var(--color-staff-ink)">{{ payload.n }}</p>
+              <p v-if="payload.n.trim()" class="font-display-wonk text-lg leading-snug whitespace-pre-line text-center print:text-black" style="color: var(--color-staff-ink)">{{ payload.n }}</p>
+              <p v-else class="font-display-wonk italic text-lg leading-snug text-center print:text-black" style="color: var(--color-staff-muted)">{{ $t('home.noKnownAllergies') }}</p>
               <p class="text-center text-xs hairline-t pt-3" style="color: var(--color-staff-muted)">
                 {{ $t('staff.allergyOverwriteNote') }}
               </p>

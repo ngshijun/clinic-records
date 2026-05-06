@@ -63,7 +63,11 @@ export function decodeUrl(urlOrHash: string): QrPayload {
   }
   let parsed: QrPayload
   try { parsed = JSON.parse(json) } catch { throw new Error('Malformed QR payload (json)') }
-  if (!parsed.id || !parsed.k || !parsed.n || !parsed.d) throw new Error('Incomplete QR payload')
+  // `n` must be a string — but empty is OK for k='a' (allergies), where empty
+  // is the meaningful "no known allergies" snapshot. For everything else
+  // (vaccines, blood tests, reminders) the name must be non-empty.
+  if (!parsed.id || !parsed.k || !parsed.d || typeof parsed.n !== 'string') throw new Error('Incomplete QR payload')
+  if (parsed.k !== 'a' && !parsed.n) throw new Error('Incomplete QR payload')
   return parsed
 }
 
