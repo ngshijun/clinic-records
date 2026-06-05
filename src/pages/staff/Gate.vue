@@ -2,29 +2,32 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { verifyPassword, markStaffUnlocked, isStaffUnlocked } from '@/lib/staff-auth'
+import { useAuthStore } from '@/stores/auth'
 import PasswordField from '@/components/PasswordField.vue'
 
 const router = useRouter()
+const auth = useAuthStore()
 const { t } = useI18n()
 const pw = ref('')
 const error = ref<string | null>(null)
 const busy = ref(false)
 
-if (isStaffUnlocked()) router.replace('/staff/generate')
+// Already signed in as the clinic account → straight to the calendar.
+if (auth.isAdmin) router.replace('/staff/calendar')
 
 async function submit() {
   busy.value = true
   error.value = null
-  const ok = await verifyPassword(
-    pw.value,
-    import.meta.env.VITE_STAFF_PASSWORD_SALT as string,
-    import.meta.env.VITE_STAFF_PASSWORD_HASH as string,
-  )
-  busy.value = false
-  if (!ok) { error.value = t('common.error'); return }
-  markStaffUnlocked()
-  router.replace('/staff/generate')
+  try {
+    // The PIN is literally the shared clinic account's password; Supabase
+    // verifies it server-side. The email is non-secret and comes from env.
+    await auth.signIn(import.meta.env.VITE_ADMIN_EMAIL as string, pw.value)
+    router.replace('/staff/calendar')
+  } catch {
+    error.value = t('common.error')
+  } finally {
+    busy.value = false
+  }
 }
 </script>
 

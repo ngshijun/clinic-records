@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { encodePayload, type QrPayload, type QrKind, type QrDueUnit } from '@/lib/qr-payload'
 import { todayLocalIso, formatDateLong } from '@/lib/dates'
-import { clearStaffUnlocked } from '@/lib/staff-auth'
+import { useAuthStore } from '@/stores/auth'
 import { recordName, readNameHistory, forgetName } from '@/lib/name-history'
 import {
   listTemplates,
@@ -37,6 +37,7 @@ interface Group {
 }
 
 const router = useRouter()
+const auth = useAuthStore()
 const { t, locale } = useI18n()
 const dialog = useDialog()
 
@@ -590,7 +591,7 @@ async function onTemplateChange(group: Group, evt: any) {
   }
 }
 
-function logout() { clearStaffUnlocked(); router.replace('/staff') }
+async function logout() { await auth.signOut(); router.replace('/staff') }
 
 const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.native })))
 

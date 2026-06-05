@@ -35,8 +35,7 @@ router.beforeEach(async (to) => {
     return { name: 'home' }
   }
   if (to.meta.requiresStaff) {
-    const { isStaffUnlocked } = await import('@/lib/staff-auth')
-    if (!isStaffUnlocked()) return { name: 'staff' }
+    if (!auth.isAdmin) return { name: 'staff' }
   }
 
   // First-profile gate: an authenticated user with zero profiles can't
