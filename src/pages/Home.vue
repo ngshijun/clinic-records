@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useProfilesStore } from '@/stores/profiles'
 import { useRecordsStore, type Reminder } from '@/stores/records'
 import { dateInMY, formatDateShort, formatMonthDay } from '@/lib/dates'
+import { reminderTitle as titleOf, reminderKindLabel as kindLabelOf } from '@/lib/reminders'
 import { useAuthStore } from '@/stores/auth'
 import ProfileSwitcher from '@/components/ProfileSwitcher.vue'
 import { Camera } from 'lucide-vue-next'
@@ -98,34 +99,10 @@ function relativeDue(iso: string) {
   return t('home.rel_inYears', { n: Math.round(days / 365) })
 }
 function reminderKindLabel(k: string) {
-  if (k === 'next_dose') return t('home.kindNextDose')
-  if (k === 'followup_test') return t('home.kindFollowupTest')
-  return k.replace('_', ' ')
+  return kindLabelOf(k, t)
 }
 function reminderTitle(r: Reminder) {
-  const rec = records.records.find(x => x.id === r.record_id)
-  if (rec) {
-    if (r.kind === 'next_dose' && rec.kind === 'vaccination' && rec.dose_number != null) {
-      // Final-dose reminders (e.g. annual flu shot stored as 1-of-1) shouldn't
-      // claim "Dose 2" — they're recurring boosters. Fall through to plain name.
-      const booster = rec.total_doses != null && rec.dose_number >= rec.total_doses
-      if (!booster) return t('home.nextDoseTitle', { name: rec.name, n: rec.dose_number + 1 })
-      return rec.name
-    }
-    if (r.kind === 'followup_test') {
-      return t('home.followupTitle', { name: rec.name })
-    }
-    // Bound reminder with no dose info or unmatched kind — show the record name plain.
-    return rec.name
-  }
-  // Orphan reminder-only entries — series identity in r.name; r.kind tells
-  // us whether the staff intended a vaccination or blood-test reminder.
-  if (r.name) {
-    if (r.kind === 'next_dose') return t('home.nextDoseReminderTitle', { name: r.name })
-    if (r.kind === 'followup_test') return t('home.followupTitle', { name: r.name })
-    return r.name
-  }
-  return t('home.reminderGeneric')
+  return titleOf(r, records.records.find(x => x.id === r.record_id), t)
 }
 function recordKindLabel(k: string) {
   return k === 'vaccination' ? t('home.kindVaccination') : t('home.kindBloodTest')
