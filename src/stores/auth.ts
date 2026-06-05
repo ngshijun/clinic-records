@@ -62,6 +62,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAnonymous = computed<boolean>(() => user.value?.is_anonymous === true)
 
+  const isAdmin = computed<boolean>(() => {
+    const email = user.value?.email?.toLowerCase()
+    const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL as string | undefined)?.toLowerCase()
+    return !!email && !!adminEmail && email === adminEmail
+  })
+
   async function signInAnonymously() {
     const { data, error } = await supabase.auth.signInAnonymously()
     if (error) throw error
@@ -88,5 +94,5 @@ export const useAuthStore = defineStore('auth', () => {
     if (error) throw error
   }
 
-  return { session, user, loaded, isAnonymous, init, signIn, signUp, signInAnonymously, upgradeToEmail, requestPasswordReset, updatePassword, signOut, discardGuestSession }
+  return { session, user, loaded, isAnonymous, isAdmin, init, signIn, signUp, signInAnonymously, upgradeToEmail, requestPasswordReset, updatePassword, signOut, discardGuestSession }
 })
