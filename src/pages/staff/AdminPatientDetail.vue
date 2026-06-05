@@ -220,7 +220,7 @@ async function saveAllergies() {
                   </div>
                 </div>
                 <div class="flex gap-2 text-xs shrink-0">
-                  <button class="btn-ghost !py-1 !px-3" @click="openEditRecord(r)">{{ $t('admin.editAllergies') }}</button>
+                  <button class="btn-ghost !py-1 !px-3" @click="openEditRecord(r)">{{ $t('admin.edit') }}</button>
                   <button class="btn-danger !py-1 !px-3" @click="deleteRecord(r)">{{ $t('common.delete') }}</button>
                 </div>
               </div>
@@ -258,7 +258,7 @@ async function saveAllergies() {
                   <div class="text-xs text-[var(--color-staff-muted)] mt-0.5">{{ formatDateShort(r.due_at, locale) }}</div>
                 </div>
                 <div class="flex gap-2 text-xs shrink-0">
-                  <button class="btn-ghost !py-1 !px-3" @click="openEditReminder(r)">{{ $t('admin.editAllergies') }}</button>
+                  <button class="btn-ghost !py-1 !px-3" @click="openEditReminder(r)">{{ $t('admin.edit') }}</button>
                   <button class="btn-danger !py-1 !px-3" @click="deleteReminder(r)">{{ $t('common.delete') }}</button>
                 </div>
               </div>
