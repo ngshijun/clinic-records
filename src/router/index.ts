@@ -17,6 +17,9 @@ const routes: RouteRecordRaw[] = [
   { path: '/settings', name: 'settings', component: () => import('@/pages/Settings.vue'), meta: { requiresAuth: true } },
   { path: '/staff', name: 'staff', component: () => import('@/pages/staff/Gate.vue') },
   { path: '/staff/generate', name: 'staff-generate', component: () => import('@/pages/staff/Generate.vue'), meta: { requiresStaff: true } },
+  { path: '/staff/calendar', name: 'staff-calendar', component: () => import('@/pages/staff/AdminCalendar.vue'), meta: { requiresStaff: true } },
+  { path: '/staff/patients', name: 'staff-patients', component: () => import('@/pages/staff/AdminPatients.vue'), meta: { requiresStaff: true } },
+  { path: '/staff/patients/:profileId', name: 'staff-patient-detail', component: () => import('@/pages/staff/AdminPatientDetail.vue'), meta: { requiresStaff: true } },
 ]
 
 export const router = createRouter({
@@ -32,7 +35,7 @@ router.beforeEach(async (to) => {
     return { name: 'landing', query: { next: to.fullPath } }
   }
   if ((to.name === 'landing' || to.name === 'signup') && auth.user) {
-    return { name: 'home' }
+    return auth.isAdmin ? { name: 'staff-calendar' } : { name: 'home' }
   }
   if (to.meta.requiresStaff) {
     if (!auth.isAdmin) return { name: 'staff' }
@@ -41,7 +44,7 @@ router.beforeEach(async (to) => {
   // First-profile gate: an authenticated user with zero profiles can't
   // do anything useful (records and reminders both require a profile),
   // so funnel them through /profiles?first=1 until they have one.
-  if (auth.user && to.meta.requiresAuth) {
+  if (auth.user && to.meta.requiresAuth && !auth.isAdmin) {
     const { useProfilesStore } = await import('@/stores/profiles')
     const profiles = useProfilesStore()
     if (!profiles.loaded) await profiles.fetchAll()
