@@ -43,7 +43,7 @@ function addMonthsClamped(utc: Date, months: number): void {
 // Cached en-CA formatter for YYYY-MM-DD in MY — hot path (every reminder render).
 const MY_ISO_FMT = new Intl.DateTimeFormat('en-CA', {
   timeZone: MY_TIMEZONE,
-  year: 'numeric', month: '2-digit', day: 'numeric',
+  year: 'numeric', month: '2-digit', day: '2-digit',
 })
 
 /** Today's date as a YYYY-MM-DD string in Malaysia time. */
