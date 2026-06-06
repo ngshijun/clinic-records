@@ -41,7 +41,10 @@ function submit() {
   <form class="space-y-4 paper-card p-5" @submit.prevent="submit">
     <div class="eyebrow">{{ isEdit ? $t('admin.editReminderTitle') : $t('admin.addReminderTitle') }}</div>
 
-    <label class="block">
+    <!-- Kind is set on creation only; editing is reschedule/rename (spec §8),
+         and adminUpdateReminder patches name + due_at only. Hiding the selector
+         on edit prevents a kind change that would silently not persist. -->
+    <label v-if="!isEdit" class="block">
       <span class="field-label">{{ $t('admin.reminderKind') }}</span>
       <div class="flex flex-wrap gap-2">
         <button
