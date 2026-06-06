@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeDueAt } from '@/lib/dates'
+import { computeDueAt, monthRangeMY } from '@/lib/dates'
 
 // Asserting on UTC components (00:00 UTC == 08:00 MY) keeps the tests
 // timezone-independent regardless of where Vitest runs.
@@ -59,6 +59,23 @@ describe('computeDueAt', () => {
     })
     it('Feb 29 + 4 years lands on next leap day', () => {
       expect(ymdUtc(computeDueAt('2024-02-29', 4, 'y'))).toEqual([2028, 2, 29])
+    })
+  })
+})
+
+describe('monthRangeMY', () => {
+  it('bounds a month as [00:00 MY 1st, 00:00 MY 1st of next month)', () => {
+    // 00:00 MY == 16:00 UTC the previous day.
+    expect(monthRangeMY(2026, 6)).toEqual({
+      from: '2026-05-31T16:00:00.000Z',
+      to: '2026-06-30T16:00:00.000Z',
+    })
+  })
+
+  it('rolls December over into the next January', () => {
+    expect(monthRangeMY(2026, 12)).toEqual({
+      from: '2026-11-30T16:00:00.000Z',
+      to: '2026-12-31T16:00:00.000Z',
     })
   })
 })

@@ -56,6 +56,21 @@ export function dateInMY(input: string | Date): string {
   return MY_ISO_FMT.format(typeof input === 'string' ? new Date(input) : input)
 }
 
+/**
+ * The UTC instants bounding a calendar month in Malaysia time: `from` is
+ * 00:00 MY on the 1st, `to` is 00:00 MY on the 1st of the next month. Use as a
+ * half-open `[from, to)` window when querying a timestamptz column by MY month
+ * (e.g. reminders due_at). 00:00 MY == 16:00 UTC the previous day. `month` is
+ * 1-based; December rolls over to January of the next year. Keeping the UTC+8
+ * offset here (not as a literal "+08:00" at call sites) means the timezone is
+ * expressed in exactly one place.
+ */
+export function monthRangeMY(year: number, month: number): { from: string; to: string } {
+  const from = new Date(Date.UTC(year, month - 1, 1, -MY_OFFSET_HOURS, 0, 0, 0)).toISOString()
+  const to = new Date(Date.UTC(year, month, 1, -MY_OFFSET_HOURS, 0, 0, 0)).toISOString()
+  return { from, to }
+}
+
 /** Map the i18n locale tag to the matching BCP 47 locale used for formatting. */
 export function dateFmtLocale(i18nLocale: string): string {
   return i18nLocale === 'zh' ? 'zh-CN' : i18nLocale === 'ms' ? 'ms-MY' : 'en-GB'

@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import StaffNav from '@/components/staff/StaffNav.vue'
 import { fetchUpcomingReminders, type AdminReminder } from '@/lib/admin'
 import { buildMonthGrid, bucketByDate, type MonthCell } from '@/lib/calendar'
-import { dateInMY, todayLocalIso, dateFmtLocale } from '@/lib/dates'
+import { dateInMY, todayLocalIso, dateFmtLocale, monthRangeMY } from '@/lib/dates'
 import { reminderTitle } from '@/lib/reminders'
 import { useDialog } from '@/lib/dialog'
 
@@ -45,11 +45,7 @@ const weekdays = computed(() => {
 async function load() {
   loading.value = true
   try {
-    const mm = String(viewMonth.value).padStart(2, '0')
-    const from = `${viewYear.value}-${mm}-01T00:00:00+08:00`
-    const nm = viewMonth.value === 12 ? 1 : viewMonth.value + 1
-    const nyr = viewMonth.value === 12 ? viewYear.value + 1 : viewYear.value
-    const to = `${nyr}-${String(nm).padStart(2, '0')}-01T00:00:00+08:00`
+    const { from, to } = monthRangeMY(viewYear.value, viewMonth.value)
     reminders.value = await fetchUpcomingReminders(from, to)
   } catch (e) {
     await dialog.alertError(e, t('common.error'))
