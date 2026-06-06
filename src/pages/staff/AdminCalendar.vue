@@ -2,10 +2,10 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import StaffNav from '@/components/staff/StaffNav.vue'
+import StaffHeader from '@/components/staff/StaffHeader.vue'
 import { fetchUpcomingReminders, type AdminReminder } from '@/lib/admin'
 import { buildMonthGrid, bucketByDate, type MonthCell } from '@/lib/calendar'
-import { dateInMY, todayLocalIso, dateFmtLocale, monthRangeMY } from '@/lib/dates'
+import { dateInMY, todayLocalIso, dateFmtLocale, monthRangeMY, formatDateLong } from '@/lib/dates'
 import { reminderTitle } from '@/lib/reminders'
 import { useDialog } from '@/lib/dialog'
 
@@ -24,6 +24,7 @@ const loading = ref(false)
 const grid = computed<MonthCell[]>(() => buildMonthGrid(viewYear.value, viewMonth.value))
 const buckets = computed(() => bucketByDate(reminders.value, (r) => dateInMY(r.due_at)))
 const selectedReminders = computed<AdminReminder[]>(() => buckets.value.get(selectedIso.value) ?? [])
+const selectedDateLabel = computed(() => formatDateLong(selectedIso.value, locale.value))
 
 function countFor(iso: string): number {
   return buckets.value.get(iso)?.length ?? 0
@@ -76,9 +77,8 @@ onMounted(load)
 
 <template>
   <main class="min-h-dvh pb-20">
+    <StaffHeader />
     <div class="max-w-[1100px] mx-auto px-6 lg:px-10 pt-6">
-      <StaffNav />
-
       <header class="flex items-center justify-between gap-4 mb-6">
         <div>
           <div class="eyebrow"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('admin.calendarTitle') }}</div>
@@ -91,51 +91,57 @@ onMounted(load)
         </div>
       </header>
 
-      <div class="grid grid-cols-7 gap-px text-center eyebrow mb-1">
-        <div v-for="w in weekdays" :key="w" class="py-1">{{ w }}</div>
-      </div>
-      <div class="grid grid-cols-7 gap-px">
-        <button
-          v-for="cell in grid"
-          :key="cell.iso"
-          type="button"
-          @click="selectedIso = cell.iso"
-          class="aspect-square p-1.5 flex flex-col items-start hairline relative transition-colors"
-          :class="[
-            cell.inMonth ? '' : 'opacity-40',
-            selectedIso === cell.iso ? 'bg-[var(--color-staff-panel)]' : 'hover:bg-[var(--color-staff-panel)]',
-          ]"
-          :style="cell.iso === today ? 'outline: 1px solid var(--color-staff-accent); outline-offset: -1px;' : ''"
-        >
-          <span class="text-xs tabular-nums">{{ cell.day }}</span>
-          <span
-            v-if="countFor(cell.iso) > 0"
-            class="mt-auto self-end font-mono-app text-[10px] px-1.5 py-0.5 rounded-full"
-            style="background: var(--color-staff-accent); color: var(--color-staff-paper)"
-          >{{ countFor(cell.iso) }}</span>
-        </button>
-      </div>
-
-      <!-- Selected-day drill-down doubles as the agenda on narrow screens. -->
-      <section class="mt-8">
-        <h2 class="font-display text-2xl mb-3">{{ selectedIso }}</h2>
-        <p v-if="selectedReminders.length === 0" class="text-sm text-[var(--color-staff-muted)]">{{ $t('admin.nothingDue') }}</p>
-        <ul v-else class="space-y-2">
-          <li v-for="r in selectedReminders" :key="r.id">
+      <!-- Wide screens: compact month grid (left) beside the selected-day
+           agenda (right). Narrow screens: the two stack, grid above list. -->
+      <div class="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:gap-10 lg:items-start">
+        <div>
+          <div class="grid grid-cols-7 gap-px text-center eyebrow mb-1">
+            <div v-for="w in weekdays" :key="w" class="py-1">{{ w }}</div>
+          </div>
+          <div class="grid grid-cols-7 gap-px">
             <button
+              v-for="cell in grid"
+              :key="cell.iso"
               type="button"
-              class="w-full text-left paper-card p-4 flex items-center justify-between gap-3 hover:bg-[var(--color-staff-panel)]"
-              @click="router.push(`/staff/patients/${r.profile_id}`)"
+              @click="selectedIso = cell.iso"
+              class="h-12 px-1.5 py-1 flex flex-col items-start hairline relative transition-colors"
+              :class="[
+                cell.inMonth ? '' : 'opacity-40',
+                selectedIso === cell.iso ? 'bg-[var(--color-staff-panel)]' : 'hover:bg-[var(--color-staff-panel)]',
+              ]"
+              :style="cell.iso === today ? 'outline: 1px solid var(--color-staff-accent); outline-offset: -1px;' : ''"
             >
-              <div>
-                <div class="font-display text-lg leading-tight">{{ titleFor(r) }}</div>
-                <div class="text-xs text-[var(--color-staff-muted)] mt-0.5">{{ r.profile?.name }}<span v-if="r.profile?.nric"> · {{ r.profile.nric }}</span></div>
-              </div>
-              <span class="text-[var(--color-staff-accent)]">→</span>
+              <span class="text-xs tabular-nums">{{ cell.day }}</span>
+              <span
+                v-if="countFor(cell.iso) > 0"
+                class="mt-auto self-end font-mono-app text-[10px] px-1.5 py-0.5 rounded-full"
+                style="background: var(--color-staff-accent); color: var(--color-staff-paper)"
+              >{{ countFor(cell.iso) }}</span>
             </button>
-          </li>
-        </ul>
-      </section>
+          </div>
+        </div>
+
+        <section class="mt-8 lg:mt-0">
+          <h2 class="font-display text-2xl mb-1">{{ selectedDateLabel }}</h2>
+          <div class="eyebrow mb-4">{{ $t('admin.dueCount', { count: selectedReminders.length }) }}</div>
+          <p v-if="selectedReminders.length === 0" class="text-sm text-[var(--color-staff-muted)]">{{ $t('admin.nothingDue') }}</p>
+          <ul v-else class="space-y-2">
+            <li v-for="r in selectedReminders" :key="r.id">
+              <button
+                type="button"
+                class="w-full text-left paper-card p-4 flex items-center justify-between gap-3 hover:bg-[var(--color-staff-panel)]"
+                @click="router.push(`/staff/patients/${r.profile_id}`)"
+              >
+                <div>
+                  <div class="font-display text-lg leading-tight">{{ titleFor(r) }}</div>
+                  <div class="text-xs text-[var(--color-staff-muted)] mt-0.5">{{ r.profile?.name }}<span v-if="r.profile?.nric"> · {{ r.profile.nric }}</span></div>
+                </div>
+                <span class="text-[var(--color-staff-accent)]">→</span>
+              </button>
+            </li>
+          </ul>
+        </section>
+      </div>
     </div>
   </main>
 </template>

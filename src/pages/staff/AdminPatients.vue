@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import StaffNav from '@/components/staff/StaffNav.vue'
+import StaffHeader from '@/components/staff/StaffHeader.vue'
 import { searchPatients, type AdminPatient } from '@/lib/admin'
 import { formatDateShort } from '@/lib/dates'
 import { useDialog } from '@/lib/dialog'
@@ -38,9 +38,8 @@ function dob(p: AdminPatient): string {
 
 <template>
   <main class="min-h-dvh pb-20">
-    <div class="max-w-[860px] mx-auto px-6 lg:px-10 pt-6">
-      <StaffNav />
-
+    <StaffHeader />
+    <div class="max-w-[1100px] mx-auto px-6 lg:px-10 pt-6">
       <header class="mb-6">
         <div class="eyebrow"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('admin.patientsTitle') }}</div>
         <h1 class="font-display text-4xl leading-tight">{{ $t('admin.patientsTitle') }}</h1>

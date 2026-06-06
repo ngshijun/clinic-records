@@ -5,7 +5,6 @@ import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { encodePayload, type QrPayload, type QrKind, type QrDueUnit } from '@/lib/qr-payload'
 import { todayLocalIso, formatDateLong } from '@/lib/dates'
-import { useAuthStore } from '@/stores/auth'
 import { recordName, readNameHistory, forgetName } from '@/lib/name-history'
 import {
   listTemplates,
@@ -25,10 +24,8 @@ import {
 import QrPreview from '@/components/QrPreview.vue'
 import TemplateCard from '@/components/staff/TemplateCard.vue'
 import DueUnitPicker from '@/components/staff/DueUnitPicker.vue'
-import AppDropdown from '@/components/AppDropdown.vue'
-import { useRouter } from 'vue-router'
+import StaffHeader from '@/components/staff/StaffHeader.vue'
 import { useDialog } from '@/lib/dialog'
-import { AVAILABLE_LOCALES, setLocale, type Locale } from '@/lib/i18n'
 
 interface Group {
   key: string
@@ -36,13 +33,10 @@ interface Group {
   templates: Template[]
 }
 
-const router = useRouter()
-const auth = useAuthStore()
 const { t, locale } = useI18n()
 const dialog = useDialog()
 
 const stage = ref<'picker' | 'compose'>('picker')
-const version = __APP_VERSION__
 
 const kind = ref<'v' | 'b' | 'a'>('v')
 const name = ref('')
@@ -591,38 +585,17 @@ async function onTemplateChange(group: Group, evt: any) {
   }
 }
 
-async function logout() { await auth.signOut(); router.replace('/staff') }
-
-const localeOptions = computed(() => AVAILABLE_LOCALES.map(l => ({ value: l.code, label: l.native })))
-
 const shareOpen = ref(false)
 const appUrl = computed(() => window.location.origin + '/')
 </script>
 
 <template>
   <main class="min-h-dvh pb-20 print:bg-white print:text-black">
-    <!-- Console header -->
-    <header class="max-w-[1200px] mx-auto px-6 lg:px-10 pt-8 pb-5 hairline-b flex items-center justify-between print:hidden">
-      <div class="flex items-center gap-4">
-        <div class="dot-pulse"></div>
-        <div class="eyebrow whitespace-nowrap">{{ $t('staff.consoleLabel') }}</div>
-        <span class="folio text-xs opacity-40 select-all">{{ version }}</span>
-      </div>
-      <div class="flex items-center gap-5">
-        <router-link to="/staff/calendar" class="eyebrow hover:text-ink whitespace-nowrap">{{ $t('admin.navCalendar') }}</router-link>
-        <router-link to="/staff/patients" class="eyebrow hover:text-ink whitespace-nowrap">{{ $t('admin.navPatients') }}</router-link>
-        <AppDropdown
-          :model-value="locale"
-          :options="localeOptions"
-          :aria-label="$t('settings.language')"
-          trigger-class="pl-0 pr-5 py-1 text-xs whitespace-nowrap"
-          style="color: var(--color-staff-ink); border-bottom: 1px solid var(--color-staff-rule);"
-          @update:model-value="(v) => setLocale(v as Locale)"
-        />
+    <StaffHeader>
+      <template #actions>
         <button class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="shareOpen = true">{{ $t('staff.openOnPhone') }}</button>
-        <button class="btn-ghost !py-1.5 !px-3 text-xs whitespace-nowrap" @click="logout">{{ $t('staff.lockConsole') }}</button>
-      </div>
-    </header>
+      </template>
+    </StaffHeader>
 
     <!-- STAGE 1: picker -->
     <section v-if="stage === 'picker'" class="max-w-[1200px] mx-auto px-6 lg:px-10 py-10 space-y-8 print:hidden">

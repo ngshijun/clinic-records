@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import StaffNav from '@/components/staff/StaffNav.vue'
+import StaffHeader from '@/components/staff/StaffHeader.vue'
 import AdminRecordForm from '@/components/staff/AdminRecordForm.vue'
 import AdminReminderForm from '@/components/staff/AdminReminderForm.vue'
 import {
@@ -147,8 +147,8 @@ async function saveAllergies() {
 
 <template>
   <main class="min-h-dvh pb-20">
-    <div class="max-w-[860px] mx-auto px-6 lg:px-10 pt-6">
-      <StaffNav />
+    <StaffHeader />
+    <div class="max-w-[1100px] mx-auto px-6 lg:px-10 pt-6">
       <router-link to="/staff/patients" class="folio underline underline-offset-4">{{ $t('admin.backToPatients') }}</router-link>
 
       <div v-if="loading" class="mt-10 text-[var(--color-staff-muted)] font-display-wonk text-xl">{{ $t('recordDetail.retrieving') }}</div>
