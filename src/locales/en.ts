@@ -158,6 +158,7 @@ export default {
     given: 'Given {date}',
     remindAroundDose: 'We’ll remind you around {date} for the next dose.',
     remindAroundTest: 'We’ll remind you around {date} for the next test.',
+    scheduleOn: 'We’ll remind you on {date}.',
     reminderNote: 'A reminder will appear as the date approaches.',
     entry: 'Record',
     vaccination: 'Vaccination',

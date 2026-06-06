@@ -161,6 +161,7 @@ export default {
     given: 'Diberikan pada {date}',
     remindAroundDose: 'Kami akan ingatkan anda sekitar {date} untuk dos seterusnya.',
     remindAroundTest: 'Kami akan ingatkan anda sekitar {date} untuk ujian seterusnya.',
+    scheduleOn: 'Kami akan ingatkan anda pada {date}.',
     reminderNote: 'Peringatan akan muncul apabila tarikhnya menghampiri.',
     entry: 'Rekod',
     vaccination: 'Vaksinasi',

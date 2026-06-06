@@ -156,6 +156,7 @@ export default {
     given: '{date} 完成',
     remindAroundDose: '我们将于 {date} 前后提醒您接种下一剂。',
     remindAroundTest: '我们将于 {date} 前后提醒您下一次检查。',
+    scheduleOn: '我们将于 {date} 提醒您。',
     reminderNote: '临近日期时会自动发出提醒。',
     entry: '记录',
     vaccination: '疫苗接种',
