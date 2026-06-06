@@ -408,6 +408,7 @@ export default {
     lock: 'Lock',
     calendarTitle: 'Reminders',
     today: 'Today',
+    dueCount: '{count} due',
     nothingDue: 'Nothing due',
     patientsTitle: 'Patients',
     searchPlaceholder: 'Search name or NRIC…',

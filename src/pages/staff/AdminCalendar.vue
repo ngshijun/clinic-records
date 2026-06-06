@@ -123,7 +123,7 @@ onMounted(load)
 
         <section class="mt-8 lg:mt-0">
           <h2 class="font-display text-2xl mb-1">{{ selectedDateLabel }}</h2>
-          <div class="eyebrow mb-4">{{ $t('admin.dueCount', { count: selectedReminders.length }) }}</div>
+          <div v-if="selectedReminders.length" class="eyebrow mb-4">{{ $t('admin.dueCount', { count: selectedReminders.length }) }}</div>
           <p v-if="selectedReminders.length === 0" class="text-sm text-[var(--color-staff-muted)]">{{ $t('admin.nothingDue') }}</p>
           <ul v-else class="space-y-2">
             <li v-for="r in selectedReminders" :key="r.id">

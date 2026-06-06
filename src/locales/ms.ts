@@ -411,6 +411,7 @@ export default {
     lock: 'Kunci',
     calendarTitle: 'Peringatan',
     today: 'Hari ini',
+    dueCount: '{count} perlu',
     nothingDue: 'Tiada peringatan',
     patientsTitle: 'Pesakit',
     searchPlaceholder: 'Cari nama atau NRIC…',

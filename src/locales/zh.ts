@@ -406,6 +406,7 @@ export default {
     lock: '锁定',
     calendarTitle: '提醒',
     today: '今天',
+    dueCount: '{count} 项',
     nothingDue: '无提醒',
     patientsTitle: '病患',
     searchPlaceholder: '搜索姓名或身份证号…',
