@@ -598,7 +598,7 @@ const appUrl = computed(() => window.location.origin + '/')
     </StaffHeader>
 
     <!-- STAGE 1: picker -->
-    <section v-if="stage === 'picker'" class="max-w-[1200px] mx-auto px-6 lg:px-10 py-10 space-y-8 print:hidden">
+    <section v-if="stage === 'picker'" class="max-w-[1100px] mx-auto px-6 lg:px-10 py-10 space-y-8 print:hidden">
       <div class="space-y-2 anim-rise">
         <div class="eyebrow"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('staff.compose') }}</div>
         <h1 class="font-display text-4xl md:text-5xl leading-[0.95]" style="color: var(--color-staff-ink)">
@@ -736,7 +736,7 @@ const appUrl = computed(() => window.location.origin + '/')
     </section>
 
     <!-- STAGE 2: compose + preview -->
-    <div v-else class="max-w-[1200px] mx-auto px-6 lg:px-10 py-8 print:block">
+    <div v-else class="max-w-[1100px] mx-auto px-6 lg:px-10 py-8 print:block">
       <div class="flex items-center justify-between mb-8 print:hidden">
         <button class="btn-ghost !py-2 !px-4 text-xs whitespace-nowrap" @click="backToPicker">
           {{ $t('staff.backToTemplates') }}
