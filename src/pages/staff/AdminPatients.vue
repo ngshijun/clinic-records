@@ -40,7 +40,7 @@ function dob(p: AdminPatient): string {
   <main class="min-h-dvh pb-20">
     <StaffHeader />
     <div class="max-w-[1100px] mx-auto px-6 lg:px-10 pt-6">
-      <header class="mb-6">
+      <header class="mb-6 anim-rise">
         <div class="eyebrow"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('admin.patientsTitle') }}</div>
         <h1 class="font-display text-4xl leading-tight">{{ $t('admin.patientsTitle') }}</h1>
       </header>
@@ -48,7 +48,7 @@ function dob(p: AdminPatient): string {
       <input
         v-model="query"
         type="search"
-        class="field text-lg"
+        class="field text-lg anim-rise-2"
         :placeholder="$t('admin.searchPlaceholder')"
         autocomplete="off"
       />

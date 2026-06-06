@@ -155,7 +155,7 @@ async function saveAllergies() {
 
       <template v-else-if="profile">
         <!-- Identity (read-only) -->
-        <header class="mt-4 mb-8">
+        <header class="mt-4 mb-8 anim-rise">
           <h1 class="font-display text-5xl leading-tight">{{ profile.name }}</h1>
           <div class="text-xs text-[var(--color-staff-muted)] mt-2">
             <span>{{ $t('admin.nricLabel') }}: {{ profile.nric ?? '—' }}</span>
@@ -167,7 +167,7 @@ async function saveAllergies() {
         </header>
 
         <!-- Allergies (editable) -->
-        <section class="mb-10 paper-card p-5">
+        <section class="mb-10 paper-card p-5 anim-rise-2">
           <div class="flex items-center justify-between">
             <div class="eyebrow" style="color: var(--color-staff-accent)">{{ $t('admin.allergiesTitle') }}</div>
             <button v-if="!editingAllergies" class="btn-ghost !py-1 !px-3 text-xs" @click="startEditAllergies">{{ $t('admin.editAllergies') }}</button>
@@ -187,7 +187,7 @@ async function saveAllergies() {
         </section>
 
         <!-- Records -->
-        <section class="mb-10">
+        <section class="mb-10 anim-rise-3">
           <div class="flex items-center justify-between mb-3">
             <h2 class="font-display text-2xl">{{ $t('admin.recordsTitle') }}</h2>
             <button v-if="!recordForm.open" class="btn-ghost !py-1 !px-3 text-xs" @click="openAddRecord">{{ $t('admin.addRecord') }}</button>
@@ -229,7 +229,7 @@ async function saveAllergies() {
         </section>
 
         <!-- Reminders -->
-        <section>
+        <section class="anim-rise-4">
           <div class="flex items-center justify-between mb-3">
             <h2 class="font-display text-2xl">{{ $t('admin.remindersTitle') }}</h2>
             <button v-if="!reminderForm.open" class="btn-ghost !py-1 !px-3 text-xs" @click="openAddReminder">{{ $t('admin.addReminder') }}</button>

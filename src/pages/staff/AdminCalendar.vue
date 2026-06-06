@@ -79,7 +79,7 @@ onMounted(load)
   <main class="min-h-dvh pb-20">
     <StaffHeader />
     <div class="max-w-[1100px] mx-auto px-6 lg:px-10 pt-6">
-      <header class="flex items-center justify-between gap-4 mb-6">
+      <header class="flex items-center justify-between gap-4 mb-6 anim-rise">
         <div>
           <div class="eyebrow"><span class="tick" style="background: var(--color-staff-accent)"></span>{{ $t('admin.calendarTitle') }}</div>
           <h1 class="font-display text-4xl leading-tight">{{ monthLabel }}</h1>
@@ -93,7 +93,7 @@ onMounted(load)
 
       <!-- Wide screens: compact month grid (left) beside the selected-day
            agenda (right). Narrow screens: the two stack, grid above list. -->
-      <div class="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:gap-10 lg:items-start">
+      <div class="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:gap-10 lg:items-start anim-rise-2">
         <div>
           <div class="grid grid-cols-7 gap-px text-center eyebrow mb-1">
             <div v-for="w in weekdays" :key="w" class="py-1">{{ w }}</div>
