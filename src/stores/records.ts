@@ -3,32 +3,16 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import type { QrPayload } from '@/lib/qr-payload'
 import { computeDueAt } from '@/lib/dates'
+import type { Database } from '@/lib/database.types'
 
-export interface Record {
-  id: string
-  user_id: string
-  profile_id: string
-  kind: 'vaccination' | 'blood_test'
-  name: string
-  performed_on: string
-  dose_number: number | null
-  total_doses: number | null
-  notes: string | null
-  qr_fingerprint: string | null
-  created_at: string
-}
+type RecordRow = Database['public']['Tables']['records']['Row']
+type ReminderRow = Database['public']['Tables']['reminders']['Row']
 
-export interface Reminder {
-  id: string
-  user_id: string
-  profile_id: string
-  record_id: string | null
-  kind: 'next_dose' | 'followup_test' | 'other'
-  name: string | null
-  due_at: string
-  sent_at: string | null
-  created_at: string
-}
+// `kind` is a checked-text column in Postgres, so generated types widen it to
+// `string`; we override it back to the app-level literal union. Every other
+// column tracks the DB schema — regenerate with `npm run gen:types`.
+export type Record = Omit<RecordRow, 'kind'> & { kind: 'vaccination' | 'blood_test' }
+export type Reminder = Omit<ReminderRow, 'kind'> & { kind: 'next_dose' | 'followup_test' | 'other' }
 
 export interface InsertInput {
   profile_id: string
@@ -43,8 +27,8 @@ export const useRecordsStore = defineStore('records', () => {
 
   async function fetchForProfile(profile_id: string) {
     const [{ data: recs, error: re }, { data: rems, error: me }] = await Promise.all([
-      supabase.from('records').select('*').eq('profile_id', profile_id).order('performed_on', { ascending: false }),
-      supabase.from('reminders').select('*').eq('profile_id', profile_id).order('due_at'),
+      supabase.from('records').select('*').eq('profile_id', profile_id).order('performed_on', { ascending: false }).returns<Record[]>(),
+      supabase.from('reminders').select('*').eq('profile_id', profile_id).order('due_at').returns<Reminder[]>(),
     ])
     if (re) throw re
     if (me) throw me
@@ -63,6 +47,7 @@ export const useRecordsStore = defineStore('records', () => {
       .eq('performed_on', performed_on)
       .gte('created_at', since)
       .limit(1)
+      .returns<Record[]>()
     if (error) throw error
     return data?.[0] ?? null
   }

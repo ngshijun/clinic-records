@@ -23,8 +23,9 @@ onMounted(async () => {
   const { data, error } = await supabase
     .from('reminders')
     .select('*')
-    .eq('id', route.params.id)
+    .eq('id', route.params.id as string)
     .single()
+    .returns<Reminder>()
   if (error) { await dialog.alert({ title: error.message }); router.push('/home'); return }
   rem.value = data
   if (data.record_id) {
@@ -33,6 +34,7 @@ onMounted(async () => {
       .select('*')
       .eq('id', data.record_id)
       .single()
+      .returns<Record>()
     sourceRecord.value = rec
   }
   await profiles.fetchAll()

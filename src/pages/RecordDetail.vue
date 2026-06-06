@@ -24,7 +24,7 @@ const deleting = ref(false)
 const moving = ref(false)
 
 onMounted(async () => {
-  const { data, error } = await supabase.from('records').select('*').eq('id', route.params.id).single()
+  const { data, error } = await supabase.from('records').select('*').eq('id', route.params.id as string).single().returns<Record>()
   if (error) { await dialog.alert({ title: error.message }); router.push('/home'); return }
   rec.value = data
   form.value = { ...data }

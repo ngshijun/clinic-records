@@ -3,20 +3,11 @@ import { ref, computed, watch } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { normalizeNric } from '@/lib/nric'
+import type { Database } from '@/lib/database.types'
 
-export interface Profile {
-  id: string
-  user_id: string
-  name: string
-  date_of_birth: string | null
-  nric: string | null
-  nationality: string  // ISO 3166-1 alpha-2 (e.g. 'MY')
-  allergies: string | null
-  notes: string | null
-  is_default: boolean
-  created_at: string
-  updated_at: string
-}
+// Source of truth is the DB schema — see src/lib/database.types.ts (regenerate
+// with `npm run gen:types`). `nationality` is ISO 3166-1 alpha-2 (e.g. 'MY').
+export type Profile = Database['public']['Tables']['profiles']['Row']
 
 export const useProfilesStore = defineStore('profiles', () => {
   const profiles = ref<Profile[]>([])

@@ -12,7 +12,7 @@ export interface AdminPatient {
   allergies: string | null
 }
 
-export interface AdminReminder extends Reminder {
+export type AdminReminder = Reminder & {
   profile: { name: string; nric: string | null; date_of_birth: string | null } | null
   record: { name: string; kind: string; dose_number: number | null; total_doses: number | null } | null
 }
@@ -51,7 +51,7 @@ export async function searchPatients(query: string): Promise<AdminPatient[]> {
     .order('name', { ascending: true })
     .limit(50)
   if (error) throw error
-  return (data ?? []) as AdminPatient[]
+  return data ?? []
 }
 
 export async function fetchUpcomingReminders(fromIso: string, toIso: string): Promise<AdminReminder[]> {
@@ -61,8 +61,9 @@ export async function fetchUpcomingReminders(fromIso: string, toIso: string): Pr
     .gte('due_at', fromIso)
     .lt('due_at', toIso)
     .order('due_at', { ascending: true })
+    .returns<AdminReminder[]>()
   if (error) throw error
-  return (data ?? []) as unknown as AdminReminder[]
+  return data ?? []
 }
 
 export async function fetchPatientBundle(profileId: string): Promise<{
@@ -72,16 +73,16 @@ export async function fetchPatientBundle(profileId: string): Promise<{
 }> {
   const [{ data: profile, error: pe }, { data: recs, error: re }, { data: rems, error: me }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', profileId).single(),
-    supabase.from('records').select('*').eq('profile_id', profileId).order('performed_on', { ascending: false }),
-    supabase.from('reminders').select('*').eq('profile_id', profileId).order('due_at', { ascending: true }),
+    supabase.from('records').select('*').eq('profile_id', profileId).order('performed_on', { ascending: false }).returns<ClinicRecord[]>(),
+    supabase.from('reminders').select('*').eq('profile_id', profileId).order('due_at', { ascending: true }).returns<Reminder[]>(),
   ])
-  if (pe) throw pe
+  if (pe || !profile) throw pe ?? new Error('profile not found')
   if (re) throw re
   if (me) throw me
   return {
-    profile: profile as Profile,
-    records: (recs ?? []) as ClinicRecord[],
-    reminders: (rems ?? []) as Reminder[],
+    profile,
+    records: recs ?? [],
+    reminders: rems ?? [],
   }
 }
 
@@ -101,8 +102,9 @@ export async function adminCreateRecord(ownerUserId: string, profileId: string, 
     total_doses: input.kind === 'vaccination' ? input.total_doses : null,
     notes: input.notes,
   }).select().single()
-  if (error) throw error
-  return data as ClinicRecord
+  if (error || !data) throw error ?? new Error('record insert returned no row')
+  // DB widens `kind` to text; we know it round-trips the literal we sent.
+  return { ...data, kind: input.kind }
 }
 
 export async function adminCreateReminder(ownerUserId: string, profileId: string, input: AdminReminderInput): Promise<Reminder> {
@@ -114,14 +116,20 @@ export async function adminCreateReminder(ownerUserId: string, profileId: string
     name: input.name,
     due_at: input.due_at,
   }).select().single()
-  if (error) throw error
-  return data as Reminder
+  if (error || !data) throw error ?? new Error('reminder insert returned no row')
+  return { ...data, kind: input.kind }
 }
 
 export async function adminUpdateReminder(id: string, patch: { name?: string | null; due_at?: string }): Promise<Reminder> {
-  const { data, error } = await supabase.from('reminders').update(patch).eq('id', id).select().single()
-  if (error) throw error
-  return data as Reminder
+  const { data, error } = await supabase
+    .from('reminders')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single()
+    .returns<Reminder>()
+  if (error || !data) throw error ?? new Error('reminder update returned no row')
+  return data
 }
 
 export async function adminSetAllergies(profileId: string, allergies: string): Promise<void> {
