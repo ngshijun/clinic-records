@@ -609,6 +609,8 @@ const appUrl = computed(() => window.location.origin + '/')
         <span class="folio text-xs opacity-40 select-all">{{ version }}</span>
       </div>
       <div class="flex items-center gap-5">
+        <router-link to="/staff/calendar" class="eyebrow hover:text-ink whitespace-nowrap">{{ $t('admin.navCalendar') }}</router-link>
+        <router-link to="/staff/patients" class="eyebrow hover:text-ink whitespace-nowrap">{{ $t('admin.navPatients') }}</router-link>
         <AppDropdown
           :model-value="locale"
           :options="localeOptions"
